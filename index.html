@@ -9,7 +9,10 @@
 <body>
 
     <header>
-        <img src="https://www.hospitalmoinhos.org.br/assets/images/logo-w-hopkins.png" alt="Logo Hospital Moinhos de Vento" id="logo-hmv">
+        <div class="logos-container">
+            <img src="https://www.hospitalmoinhos.org.br/assets/images/logo-w-hopkins.png" alt="Logo Hospital Moinhos de Vento" id="logo-hmv">
+            <img src="img/Casa Colaborador.jpg" alt="Logo Casa do Colaborador" id="logo-casa-colaborador">
+        </div>
         <h1>Agenda de Horários para Colaboradores</h1>
     </header>
     
@@ -22,13 +25,14 @@
     <main id="agenda-container">
         <p class="loading">Carregando agenda...</p>
     </main>
+    
     <div id="modal-agendamento" class="modal-overlay hidden">
         <div class="modal-content">
             <h2>Confirmar Agendamento</h2>
             <p>Você está prestes a agendar o seguinte horário:</p>
             
             <ul id="modal-detalhes">
-                </ul>
+            </ul>
 
             <div class="form-group">
                 <label for="input-matricula">Sua Matrícula:</label>
@@ -43,6 +47,7 @@
             <div id="modal-mensagem"></div>
         </div>
     </div>
+
     <script src="script.js"></script>
 </body>
 </html>
