@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda de Horários - Moinhos de Vento</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <img src="https://www.hospitalmoinhos.org.br/assets/images/logo-w-hopkins.png" alt="Logo Hospital Moinhos de Vento" id="logo-hmv">
+        <h1>Agenda de Horários para Colaboradores</h1>
+    </header>
+    
+    <div id="seletor-container">
+        <label for="seletor-data">Selecione uma data:</label>
+        <input type="date" id="seletor-data">
+        <span id="dia-semana"></span>
+    </div>
+
+    <main id="agenda-container">
+        <p class="loading">Carregando agenda...</p>
+    </main>
+    <div id="modal-agendamento" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2>Confirmar Agendamento</h2>
+            <p>Você está prestes a agendar o seguinte horário:</p>
+            
+            <ul id="modal-detalhes">
+                </ul>
+
+            <div class="form-group">
+                <label for="input-matricula">Sua Matrícula:</label>
+                <input type="text" id="input-matricula" placeholder="Digite sua matrícula">
+            </div>
+
+            <div class="modal-botoes">
+                <button id="btn-cancelar" class="btn-modal btn-cinza">Cancelar</button>
+                <button id="btn-confirmar" class="btn-modal btn-verde">Confirmar</button>
+            </div>
+
+            <div id="modal-mensagem"></div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

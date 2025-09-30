@@ -1,0 +1,308 @@
+/* --- Estilos Gerais com Identidade Visual Moinhos de Vento --- */
+:root {
+    --azul-moinhos: #004b84; /* Azul escuro da marca */
+    --verde-moinhos: #00a99d; /* Verde da marca */
+    --cinza-claro: #f8f9fa;
+    --cinza-texto: #495057;
+    --cinza-borda: #dee2e6;
+}
+
+body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    background-color: var(--cinza-claro);
+    color: #333;
+    margin: 0;
+    padding: 20px;
+    line-height: 1.5;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 40px;
+    color: var(--azul-moinhos);
+}
+
+#logo-hmv {
+    max-width: 250px;
+    margin-bottom: 20px;
+}
+
+main {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.loading {
+    text-align: center;
+    font-size: 1.2em;
+    color: #6c757d;
+}
+
+/* --- Estilos para o Seletor de Data --- */
+#seletor-container {
+    max-width: 1200px;
+    margin: 0 auto 30px auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+#seletor-container label {
+    font-size: 1.1em;
+    font-weight: 500;
+    color: var(--cinza-texto);
+}
+
+#seletor-data {
+    padding: 12px;
+    border: 2px solid var(--cinza-borda);
+    border-radius: 8px;
+    font-size: 1.1em;
+    font-family: inherit;
+    min-width: 180px;
+    cursor: pointer;
+    background-color: #fff;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+#seletor-data:focus {
+    outline: none;
+    border-color: var(--azul-moinhos);
+    box-shadow: 0 0 0 4px rgba(0, 75, 132, 0.2);
+}
+
+#dia-semana {
+    font-size: 1.1em;
+    font-weight: bold;
+    color: var(--azul-moinhos);
+    text-transform: capitalize;
+}
+
+/* --- Estilos para o Efeito Acordeão --- */
+.titulo-atividade {
+    font-size: 2em;
+    color: var(--azul-moinhos);
+    border-bottom: 2px solid var(--verde-moinhos);
+    padding-bottom: 10px;
+    margin-top: 40px;
+    margin-bottom: 20px;
+    cursor: pointer;
+    position: relative;
+    padding-right: 30px;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.titulo-atividade::after {
+    content: '+';
+    font-size: 2em;
+    color: var(--verde-moinhos);
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    transition: transform 0.3s ease;
+}
+
+.titulo-atividade.ativo::after {
+    content: '−';
+}
+
+/* --- Estilos da Tabela de Horários --- */
+.tabela-container {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.5s ease-in-out;
+    padding: 0 10px;
+    margin-bottom: 10px;
+    overflow-x: auto;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+}
+
+.tabela-agenda {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 600px;
+}
+
+.tabela-agenda th, .tabela-agenda td {
+    padding: 12px 15px;
+    text-align: center;
+    border: 1px solid var(--cinza-borda);
+}
+
+.tabela-agenda thead th {
+    background-color: #e9ecef;
+    font-size: 1.1em;
+    color: var(--cinza-texto);
+}
+
+.horario-col {
+    font-weight: bold;
+    color: var(--cinza-texto);
+    background-color: #e9ecef;
+}
+
+.tabela-agenda tbody {
+    display: block;
+    max-height: 280px;
+    overflow-y: auto;
+}
+
+.tabela-agenda thead, .tabela-agenda tbody tr {
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+}
+
+.tabela-agenda tbody::-webkit-scrollbar {
+    width: 8px;
+}
+
+.tabela-agenda tbody::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.tabela-agenda tbody::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+}
+
+.tabela-agenda tbody::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* --- Estilos das Células de Status --- */
+.status-cell {
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
+}
+
+.status-disponivel {
+    background-color: #d4edda;
+    color: #155724;
+    cursor: pointer;
+}
+.status-disponivel:hover {
+    background-color: var(--verde-moinhos);
+    color: white;
+    transform: scale(1.05);
+}
+
+.status-reservado {
+    background-color: #fff3cd;
+    color: #856404;
+    cursor: not-allowed;
+}
+
+.status-indisponivel {
+    background-color: #f2f2f2;
+    color: #6c757d;
+    cursor: not-allowed;
+}
+/* --- Estilos para o Modal de Agendamento --- */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+.modal-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.modal-content {
+    background-color: white;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    width: 90%;
+    max-width: 500px;
+    text-align: left;
+}
+
+.modal-content h2 {
+    margin-top: 0;
+    color: var(--azul-moinhos);
+}
+
+#modal-detalhes {
+    list-style: none;
+    padding: 0;
+    margin: 20px 0;
+    border-left: 3px solid var(--verde-moinhos);
+    padding-left: 15px;
+}
+
+#modal-detalhes li {
+    margin-bottom: 8px;
+    font-size: 1.1em;
+}
+
+.form-group {
+    margin: 20px 0;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: var(--cinza-texto);
+}
+
+#input-matricula {
+    width: 100%;
+    padding: 12px;
+    font-size: 1em;
+    border: 1px solid var(--cinza-borda);
+    border-radius: 5px;
+    box-sizing: border-box; /* Garante que padding não afete a largura total */
+}
+
+.modal-botoes {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.btn-modal {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    font-size: 1em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+.btn-modal:hover {
+    opacity: 0.8;
+}
+
+.btn-cinza { background-color: #6c757d; color: white; }
+.btn-verde { background-color: var(--verde-moinhos); color: white; }
+
+#modal-mensagem {
+    margin-top: 15px;
+    font-weight: bold;
+    text-align: center;
+}
