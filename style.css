@@ -322,3 +322,17 @@ main {
     font-weight: bold;
     text-align: center;
 }
+/* --- Estilos para Coluna de Horário Fixa (Sticky Column) --- */
+
+.tabela-agenda th:first-child,
+.tabela-agenda td:first-child {
+    position: -webkit-sticky; /* Necessário para compatibilidade com Safari */
+    position: sticky;
+    left: 0; /* "Gruda" a coluna na borda esquerda */
+    z-index: 2; /* Garante que a coluna fique por cima do resto do conteúdo ao rolar */
+}
+
+/* Garante que o cabeçalho "Horário" também fique fixo e acima da coluna de horários */
+.tabela-agenda thead th:first-child {
+    z-index: 3;
+}
