@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
     <header>
         <div class="logos-container">
             <img src="https://www.hospitalmoinhos.org.br/assets/images/logo-w-hopkins.png" alt="Logo Hospital Moinhos de Vento" id="logo-hmv">
@@ -20,6 +19,7 @@
         <label for="seletor-data">Selecione uma data:</label>
         <input type="date" id="seletor-data">
         <span id="dia-semana"></span>
+        <button id="btn-consultar-reservas" class="btn-acao">Consultar/Cancelar Reservas</button>
     </div>
 
     <main id="agenda-container">
@@ -30,21 +30,41 @@
         <div class="modal-content">
             <h2>Confirmar Agendamento</h2>
             <p>Você está prestes a agendar o seguinte horário:</p>
-            
-            <ul id="modal-detalhes">
-            </ul>
-
+            <ul id="modal-detalhes"></ul>
             <div class="form-group">
                 <label for="input-matricula">Sua Matrícula:</label>
                 <input type="text" id="input-matricula" placeholder="Digite sua matrícula">
             </div>
-
             <div class="modal-botoes">
-                <button id="btn-cancelar" class="btn-modal btn-cinza">Cancelar</button>
+                <button id="btn-cancelar-agendamento" class="btn-modal btn-cinza">Cancelar</button>
                 <button id="btn-confirmar" class="btn-modal btn-verde">Confirmar</button>
             </div>
-
             <div id="modal-mensagem"></div>
+        </div>
+    </div>
+
+    <div id="modal-consulta" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div id="consulta-view-inicial">
+                <h2>Minhas Reservas</h2>
+                <p>Digite sua matrícula para ver ou cancelar seus agendamentos futuros.</p>
+                <div class="form-group">
+                    <label for="input-consulta-matricula">Sua Matrícula:</label>
+                    <input type="text" id="input-consulta-matricula" placeholder="Digite sua matrícula">
+                </div>
+                <div class="modal-botoes">
+                    <button id="btn-fechar-consulta" class="btn-modal btn-cinza">Fechar</button>
+                    <button id="btn-buscar-reservas" class="btn-modal btn-azul">Buscar</button>
+                </div>
+            </div>
+            <div id="consulta-view-resultados" class="hidden">
+                <h2>Seus Agendamentos</h2>
+                <div id="lista-agendamentos"></div>
+                <div class="modal-botoes">
+                    <button id="btn-voltar-consulta" class="btn-modal btn-cinza">Voltar</button>
+                </div>
+            </div>
+            <div id="consulta-mensagem"></div>
         </div>
     </div>
 
