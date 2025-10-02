@@ -417,4 +417,16 @@ main {
     /* Torna a imagem um elemento em linha para que 'text-align' funcione no container */
     display: inline-block;
 }
+.personagem-container {
+    width: 100%;        /* ocupa toda a largura do container */
+    text-align: center; /* garante centralização do conteúdo */
+    margin-bottom: 10px;
+}
+
+#personagem-casa {
+    width: 100%;        /* imagem ocupa 100% da largura disponível */
+    height: auto;       /* mantém proporção */
+    display: block;
+}
+
 
