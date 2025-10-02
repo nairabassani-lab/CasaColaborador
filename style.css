@@ -22,24 +22,19 @@ header {
     color: var(--azul-moinhos);
 }
 
-/* Novo estilo para o container das duas imagens */
 .logos-container {
     display: flex;
-    justify-content: center; /* Centraliza horizontalmente */
-    align-items: center;    /* Alinha verticalmente */
-    gap: 20px;              /* Espaço entre as imagens */
-    margin-bottom: 20px;    /* Espaço abaixo dos logos */
-    flex-wrap: wrap;        /* Permite quebra de linha em telas pequenas */
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
 }
 
 #logo-hmv, #logo-casa-colaborador {
-    max-height: 80px; /* Altura máxima para ambas as imagens */
-    width: auto;      /* Mantém a proporção */
+    max-height: 80px;
+    width: auto;
 }
-
-/* Você pode ajustar o max-height individualmente se uma imagem for mais alta que a outra naturalmente */
-/* #logo-hmv { max-height: 80px; } */
-/* #logo-casa-colaborador { max-height: 100px; } */
 
 
 main {
@@ -181,25 +176,38 @@ main {
 .tabela-agenda tbody::-webkit-scrollbar {
     width: 8px;
 }
-
 .tabela-agenda tbody::-webkit-scrollbar-track {
     background: #f1f1f1;
     border-radius: 10px;
 }
-
 .tabela-agenda tbody::-webkit-scrollbar-thumb {
     background: #888;
     border-radius: 10px;
 }
-
 .tabela-agenda tbody::-webkit-scrollbar-thumb:hover {
     background: #555;
 }
 
-/* --- Estilos das Células de Status --- */
+.tabela-agenda th:first-child,
+.tabela-agenda td:first-child {
+    position: -webkit-sticky;
+    position: sticky;
+    left: 0;
+    z-index: 2;
+}
+.tabela-agenda thead th:first-child {
+    z-index: 3;
+}
+
+/* --- Estilos das Células de Status (ATUALIZADO) --- */
 .status-cell {
-    font-weight: 500;
+    font-weight: bold; /* Deixa o texto mais forte */
     transition: all 0.2s ease-in-out;
+}
+.status-cell span {
+    display: block;
+    font-size: 0.8em;
+    font-weight: normal; /* "Vagas" em texto normal */
 }
 
 .status-disponivel {
@@ -213,9 +221,9 @@ main {
     transform: scale(1.05);
 }
 
-.status-reservado {
-    background-color: #fff3cd;
-    color: #856404;
+.status-lotado {
+    background-color: #f8d7da;
+    color: #721c24;
     cursor: not-allowed;
 }
 
@@ -224,6 +232,7 @@ main {
     color: #6c757d;
     cursor: not-allowed;
 }
+
 
 /* --- Estilos para o Modal de Agendamento --- */
 .modal-overlay {
@@ -277,7 +286,6 @@ main {
 .form-group {
     margin: 20px 0;
 }
-
 .form-group label {
     display: block;
     margin-bottom: 5px;
@@ -322,17 +330,68 @@ main {
     font-weight: bold;
     text-align: center;
 }
-/* --- Estilos para Coluna de Horário Fixa (Sticky Column) --- */
+/* --- Estilos para o Botão de Consulta e a Lista de Agendamentos --- */
 
-.tabela-agenda th:first-child,
-.tabela-agenda td:first-child {
-    position: -webkit-sticky; /* Necessário para compatibilidade com Safari */
-    position: sticky;
-    left: 0; /* "Gruda" a coluna na borda esquerda */
-    z-index: 2; /* Garante que a coluna fique por cima do resto do conteúdo ao rolar */
+.btn-acao {
+    padding: 12px 18px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1em;
+    font-weight: bold;
+    cursor: pointer;
+    background-color: var(--azul-moinhos);
+    color: white;
+    transition: background-color 0.2s;
+}
+.btn-acao:hover {
+    background-color: #003b6a;
+}
+.btn-azul {
+    background-color: var(--azul-moinhos);
+    color: white;
 }
 
-/* Garante que o cabeçalho "Horário" também fique fixo e acima da coluna de horários */
-.tabela-agenda thead th:first-child {
-    z-index: 3;
+#consulta-view-resultados {
+    text-align: left;
+}
+#lista-agendamentos {
+    margin: 20px 0;
+    max-height: 300px;
+    overflow-y: auto;
+    border-top: 1px solid var(--cinza-borda);
+    border-bottom: 1px solid var(--cinza-borda);
+}
+.item-agendamento {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid #f0f0f0;
+}
+.item-agendamento:last-child {
+    border-bottom: none;
+}
+.detalhes-agendamento span {
+    display: block;
+    font-size: 0.9em;
+    color: #6c757d;
+}
+.btn-cancelar-item {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 5px;
+    background-color: #dc3545;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.btn-cancelar-item:hover {
+    background-color: #c82333;
+}
+
+#consulta-mensagem {
+    margin-top: 15px;
+    font-weight: bold;
+    text-align: center;
 }
