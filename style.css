@@ -411,9 +411,10 @@ main {
 
 #qr-code-aulas {
     /* Define a largura máxima da imagem para que ela não fique muito grande */
-    max-width: 150px; /* Você pode ajustar este valor conforme o desejado */
+    max-width: 1080px; /* Você pode ajustar este valor conforme o desejado */
     /* Garante que a altura seja ajustada proporcionalmente */
     height: auto;
     /* Torna a imagem um elemento em linha para que 'text-align' funcione no container */
     display: inline-block;
 }
+
