@@ -395,3 +395,25 @@ main {
     font-weight: bold;
     text-align: center;
 }
+
+/* Adicione isso ao final do seu arquivo style.css */
+
+.qr-code-container {
+    /* Garante que o container ocupe toda a largura para centralizar o conteúdo */
+    width: 100%;
+    /* Centraliza o conteúdo (a imagem, que é um elemento inline) */
+    text-align: center;
+    /* Adiciona um espaço acima (opcional, para separar do conteúdo principal) */
+    margin-top: 20px; 
+    /* Adiciona um espaço abaixo (opcional, para margem na parte inferior da página) */
+    padding-bottom: 20px;
+}
+
+#qr-code-aulas {
+    /* Define a largura máxima da imagem para que ela não fique muito grande */
+    max-width: 150px; /* Você pode ajustar este valor conforme o desejado */
+    /* Garante que a altura seja ajustada proporcionalmente */
+    height: auto;
+    /* Torna a imagem um elemento em linha para que 'text-align' funcione no container */
+    display: inline-block;
+}
