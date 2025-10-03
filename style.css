@@ -1,33 +1,50 @@
-/* Adicione (ou verifique se existe) no seu style.css, dentro do bloco de estilos de admin */
-.grid-admin-horario {
+/* Adicionado ao style.css */
+
+/* Novo Grid para Metadados no modal Admin */
+.grid-admin-metadados {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
 }
 
-.grid-admin-horario label {
-    grid-column: 1 / 3; /* Ocupa as duas colunas */
-    margin-top: 5px;
+/* Tabela de horários fixos para Quick Massage/Reiki */
+.tabela-horarios-fixos {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
 }
 
-#modal-admin-gerenciar select,
-#modal-admin-gerenciar input[type="date"],
-#modal-admin-gerenciar input[type="time"],
-#modal-admin-gerenciar input[type="number"],
-#modal-admin-gerenciar input[type="text"] {
-    padding: 10px;
+.tabela-horarios-fixos th,
+.tabela-horarios-fixos td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: center;
+}
+
+.tabela-horarios-fixos th {
+    background-color: var(--azul-moinhos);
+    color: white;
+    font-weight: normal;
+}
+
+.tabela-horarios-fixos input[type="text"] {
+    width: 90%;
+    padding: 5px;
+    text-align: center;
     border: 1px solid #ccc;
-    border-radius: 4px;
-    width: 100%; 
-    box-sizing: border-box; /* Garante que o padding não aumente o tamanho final */
 }
 
-/* Garante o estilo correto para o botão Gerenciar Agenda */
-.btn-admin {
-    background-color: #337ab7 !important; /* Azul para ação administrativa */
-    margin-left: 10px;
+.tabela-horarios-fixos tr:nth-child(even) {
+    background-color: #f9f9f9;
 }
-.btn-admin:hover {
-    background-color: #286090 !important;
+
+/* Para o formulário simples (Ana/Carlos) */
+.grid-admin-simples {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+.grid-admin-simples input {
+    width: 100%;
 }
