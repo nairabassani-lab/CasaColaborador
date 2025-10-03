@@ -287,3 +287,32 @@ main {
         background-position-x: -1920px;
     }
 }
+/* Garante que o cabeçalho seja o referencial para o posicionamento absoluto */
+header {
+    position: relative; 
+    /* Outras estilizações do seu header */
+    padding-top: 20px; /* Ajuste o padding para dar espaço ao botão, se necessário */
+    padding-bottom: 20px;
+}
+
+/* Estilização e Posicionamento do Botão Admin */
+#btn-admin-login {
+    position: absolute; /* Posiciona o botão em relação ao header */
+    top: 15px; /* Distância do topo do header */
+    right: 15px; /* Distância da direita do header */
+    z-index: 100; /* Garante que fique acima de outros elementos se houver sobreposição */
+    
+    /* Estilos Adicionais para Destacar o Botão Admin */
+    background-color: #d9534f; /* Exemplo: Cor vermelha para login administrativo */
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+#btn-admin-login:hover {
+    background-color: #c9302c; /* Cor mais escura ao passar o mouse */
+}
