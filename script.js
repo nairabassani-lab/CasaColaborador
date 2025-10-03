@@ -12,6 +12,14 @@ const ATIVIDADES_POR_PROFISSIONAL = {
     'Luis': ['Quick Massage'],
     'Rafael': ['Quick Massage', 'Reiki']
 };
+// Horários fixos para Quick Massage e Reiki (43 slots)
+const QUICK_MASSAGE_REIKI_TIMES = [
+    '08:15', '08:30', '08:45', '09:00', '09:15', '09:30', '09:45', '10:00', '10:15', '10:30', '10:45',
+    '11:00', '11:15', '11:30', '11:45', '12:00', '12:15', '12:30', '12:45', '13:00', '13:15', '13:30',
+    '13:45', '14:00', '14:15', '14:30', '14:45', '15:00', '15:15', '15:30', '15:45', '16:00', '16:15',
+    '16:30', '16:45', '17:00', '17:15', '17:30', '17:45', '18:00', '18:15', '18:30', '18:45'
+];
+const ATIVIDADES_COM_HORARIO_FIXO = ['Quick Massage', 'Reiki'];
 
 
 // --- Seletores de Elementos (Completos e padronizados) ---
@@ -52,9 +60,8 @@ const modalAdminGerenciar = document.getElementById('modal-admin-gerenciar');
 const selectAdminProfissional = document.getElementById('select-admin-profissional');
 const selectAdminAtividade = document.getElementById('select-admin-atividade');
 const inputAdminData = document.getElementById('input-admin-data');
-const inputAdminHorario = document.getElementById('input-admin-horario');
-const inputAdminVagas = document.getElementById('input-admin-vagas');
 const inputAdminMatricula = document.getElementById('input-admin-matricula');
+const adminFormDinamico = document.getElementById('admin-form-dinamico'); // NOVO CONTAINER
 const btnAdicionarHorario = document.getElementById('btn-adicionar-horario');
 const btnFecharAdminGerenciar = document.getElementById('btn-fechar-admin-gerenciar');
 const btnAdminLogout = document.getElementById('btn-admin-logout');
@@ -84,14 +91,13 @@ function atualizarDiaDaSemana(dataISO) {
 
 /**
  * Processa os dados brutos da API para facilitar a renderização da grade.
- * (Função completa, apenas para referência, deve ser a mesma do seu código existente)
  */
 function processarDadosParaGrade(dataFormatoPlanilha) {
     const dadosFiltrados = todosOsAgendamentos.filter(item => item.Data === dataFormatoPlanilha);
     const dadosProcessados = {};
 
     dadosFiltrados.forEach(item => {
-        const { Atividade, Profissional, Horário, Data } = item;
+        const { Atividade, Profissional, Horário } = item;
         
         if (!dadosProcessados[Atividade]) {
             dadosProcessados[Atividade] = {
@@ -145,7 +151,14 @@ async function carregarAgenda() {
              throw new Error(`Erro de rede: Status ${response.status}. Verifique o URL da API.`);
         }
         
-        todosOsAgendamentos = await response.json();
+        // CORREÇÃO: Limpa a variável global antes de atribuir
+        todosOsAgendamentos = [];
+        const data = await response.json();
+        if (Array.isArray(data)) {
+            todosOsAgendamentos = data;
+        } else {
+             console.warn("A resposta da API não é um array:", data);
+        }
         
         // Inicialização de data e renderização
         const hoje = new Date();
@@ -169,7 +182,7 @@ async function carregarAgenda() {
 
     } catch (error) {
         console.error('Erro ao carregar a agenda:', error);
-        container.innerHTML = `<p class="loading error-message">⚠️ Erro: ${error.message}. Verifique a publicação do Apps Script.</p>`;
+        container.innerHTML = `<p class="loading error-message">⚠️ Erro: ${error.message}. Verifique a publicação do Apps Script. Se estiver usando o modo Admin, certifique-se de que a última publicação seja 'doGet'.</p>`;
     }
 }
 
@@ -188,7 +201,7 @@ function renderizarAgendaParaData(dataCalendario) {
     if (isAdmin) {
         const aviso = document.createElement('p');
         aviso.className = 'aviso-admin';
-        aviso.textContent = 'MODO ADMINISTRADOR ATIVO: Clique em uma célula disponível para excluir o horário ou em uma célula lotada/indisponível para gerenciar as reservas.';
+        aviso.textContent = 'MODO ADMINISTRADOR ATIVO: Clique em uma célula (Disponível ou Lotada) para excluir o horário, indisponibilizar ou remover reservas.';
         container.appendChild(aviso);
     }
     
@@ -215,7 +228,8 @@ function renderizarAgendaParaData(dataCalendario) {
 
                 if (agendamento) {
                     const vagasTotais = parseInt(agendamento.Vagas) || 0;
-                    const reservas = agendamento.Reserva ? agendamento.Reserva.split(',').filter(Boolean) : [];
+                    // Filtra para garantir que não hajam strings vazias do split
+                    const reservas = agendamento.Reserva ? agendamento.Reserva.split(',').filter(r => r && r.trim() !== '') : [];
                     const vagasOcupadas = reservas.length;
                     const vagasDisponiveis = vagasTotais - vagasOcupadas;
                     
@@ -226,7 +240,7 @@ function renderizarAgendaParaData(dataCalendario) {
                     if (vagasTotais <= 0) {
                          // Horário indisponível (Vagas = 0 ou negativo)
                          statusClass = 'status-indisponivel';
-                         textoStatus = '-';
+                         textoStatus = 'Indisponível';
                     } else if (vagasDisponiveis > 0) {
                         statusClass = 'status-disponivel';
                         textoStatus = `${vagasDisponiveis} <span>Vaga(s)</span>`;
@@ -235,14 +249,15 @@ function renderizarAgendaParaData(dataCalendario) {
                         textoStatus = 'Lotado';
                     }
                     
-                    // Adiciona classes específicas para o modo Admin
+                    // Lógica para modo Admin: todas as células com ID ficam clicáveis para manutenção
                     if (isAdmin) {
-                        if (statusClass === 'status-disponivel') {
-                            statusClass = 'status-admin-excluir'; // Permite excluir o horário
-                        } else if (statusClass === 'status-lotado') {
-                            statusClass += ' status-admin-lotado'; // Indica que pode gerenciar reservas
+                        statusClass += ' status-admin-maintenance'; 
+                        if (vagasDisponiveis > 0) {
+                           statusClass = 'status-admin-excluir'; // Destaca as disponíveis para exclusão rápida
                         }
-                        // O modo admin não usa 'cursor: not-allowed'
+                    } else if (statusClass !== 'status-disponivel') {
+                        // Modo usuário normal, desabilita clique em lotado/indisponível
+                        dataAttributes += ` style="cursor: not-allowed;"`;
                     }
 
                     statusHtml = `<div class="status-cell ${statusClass}" ${dataAttributes}>${textoStatus}</div>`;
@@ -263,7 +278,6 @@ function renderizarAgendaParaData(dataCalendario) {
  * Envia o agendamento para a API (doGet com action=book)
  */
 async function confirmarAgendamento() {
-    // ... (restante da função confirmarAgendamento, sem alteração)
     const matricula = inputMatricula.value.trim();
     if (!matricula) {
         modalMensagem.textContent = 'Por favor, insira sua matrícula.';
@@ -291,13 +305,12 @@ async function confirmarAgendamento() {
             modalMensagem.textContent = result.message;
             modalMensagem.style.color = 'var(--verde-moinhos)';
             
-            await carregarAgenda(); // Recarrega para atualizar a grade
-            
             // Re-renderiza para a data correta
             const [dia, mes, ano] = agendamentoAtual.data.split('/');
             const dataISO = `${ano}-${mes}-${dia}`;
+            await carregarAgenda(); 
             if (seletorData) seletorData.value = dataISO;
-            renderizarAgendaParaData(dataISO); // Força a atualização da grade
+            renderizarAgendaParaData(dataISO); 
             
             setTimeout(fecharModalAgendamento, 2000);
         } else {
@@ -339,7 +352,7 @@ function fecharModalConsulta() {
     modalConsulta.classList.add('hidden');
 }
 
-// --- Funções de Consulta e Cancelamento (Sem alteração) ---
+// --- Funções de Consulta e Cancelamento ---
 
 /**
  * Busca reservas do usuário (doGet com action=getMyBookings)
@@ -377,6 +390,7 @@ async function buscarReservas() {
 
 /**
  * Renderiza a lista de agendamentos buscados.
+ * CORREÇÃO: Assegura que Data e Horário não sejam 'undefined'.
  */
 function renderizarListaReservas(reservas) {
     listaAgendamentos.innerHTML = '';
@@ -386,12 +400,16 @@ function renderizarListaReservas(reservas) {
     }
     
     reservas.forEach(reserva => {
+        // CORREÇÃO: Usa ?? '' para garantir que não haverá 'undefined' na string
+        const data = reserva.Data ?? 'Data Indefinida';
+        const horario = reserva.Horário ?? 'Horário Indefinido';
+        
         const item = document.createElement('div');
         item.className = 'item-agendamento';
         item.innerHTML = `
             <div class="detalhes-agendamento">
-                <strong>${reserva.Atividade} - ${reserva.Profissional}</strong>
-                <span>${reserva.Data} às ${reserva.Horário}</span>
+                <strong>${reserva.Atividade ?? 'Atividade Indefinida'} - ${reserva.Profissional ?? 'Profissional Indefinido'}</strong>
+                <span>${data} às ${horario}</span>
             </div>
             <button class="btn-cancelar-item" type="button" data-id="${reserva.ID}" data-matricula="${reserva.Matricula}">Cancelar</button>
         `;
@@ -403,7 +421,7 @@ function renderizarListaReservas(reservas) {
         button.addEventListener('click', (e) => {
             const id = e.target.dataset.id;
             const matricula = e.target.dataset.matricula;
-            if (confirm(`Tem certeza que deseja cancelar a reserva para ${matricula} no horário selecionado?`)) {
+            if (confirm(`Tem certeza que deseja cancelar a reserva para matrícula ${matricula} no horário selecionado?`)) {
                 cancelarReserva(id, matricula);
             }
         });
@@ -448,23 +466,13 @@ async function cancelarReserva(id, matricula) {
 
 /**
  * Adiciona listeners às células da agenda.
+ * PONTO 6: Melhoria na UX de Manutenção Admin (substituindo o prompt genérico)
  */
 function adicionarListenersCelulas() {
     document.querySelectorAll('.status-cell').forEach(cell => {
         const isDisponivel = cell.classList.contains('status-disponivel');
-        const isExcluirAdmin = cell.classList.contains('status-admin-excluir');
-        const isGerenciarAdmin = cell.classList.contains('status-lotado') && isAdmin;
+        const isManutencaoAdmin = cell.classList.contains('status-admin-maintenance');
 
-        if (isDisponivel) {
-            cell.addEventListener('click', (e) => {
-                const data = e.target.dataset.data;
-                const horario = e.target.dataset.horario;
-                const atividade = e.target.dataset.atividade;
-                const profissional = e.target.dataset.profissional;
-                abrirModalAgendamento({ data, horario, atividade, profissional });
-            });
-        }
-        
         if (isAdmin) {
              cell.addEventListener('click', (e) => {
                 const id = e.target.dataset.id;
@@ -472,35 +480,42 @@ function adicionarListenersCelulas() {
                 const horario = e.target.dataset.horario;
                 const atividade = e.target.dataset.atividade;
                 const profissional = e.target.dataset.profissional;
-                const reservas = e.target.dataset.reservas ? e.target.dataset.reservas.split(',') : [];
+                const reservasString = e.target.dataset.reservas;
+                const reservas = reservasString ? reservasString.split(',').filter(r => r.trim() !== '') : [];
                 const vagas = e.target.dataset.vagas;
                 
                 // MODO ADMIN: Lógica de Exclusão/Gerenciamento
-                if (isExcluirAdmin) {
-                    if (confirm(`[ADMIN] Deseja EXCLUIR o horário de ${atividade} com ${profissional} em ${data} às ${horario}?`)) {
-                        // Action: adminUpdate, Vagas: 0 (para excluir)
+                let opcoesTexto = `[ADMIN] Manutenção do Horário ID: ${id}\nData: ${data} | Horário: ${horario}\nAtividade: ${atividade} | Profissional: ${profissional}\nVagas Totais: ${vagas} | Reservas Atuais (${reservas.length}): ${reservas.join(', ') || 'Nenhuma'}`;
+                
+                opcoesTexto += "\n\nOpções:\n1. Deletar Horário (Fica Indisponível/Vagas=0).\n2. Remover uma Matrícula específica (Digite a matrícula).\n3. Cancelar (Manter como está).";
+                
+                const acao = prompt(opcoesTexto, '3'); // Padrão '3' para cancelar
+                
+                if (acao === null || acao.trim() === '3') {
+                    return; // Cancelou ou escolheu 'Cancelar'
+                }
+                
+                if (acao.trim() === '1') {
+                    // Deletar Horário (Indisponibiliza)
+                    if (confirm(`Confirma a exclusão (Vagas=0) para o ID ${id}?`)) {
                         alternarStatusReservaAdmin(id, { vagas: 0 }, data, horario);
                     }
-                } else if (isGerenciarAdmin || cell.classList.contains('status-indisponivel')) {
-                    // MODO ADMIN: Gerenciar Reservas/Indisponibilidade
-                    if (confirm(`[ADMIN] Gerenciar agendamento ID: ${id}. Reservas atuais: ${reservas.join(', ') || 'Nenhuma'}. Vagas: ${vagas}.` + 
-                                '\n\nOK para remover reservas (ex: Matrícula) ou CANCELAR para indisponibilizar/excluir (Vagas=0).')) {
-                        
-                        const matriculaParaRemover = prompt("Digite a matrícula para remover a reserva (ou deixe vazio para cancelar/indisponibilizar):");
-                        
-                        if (matriculaParaRemover !== null) { // Se o usuário não cancelou o prompt
-                            if (matriculaParaRemover.trim() === '') {
-                                // Se deixou vazio, pede confirmação para indisponibilizar
-                                if (confirm(`Deseja indisponibilizar/excluir o agendamento ID ${id} (Vagas=0)?`)) {
-                                     alternarStatusReservaAdmin(id, { vagas: 0 }, data, horario);
-                                }
-                            } else {
-                                // Remover uma reserva
-                                alternarStatusReservaAdmin(id, { matriculaToRemove: matriculaParaRemover.trim() }, data, horario);
-                            }
-                        }
+                } else if (acao.trim() !== '') {
+                    // Remover Matrícula Específica
+                    if (confirm(`Confirma a remoção da reserva para a Matrícula ${acao.trim()} no ID ${id}?`)) {
+                        alternarStatusReservaAdmin(id, { matriculaToRemove: acao.trim() }, data, horario);
                     }
                 }
+            });
+        } 
+        
+        if (isDisponivel && !isAdmin) {
+            cell.addEventListener('click', (e) => {
+                const data = e.target.dataset.data;
+                const horario = e.target.dataset.horario;
+                const atividade = e.target.dataset.atividade;
+                const profissional = e.target.dataset.profissional;
+                abrirModalAgendamento({ data, horario, atividade, profissional });
             });
         }
     });
@@ -512,30 +527,39 @@ function adicionarListenersCelulas() {
 function adicionarListenersAcordeao() {
     document.querySelectorAll('.titulo-atividade').forEach(titulo => {
         // Inicializa o acordeão fechado
-        titulo.nextElementSibling.style.maxHeight = '0';
+        const tabelaContainer = titulo.nextElementSibling;
+        if (tabelaContainer && tabelaContainer.classList.contains('tabela-container')) {
+            tabelaContainer.style.maxHeight = '0';
+        }
         
         titulo.addEventListener('click', () => {
             const tabelaContainer = titulo.nextElementSibling;
-            
-            // Toggle do estado
-            if (tabelaContainer.style.maxHeight !== '0px' && tabelaContainer.style.maxHeight !== '') {
-                // Fechar
-                tabelaContainer.style.maxHeight = '0';
-                titulo.classList.remove('ativo');
-            } else {
-                // Abrir
-                // Fechar outros abertos para um "accordion" clássico
-                document.querySelectorAll('.titulo-atividade.ativo').forEach(t => {
-                    t.nextElementSibling.style.maxHeight = '0';
-                    t.classList.remove('ativo');
-                });
-                // Abrir o atual (usamos um valor grande para simular 'auto')
-                tabelaContainer.style.maxHeight = tabelaContainer.scrollHeight + 'px';
-                titulo.classList.add('ativo');
+            if (tabelaContainer && tabelaContainer.classList.contains('tabela-container')) {
+                // Toggle do estado
+                if (tabelaContainer.style.maxHeight !== '0px' && tabelaContainer.style.maxHeight !== '') {
+                    // Fechar
+                    tabelaContainer.style.maxHeight = '0';
+                    titulo.classList.remove('ativo');
+                } else {
+                    // Abrir
+                    // Fechar outros abertos para um "accordion" clássico
+                    document.querySelectorAll('.titulo-atividade.ativo').forEach(t => {
+                        const tc = t.nextElementSibling;
+                        if (tc && tc.classList.contains('tabela-container')) {
+                             tc.style.maxHeight = '0';
+                             t.classList.remove('ativo');
+                        }
+                    });
+                    // Abrir o atual (usamos scrollHeight)
+                    tabelaContainer.style.maxHeight = tabelaContainer.scrollHeight + 'px';
+                    titulo.classList.add('ativo');
+                }
             }
         });
     });
 }
+
+// --- Funções de Administração ---
 
 /**
  * Popula a lista de profissionais no modal admin.
@@ -551,14 +575,16 @@ function popularProfissionaisAdmin() {
 }
 
 /**
- * Popula a lista de atividades com base no profissional selecionado.
+ * Popula a lista de atividades e renderiza o formulário dinâmico.
  */
 function popularAtividadesAdmin() {
     const profissional = selectAdminProfissional.value;
     selectAdminAtividade.innerHTML = '';
+    adminAdicionarMensagem.textContent = ''; // Limpa mensagens anteriores
 
     if (!profissional) {
         selectAdminAtividade.innerHTML = '<option value="">Selecione um profissional primeiro</option>';
+        adminFormDinamico.innerHTML = '<p>Selecione um Profissional e Atividade para configurar os horários.</p>';
         return;
     }
     
@@ -568,10 +594,81 @@ function popularAtividadesAdmin() {
         option.textContent = ativ;
         selectAdminAtividade.appendChild(option);
     });
+    
+    // Auto-seleciona o primeiro, se houver, e renderiza o form
+    if (selectAdminAtividade.options.length > 0) {
+        selectAdminAtividade.selectedIndex = 0;
+    }
+    renderizarFormAdmin();
 }
 
+/**
+ * Renderiza o formulário de entrada de horário (simples ou grade).
+ * PONTOS 2 E 3: Lógica de formulário dinâmico.
+ */
+function renderizarFormAdmin() {
+    const atividade = selectAdminAtividade.value;
+    const isHorarioFixo = ATIVIDADES_COM_HORARIO_FIXO.includes(atividade);
+    
+    adminFormDinamico.innerHTML = '';
 
-// --- Funções de Administração ---
+    if (!atividade) {
+        adminFormDinamico.innerHTML = '<p>Selecione uma Atividade para configurar os horários.</p>';
+        return;
+    }
+    
+    if (isHorarioFixo) {
+        // PONTOS 2: Quick Massage / Reiki (Grade de 43 horários fixos)
+        let tabelaHtml = `<p>Insira '1' para abrir o horário ou 'Indisponível' (ou deixe vazio) para bloquear o horário.</p>`;
+        tabelaHtml += `<table class="tabela-horarios-fixos">
+                            <thead>
+                                <tr>
+                                    <th>Horário</th>
+                                    <th>Vagas (1 ou Indisponível)</th>
+                                    <th>Horário</th>
+                                    <th>Vagas (1 ou Indisponível)</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+        
+        // Renderiza em 2 colunas
+        const halfLength = Math.ceil(QUICK_MASSAGE_REIKI_TIMES.length / 2);
+        for (let i = 0; i < halfLength; i++) {
+            const time1 = QUICK_MASSAGE_REIKI_TIMES[i];
+            const time2 = QUICK_MASSAGE_REIKI_TIMES[i + halfLength];
+            
+            tabelaHtml += `<tr>
+                <td>${time1}</td>
+                <td><input type="text" class="input-admin-vagas-fixo" data-horario="${time1}" placeholder="1 ou Indisponível"></td>`;
+            
+            if (time2) {
+                tabelaHtml += `<td>${time2}</td>
+                <td><input type="text" class="input-admin-vagas-fixo" data-horario="${time2}" placeholder="1 ou Indisponível"></td>`;
+            } else {
+                 tabelaHtml += `<td></td><td></td>`; // Garante que a linha termine corretamente
+            }
+            tabelaHtml += `</tr>`;
+        }
+        
+        tabelaHtml += `</tbody></table>`;
+        adminFormDinamico.innerHTML = tabelaHtml;
+
+    } else {
+        // PONTO 3: Ana / Carlos (Input simples para horário e vagas)
+        adminFormDinamico.innerHTML = `
+            <div class="form-group grid-admin-simples">
+                <div>
+                    <label for="input-admin-horario">Horário:</label>
+                    <input type="time" id="input-admin-horario" step="600" required>
+                </div>
+                <div>
+                    <label for="input-admin-vagas">Quantidade de Vagas:</label>
+                    <input type="number" id="input-admin-vagas" min="1" value="1" required>
+                </div>
+            </div>`;
+    }
+}
+
 
 /**
  * Abre o modal de login admin
@@ -598,7 +695,7 @@ function processarLoginAdmin() {
         isAdmin = true;
         fecharModalAdminLogin();
         btnAdminLogin.textContent = 'Logout Admin';
-        btnGerenciarAgenda.classList.remove('hidden');
+        btnGerenciarAgenda.classList.remove('hidden'); // Exibe o botão de Gerenciamento
         renderizarAgendaParaData(seletorData.value); // Re-renderiza no modo admin
     } else {
         adminLoginMensagem.textContent = 'Senha incorreta.';
@@ -622,7 +719,7 @@ function processarLogoutAdmin() {
  */
 function abrirModalAdminGerenciar() {
     popularProfissionaisAdmin();
-    popularAtividadesAdmin();
+    // A chamada para popularAtividadesAdmin e renderizarFormAdmin será feita no listener de 'change'
     adminAdicionarMensagem.textContent = '';
     
     // Define a data atual como padrão
@@ -642,38 +739,89 @@ function fecharModalAdminGerenciar() {
 
 /**
  * Adiciona um novo agendamento (doGet com action=create)
+ * PONTOS 3 E 5: Trata submissão simples ou submissão de grade.
  */
 async function adicionarNovoAgendamento() {
     const profissional = selectAdminProfissional.value;
     const atividade = selectAdminAtividade.value;
     const dataISO = inputAdminData.value;
-    const horario = inputAdminHorario.value;
-    const vagas = parseInt(inputAdminVagas.value);
-    const matricula = inputAdminMatricula.value.trim(); // Matrícula opcional do admin para registro
-
-    if (!profissional || !atividade || !dataISO || !horario || isNaN(vagas) || vagas <= 0) {
-        adminAdicionarMensagem.textContent = 'Preencha todos os campos obrigatórios (Profissional, Atividade, Data, Horário e Vagas > 0).';
+    const matriculaAdmin = inputAdminMatricula.value.trim();
+    
+    if (!profissional || !atividade || !dataISO) {
+        adminAdicionarMensagem.textContent = 'Selecione o Profissional, Atividade e Data.';
         adminAdicionarMensagem.style.color = 'red';
         return;
     }
     
     btnAdicionarHorario.disabled = true;
-    adminAdicionarMensagem.textContent = 'Adicionando horário, aguarde...';
+    adminAdicionarMensagem.textContent = 'Adicionando horário(s), aguarde...';
     adminAdicionarMensagem.style.color = 'var(--cinza-texto)';
     
-    // Converte data ISO para DD/MM/AAAA
     const [ano, mes, dia] = dataISO.split('-');
     const dataFormatoPlanilha = `${dia}/${mes}/${ano}`;
+    
+    let agendamentosParaCriar = [];
+    const isHorarioFixo = ATIVIDADES_COM_HORARIO_FIXO.includes(atividade);
 
-    const params = new URLSearchParams({
+    if (isHorarioFixo) {
+        // Coleta dados da grade (Quick Massage/Reiki)
+        document.querySelectorAll('.input-admin-vagas-fixo').forEach(input => {
+            let vagas = input.value.trim().toLowerCase();
+            let numVagas = 0;
+            
+            if (vagas === '1') {
+                numVagas = 1;
+            } else if (vagas === 'indisponível' || vagas === 'indisponivel' || vagas === '') {
+                numVagas = 0; // 0 vagas = Indisponível/Excluído
+            } else if (!isNaN(parseInt(vagas)) && parseInt(vagas) > 0) {
+                 // Aceita outros números de vagas se for digitado, embora a regra seja 1.
+                 numVagas = parseInt(vagas); 
+            }
+            
+            if (numVagas >= 0) {
+                agendamentosParaCriar.push({
+                    horario: input.dataset.horario,
+                    vagas: numVagas
+                });
+            }
+        });
+
+    } else {
+        // Coleta dados da entrada simples (Ana/Carlos)
+        const horario = document.getElementById('input-admin-horario').value;
+        const vagas = parseInt(document.getElementById('input-admin-vagas').value);
+        
+        if (!horario || isNaN(vagas) || vagas <= 0) {
+            adminAdicionarMensagem.textContent = 'Preencha o Horário e Vagas (deve ser > 0) para esta atividade.';
+            adminAdicionarMensagem.style.color = 'red';
+            btnAdicionarHorario.disabled = false;
+            return;
+        }
+        agendamentosParaCriar.push({ horario, vagas });
+    }
+    
+    if (agendamentosParaCriar.length === 0) {
+        adminAdicionarMensagem.textContent = 'Nenhum horário válido para adicionar.';
+        adminAdicionarMensagem.style.color = 'red';
+        btnAdicionarHorario.disabled = false;
+        return;
+    }
+    
+    // Constrói o objeto de dados a ser enviado.
+    // Usamos 'bookingsData' para enviar múltiplos horários de uma vez
+    const payload = {
         action: 'create',
         data: dataFormatoPlanilha,
-        horario: horario,
         atividade: atividade,
         profissional: profissional,
-        vagas: vagas,
-        matriculaAdmin: matricula || '' // Passa a matrícula do admin, se houver
-    });
+        matriculaAdmin: matriculaAdmin,
+        bookingsData: JSON.stringify(agendamentosParaCriar) 
+    };
+    
+    // IMPORTANTE: Para enviar o bookingsData como um objeto grande, você precisará
+    // usar o método POST ou o método GET com o URLSearchParams. 
+    // Para simplificar a compatibilidade com o Apps Script, usamos GET/URLSearchParams.
+    const params = new URLSearchParams(payload);
     const requestUrl = `${apiUrl}?${params.toString()}`;
 
     try {
@@ -686,7 +834,9 @@ async function adicionarNovoAgendamento() {
             await carregarAgenda(); // Recarrega para atualizar a grade
             renderizarAgendaParaData(dataISO); // Força a atualização da grade
         } else {
-            throw new Error(result.message);
+            // PONTO 5: Se retornar "Ação não reconhecida", o erro está no Apps Script!
+            // Avisa o admin sobre isso.
+             throw new Error(result.message || 'Erro de comunicação. Verifique se o seu Apps Script reconhece a "action=create".');
         }
 
     } catch (error) {
@@ -767,5 +917,7 @@ btnGerenciarAgenda.addEventListener('click', abrirModalAdminGerenciar);
 btnFecharAdminGerenciar.addEventListener('click', fecharModalAdminGerenciar);
 btnAdminLogout.addEventListener('click', processarLogoutAdmin);
 
+// Lógica de atualização dinâmica do formulário
 selectAdminProfissional.addEventListener('change', popularAtividadesAdmin);
+selectAdminAtividade.addEventListener('change', renderizarFormAdmin);
 btnAdicionarHorario.addEventListener('click', adicionarNovoAgendamento);
