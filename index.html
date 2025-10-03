@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -7,16 +8,16 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    
-    <div class="personagem-container">
-        <div class="personagens-loop">
-            </div>
-    </div>
+    <!-- Personagem no topo da página -->
+   <div class="personagem-container">
+    <div class="personagens-loop">
+        </div>
+</div>
 
     <header>
-        <button id="btn-admin-login" class="btn-acao" type="button">Login Admin</button>
         <div class="logos-container">
             <img src="https://www.hospitalmoinhos.org.br/assets/images/logo-w-hopkins.png" alt="Logo Hospital Moinhos de Vento" id="logo-hmv">
+            <!-- Espaço no nome: encode com %20 -->
             <img src="img/casa-colaborador.png" alt="Logo Casa do Colaborador" id="logo-casa-colaborador">
         </div>
         <h1>Agenda de Horários para Colaboradores</h1>
@@ -31,7 +32,7 @@
         <input type="date" id="seletor-data">
         <span id="dia-semana"></span>
         <button id="btn-consultar-reservas" class="btn-acao" type="button">Consultar/Cancelar Reservas</button>
-        </div>
+    </div>
 
     <main id="agenda-container">
         <p class="loading">Carregando agenda...</p>
@@ -78,44 +79,7 @@
             <div id="consulta-mensagem"></div>
         </div>
     </div>
-    
-    <div id="modal-admin-gerenciar" class="modal-overlay hidden">
-        <div class="modal-content">
-            <h2>Painel de Gerenciamento de Agenda</h2>
-            
-            <div class="painel-secao">
-                <h3>Incluir Novo Horário na Agenda</h3>
-                <div class="form-group">
-                    <label for="input-admin-data">Data (DD/MM/AAAA):</label>
-                    <input type="date" id="input-admin-data" required>
-                </div>
-                <div class="form-group">
-                    <label for="input-admin-hora">Horário (HH:MM):</label>
-                    <input type="time" id="input-admin-hora" required>
-                </div>
-                <div class="form-group">
-                    <label for="input-admin-vagas">Número de Vagas:</label>
-                    <input type="number" id="input-admin-vagas" min="1" value="1" required>
-                    </div>
-                <button id="btn-admin-adicionar" class="btn-modal btn-verde" type="button">Adicionar Horário</button>
-                <div id="admin-mensagem-adicao"></div>
-            </div>
 
-            <hr>
-
-            <div class="painel-secao">
-                <h3>Excluir Horário Existente</h3>
-                <p>
-                    Para **excluir** um horário: Feche este painel, vá para a agenda principal (abaixo), selecione a data e **clique no slot de horário** que deseja remover.
-                </p>
-            </div>
-
-            <div class="modal-botoes">
-                <button id="btn-admin-fechar" class="btn-modal btn-cinza" type="button">Fechar Painel</button>
-            </div>
-        </div>
-    </div>
-    
     <div class="qr-code-container">
         <img src="img/qr-code-aulas.jpg" alt="Código QR para Aulas" id="qr-code-aulas">
     </div>
@@ -123,3 +87,6 @@
     <script src="script.js"></script>
 </body>
 </html>
+
+
+
