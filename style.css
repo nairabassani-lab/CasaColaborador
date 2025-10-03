@@ -12,7 +12,10 @@ body {
     background-color: var(--cinza-claro);
     color: #333;
     margin: 0;
-    padding: 20px;
+    /* Adicionamos um padding-top para dar espaço para a animação */
+    padding-top: 100px; 
+    padding-left: 20px;
+    padding-right: 20px;
     line-height: 1.5;
 }
 
@@ -91,6 +94,25 @@ main {
     font-weight: bold;
     color: var(--azul-moinhos);
     text-transform: capitalize;
+}
+
+.btn-acao {
+    padding: 12px 18px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1em;
+    font-weight: bold;
+    cursor: pointer;
+    background-color: var(--azul-moinhos);
+    color: white;
+    transition: background-color 0.2s;
+}
+.btn-acao:hover {
+    background-color: #003b6a;
+}
+.btn-azul {
+    background-color: var(--azul-moinhos);
+    color: white;
 }
 
 /* --- Estilos para o Efeito Acordeão --- */
@@ -173,20 +195,10 @@ main {
     table-layout: fixed;
 }
 
-.tabela-agenda tbody::-webkit-scrollbar {
-    width: 8px;
-}
-.tabela-agenda tbody::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 10px;
-}
-.tabela-agenda tbody::-webkit-scrollbar-thumb {
-    background: #888;
-    border-radius: 10px;
-}
-.tabela-agenda tbody::-webkit-scrollbar-thumb:hover {
-    background: #555;
-}
+.tabela-agenda tbody::-webkit-scrollbar { width: 8px; }
+.tabela-agenda tbody::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+.tabela-agenda tbody::-webkit-scrollbar-thumb { background: #888; border-radius: 10px; }
+.tabela-agenda tbody::-webkit-scrollbar-thumb:hover { background: #555; }
 
 .tabela-agenda th:first-child,
 .tabela-agenda td:first-child {
@@ -195,238 +207,76 @@ main {
     left: 0;
     z-index: 2;
 }
-.tabela-agenda thead th:first-child {
-    z-index: 3;
-}
+.tabela-agenda thead th:first-child { z-index: 3; }
 
-/* --- Estilos das Células de Status (ATUALIZADO) --- */
-.status-cell {
-    font-weight: bold; /* Deixa o texto mais forte */
-    transition: all 0.2s ease-in-out;
-}
-.status-cell span {
-    display: block;
-    font-size: 0.8em;
-    font-weight: normal; /* "Vagas" em texto normal */
-}
+/* --- Estilos das Células de Status --- */
+.status-cell { font-weight: bold; transition: all 0.2s ease-in-out; }
+.status-cell span { display: block; font-size: 0.8em; font-weight: normal; }
+.status-disponivel { background-color: #d4edda; color: #155724; cursor: pointer; }
+.status-disponivel:hover { background-color: var(--verde-moinhos); color: white; transform: scale(1.05); }
+.status-lotado { background-color: #f8d7da; color: #721c24; cursor: not-allowed; }
+.status-indisponivel { background-color: #f2f2f2; color: #6c757d; cursor: not-allowed; }
 
-.status-disponivel {
-    background-color: #d4edda;
-    color: #155724;
-    cursor: pointer;
-}
-.status-disponivel:hover {
-    background-color: var(--verde-moinhos);
-    color: white;
-    transform: scale(1.05);
-}
+/* --- Estilos para os Modais --- */
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 1; transition: opacity 0.3s ease; }
+.modal-overlay.hidden { opacity: 0; pointer-events: none; }
+.modal-content { background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); width: 90%; max-width: 500px; text-align: left; }
+.modal-content h2 { margin-top: 0; color: var(--azul-moinhos); }
+#modal-detalhes { list-style: none; padding: 0; margin: 20px 0; border-left: 3px solid var(--verde-moinhos); padding-left: 15px; }
+#modal-detalhes li { margin-bottom: 8px; font-size: 1.1em; }
+.form-group { margin: 20px 0; }
+.form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: var(--cinza-texto); }
+#input-matricula, #input-consulta-matricula { width: 100%; padding: 12px; font-size: 1em; border: 1px solid var(--cinza-borda); border-radius: 5px; box-sizing: border-box; }
+.modal-botoes { display: flex; justify-content: flex-end; gap: 15px; margin-top: 20px; }
+.btn-modal { padding: 10px 20px; border: none; border-radius: 5px; font-size: 1em; font-weight: bold; cursor: pointer; transition: opacity 0.2s; }
+.btn-modal:hover { opacity: 0.8; }
+.btn-cinza { background-color: #6c757d; color: white; }
+.btn-verde { background-color: var(--verde-moinhos); color: white; }
+#modal-mensagem, #consulta-mensagem { margin-top: 15px; font-weight: bold; text-align: center; }
 
-.status-lotado {
-    background-color: #f8d7da;
-    color: #721c24;
-    cursor: not-allowed;
-}
-
-.status-indisponivel {
-    background-color: #f2f2f2;
-    color: #6c757d;
-    cursor: not-allowed;
-}
+/* Lista de Agendamentos */
+#consulta-view-resultados { text-align: left; }
+#lista-agendamentos { margin: 20px 0; max-height: 300px; overflow-y: auto; border-top: 1px solid var(--cinza-borda); border-bottom: 1px solid var(--cinza-borda); }
+.item-agendamento { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #f0f0f0; }
+.item-agendamento:last-child { border-bottom: none; }
+.detalhes-agendamento span { display: block; font-size: 0.9em; color: #6c757d; }
+.btn-cancelar-item { padding: 8px 12px; border: none; border-radius: 5px; background-color: #dc3545; color: white; font-weight: bold; cursor: pointer; transition: background-color 0.2s; }
+.btn-cancelar-item:hover { background-color: #c82333; }
 
 
-/* --- Estilos para o Modal de Agendamento --- */
-.modal-overlay {
-    position: fixed;
+/* --- Animação Personagem Correndo --- */
+.personagem-container {
+    position: fixed; /* Fixa o container no topo da tela */
     top: 0;
     left: 0;
     width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.6);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-    opacity: 1;
-    transition: opacity 0.3s ease;
-}
-
-.modal-overlay.hidden {
-    opacity: 0;
-    pointer-events: none;
-}
-
-.modal-content {
-    background-color: white;
-    padding: 30px;
-    border-radius: 8px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-    width: 90%;
-    max-width: 500px;
-    text-align: left;
-}
-
-.modal-content h2 {
-    margin-top: 0;
-    color: var(--azul-moinhos);
-}
-
-#modal-detalhes {
-    list-style: none;
-    padding: 0;
-    margin: 20px 0;
-    border-left: 3px solid var(--verde-moinhos);
-    padding-left: 15px;
-}
-
-#modal-detalhes li {
-    margin-bottom: 8px;
-    font-size: 1.1em;
-}
-
-.form-group {
-    margin: 20px 0;
-}
-.form-group label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
-    color: var(--cinza-texto);
-}
-
-#input-matricula {
-    width: 100%;
-    padding: 12px;
-    font-size: 1em;
-    border: 1px solid var(--cinza-borda);
-    border-radius: 5px;
-    box-sizing: border-box;
-}
-
-.modal-botoes {
-    display: flex;
-    justify-content: flex-end;
-    gap: 15px;
-    margin-top: 20px;
-}
-
-.btn-modal {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    font-size: 1em;
-    font-weight: bold;
-    cursor: pointer;
-    transition: opacity 0.2s;
-}
-.btn-modal:hover {
-    opacity: 0.8;
-}
-
-.btn-cinza { background-color: #6c757d; color: white; }
-.btn-verde { background-color: var(--verde-moinhos); color: white; }
-
-#modal-mensagem {
-    margin-top: 15px;
-    font-weight: bold;
-    text-align: center;
-}
-/* --- Estilos para o Botão de Consulta e a Lista de Agendamentos --- */
-
-.btn-acao {
-    padding: 12px 18px;
-    border: none;
-    border-radius: 8px;
-    font-size: 1em;
-    font-weight: bold;
-    cursor: pointer;
-    background-color: var(--azul-moinhos);
-    color: white;
-    transition: background-color 0.2s;
-}
-.btn-acao:hover {
-    background-color: #003b6a;
-}
-.btn-azul {
-    background-color: var(--azul-moinhos);
-    color: white;
-}
-
-#consulta-view-resultados {
-    text-align: left;
-}
-#lista-agendamentos {
-    margin: 20px 0;
-    max-height: 300px;
-    overflow-y: auto;
-    border-top: 1px solid var(--cinza-borda);
-    border-bottom: 1px solid var(--cinza-borda);
-}
-.item-agendamento {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px;
-    border-bottom: 1px solid #f0f0f0;
-}
-.item-agendamento:last-child {
-    border-bottom: none;
-}
-.detalhes-agendamento span {
-    display: block;
-    font-size: 0.9em;
-    color: #6c757d;
-}
-.btn-cancelar-item {
-    padding: 8px 12px;
-    border: none;
-    border-radius: 5px;
-    background-color: #dc3545;
-    color: white;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-.btn-cancelar-item:hover {
-    background-color: #c82333;
-}
-
-#consulta-mensagem {
-    margin-top: 15px;
-    font-weight: bold;
-    text-align: center;
-}
-
-/* Adicione isso ao final do seu arquivo style.css */
-
-.qr-code-container {
-    /* Garante que o container ocupe toda a largura para centralizar o conteúdo */
-    width: 100%;
-    /* Centraliza o conteúdo (a imagem, que é um elemento inline) */
-    text-align: center;
-    /* Adiciona um espaço acima (opcional, para separar do conteúdo principal) */
-    margin-top: 20px; 
-    /* Adiciona um espaço abaixo (opcional, para margem na parte inferior da página) */
-    padding-bottom: 20px;
-}
-
-#qr-code-aulas {
-    /* Define a largura máxima da imagem para que ela não fique muito grande */
-    max-width: 1080px; /* Você pode ajustar este valor conforme o desejado */
-    /* Garante que a altura seja ajustada proporcionalmente */
-    height: auto;
-    /* Torna a imagem um elemento em linha para que 'text-align' funcione no container */
-    display: inline-block;
-}
-.personagem-container {
-    width: 100%;        /* ocupa toda a largura do container */
-    text-align: center; /* garante centralização do conteúdo */
-    margin-bottom: 10px;
+    height: 100px; /* Altura da faixa da animação, ajuste se necessário */
+    overflow: hidden; /* Esconde a imagem quando ela sai da tela */
+    z-index: -1; /* Coloca a animação atrás do conteúdo principal */
+    pointer-events: none; /* Permite clicar através da animação */
 }
 
 #personagem-casa {
-    width: 100%;        /* imagem ocupa 100% da largura disponível */
-    height: auto;       /* mantém proporção */
-    display: block;
+    position: absolute;
+    top: 10px; /* Distância do topo */
+    height: 80px; /* Altura da imagem */
+    width: auto;
+    
+    /* Vira a imagem para a esquerda para dar a impressão de que está correndo para a esquerda */
+    transform: scaleX(-1); 
+    
+    /* Aplica a animação que definimos abaixo */
+    animation: correrDireitaParaEsquerda 15s linear infinite;
 }
 
-
+/* Define os passos da animação */
+@keyframes correrDireitaParaEsquerda {
+    0% {
+        /* Começa 100% à direita da tela (fora da tela) */
+        transform: translateX(100vw) scaleX(-1);
+    }
+    100% {
+        /* Termina 100% à esquerda da sua própria largura (fora da tela) */
+        transform: translateX(-100%) scaleX(-1);
+    }
+}
