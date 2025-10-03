@@ -95,7 +95,7 @@
     </div>
 
     <div id="modal-admin-gerenciar" class="modal-overlay hidden">
-        <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-content" style="max-width: 800px;">
             <h2>Gerenciar Agenda</h2>
             
             <div class="painel-secao">
@@ -114,22 +114,23 @@
                     </select>
                 </div>
 
-                <div class="form-group">
-                    <label for="input-admin-data">Data:</label>
-                    <input type="date" id="input-admin-data">
+                <div class="form-group grid-admin-metadados">
+                    <div>
+                        <label for="input-admin-data">Data:</label>
+                        <input type="date" id="input-admin-data">
+                    </div>
+                    <div>
+                        <label for="input-admin-matricula">Matrícula Admin (Opcional):</label>
+                        <input type="text" id="input-admin-matricula" placeholder="Sua matrícula (para registro)">
+                    </div>
                 </div>
                 
-                <div class="form-group grid-admin-horario">
-                    <label for="input-admin-horario">Horário:</label>
-                    <input type="time" id="input-admin-horario" step="600">
-                    <label for="input-admin-vagas">Vagas:</label>
-                    <input type="number" id="input-admin-vagas" min="1" value="1">
-                    <label for="input-admin-matricula">Matrícula Admin (Opcional):</label>
-                    <input type="text" id="input-admin-matricula" placeholder="Sua matrícula (para registro)">
+                <div id="admin-form-dinamico">
+                    <p>Selecione um Profissional e Atividade para configurar os horários.</p>
                 </div>
                 
                 <div class="modal-botoes" style="justify-content: center;">
-                    <button id="btn-adicionar-horario" class="btn-modal btn-verde" type="button">Adicionar Horário</button>
+                    <button id="btn-adicionar-horario" class="btn-modal btn-verde" type="button">Adicionar Horário(s)</button>
                 </div>
                 <div id="admin-adicionar-mensagem" style="margin-top: 15px;"></div>
             </div>
