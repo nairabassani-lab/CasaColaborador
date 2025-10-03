@@ -77,7 +77,40 @@
             <div id="consulta-mensagem"></div>
         </div>
     </div>
+<div id="modal-admin-gerenciar" class="modal-overlay hidden">
+    <div class="modal-content">
+        <h2>Painel de Gerenciamento de Agenda</h2>
+        
+        <div class="painel-secao">
+            <h3>Incluir Nova Data/Horário</h3>
+            <div class="form-group">
+                <label for="input-admin-data">Data:</label>
+                <input type="date" id="input-admin-data" required>
+            </div>
+            <div class="form-group">
+                <label for="input-admin-hora">Horário:</label>
+                <input type="time" id="input-admin-hora" required>
+            </div>
+            <div class="form-group">
+                <label for="input-admin-vagas">Número de Vagas:</label>
+                <input type="number" id="input-admin-vagas" min="1" value="1" required>
+            </div>
+            <button id="btn-admin-adicionar" class="btn-modal btn-verde" type="button">Adicionar Horário</button>
+            <div id="admin-mensagem-adicao"></div>
+        </div>
 
+        <hr>
+
+        <div class="painel-secao">
+            <h3>Excluir Horário Existente</h3>
+            <p>Selecione um horário na agenda principal e clique em "Excluir" (lógica a ser implementada no JS).</p>
+            </div>
+
+        <div class="modal-botoes">
+            <button id="btn-admin-fechar" class="btn-modal btn-cinza" type="button">Fechar Painel</button>
+        </div>
+    </div>
+</div>
     <div class="qr-code-container">
         <img src="img/qr-code-aulas.jpg" alt="Código QR para Aulas" id="qr-code-aulas">
     </div>
@@ -85,3 +118,4 @@
     <script src="script.js"></script>
 </body>
 </html>
+
