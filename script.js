@@ -3,7 +3,7 @@ const apiUrl = 'https://script.google.com/macros/s/AKfycbzzShDDLK89kO3fgMNNconr-
 
 // --- Variáveis de Configuração Admin ---
 const ADMIN_PASSWORD = 'C@sacolab#123';
-let isAdmin = false;
+let isAdmin = false; // COMEÇA COMO FALSE (NÃO LOGADO)
 const PROFISSIONAIS = ['Ana', 'Carlos', 'Maria Eduarda', 'Luis', 'Rafael'];
 const ATIVIDADES_POR_PROFISSIONAL = {
     'Ana': ['Fit Class', 'Funcional Dance', 'Power Gap', 'Funcional Dance'],
@@ -61,7 +61,7 @@ const selectAdminProfissional = document.getElementById('select-admin-profission
 const selectAdminAtividade = document.getElementById('select-admin-atividade');
 const inputAdminData = document.getElementById('input-admin-data');
 const inputAdminMatricula = document.getElementById('input-admin-matricula');
-const adminFormDinamico = document.getElementById('admin-form-dinamico'); // NOVO CONTAINER
+const adminFormDinamico = document.getElementById('admin-form-dinamico'); 
 const btnAdicionarHorario = document.getElementById('btn-adicionar-horario');
 const btnFecharAdminGerenciar = document.getElementById('btn-fechar-admin-gerenciar');
 const btnAdminLogout = document.getElementById('btn-admin-logout');
@@ -83,7 +83,7 @@ function atualizarDiaDaSemana(dataISO) {
         diaSemanaSpan.textContent = '';
         return;
     }
-    const data = new Date(dataISO + 'T00:00:00'); // Garante que a data seja interpretada como local
+    const data = new Date(dataISO + 'T00:00:00'); 
     const opcoes = { weekday: 'long', timeZone: 'UTC' };
     const dia = data.toLocaleDateString('pt-BR', opcoes);
     diaSemanaSpan.textContent = dia.charAt(0).toUpperCase() + dia.slice(1);
@@ -390,7 +390,6 @@ async function buscarReservas() {
 
 /**
  * Renderiza a lista de agendamentos buscados.
- * CORREÇÃO: Assegura que Data e Horário não sejam 'undefined'.
  */
 function renderizarListaReservas(reservas) {
     listaAgendamentos.innerHTML = '';
@@ -400,7 +399,7 @@ function renderizarListaReservas(reservas) {
     }
     
     reservas.forEach(reserva => {
-        // CORREÇÃO: Usa ?? '' para garantir que não haverá 'undefined' na string
+        // Usa ?? '' para garantir que não haverá 'undefined' na string
         const data = reserva.Data ?? 'Data Indefinida';
         const horario = reserva.Horário ?? 'Horário Indefinido';
         
@@ -466,7 +465,6 @@ async function cancelarReserva(id, matricula) {
 
 /**
  * Adiciona listeners às células da agenda.
- * PONTO 6: Melhoria na UX de Manutenção Admin (substituindo o prompt genérico)
  */
 function adicionarListenersCelulas() {
     document.querySelectorAll('.status-cell').forEach(cell => {
@@ -604,7 +602,6 @@ function popularAtividadesAdmin() {
 
 /**
  * Renderiza o formulário de entrada de horário (simples ou grade).
- * PONTOS 2 E 3: Lógica de formulário dinâmico.
  */
 function renderizarFormAdmin() {
     const atividade = selectAdminAtividade.value;
@@ -618,7 +615,7 @@ function renderizarFormAdmin() {
     }
     
     if (isHorarioFixo) {
-        // PONTOS 2: Quick Massage / Reiki (Grade de 43 horários fixos)
+        // Quick Massage / Reiki (Grade de 43 horários fixos)
         let tabelaHtml = `<p>Insira '1' para abrir o horário ou 'Indisponível' (ou deixe vazio) para bloquear o horário.</p>`;
         tabelaHtml += `<table class="tabela-horarios-fixos">
                             <thead>
@@ -654,7 +651,7 @@ function renderizarFormAdmin() {
         adminFormDinamico.innerHTML = tabelaHtml;
 
     } else {
-        // PONTO 3: Ana / Carlos (Input simples para horário e vagas)
+        // Ana / Carlos (Input simples para horário e vagas)
         adminFormDinamico.innerHTML = `
             <div class="form-group grid-admin-simples">
                 <div>
@@ -688,6 +685,7 @@ function fecharModalAdminLogin() {
 
 /**
  * Lógica de Login Admin
+ * CORREÇÃO: Exibe o botão de Gerenciar Agenda
  */
 function processarLoginAdmin() {
     const senha = inputAdminPassword.value;
@@ -695,7 +693,8 @@ function processarLoginAdmin() {
         isAdmin = true;
         fecharModalAdminLogin();
         btnAdminLogin.textContent = 'Logout Admin';
-        btnGerenciarAgenda.classList.remove('hidden'); // Exibe o botão de Gerenciamento
+        // EXIBE O BOTÃO GERENCIAR AGENDA
+        btnGerenciarAgenda.classList.remove('hidden'); 
         renderizarAgendaParaData(seletorData.value); // Re-renderiza no modo admin
     } else {
         adminLoginMensagem.textContent = 'Senha incorreta.';
@@ -705,11 +704,13 @@ function processarLoginAdmin() {
 
 /**
  * Lógica de Logout Admin
+ * CORREÇÃO: Oculta o botão de Gerenciar Agenda
  */
 function processarLogoutAdmin() {
     isAdmin = false;
     btnAdminLogin.textContent = 'Login Admin';
-    btnGerenciarAgenda.classList.add('hidden');
+    // OCULTA O BOTÃO GERENCIAR AGENDA
+    btnGerenciarAgenda.classList.add('hidden'); 
     renderizarAgendaParaData(seletorData.value); // Re-renderiza no modo normal
     fecharModalAdminGerenciar();
 }
@@ -739,7 +740,6 @@ function fecharModalAdminGerenciar() {
 
 /**
  * Adiciona um novo agendamento (doGet com action=create)
- * PONTOS 3 E 5: Trata submissão simples ou submissão de grade.
  */
 async function adicionarNovoAgendamento() {
     const profissional = selectAdminProfissional.value;
@@ -808,7 +808,6 @@ async function adicionarNovoAgendamento() {
     }
     
     // Constrói o objeto de dados a ser enviado.
-    // Usamos 'bookingsData' para enviar múltiplos horários de uma vez
     const payload = {
         action: 'create',
         data: dataFormatoPlanilha,
@@ -818,9 +817,6 @@ async function adicionarNovoAgendamento() {
         bookingsData: JSON.stringify(agendamentosParaCriar) 
     };
     
-    // IMPORTANTE: Para enviar o bookingsData como um objeto grande, você precisará
-    // usar o método POST ou o método GET com o URLSearchParams. 
-    // Para simplificar a compatibilidade com o Apps Script, usamos GET/URLSearchParams.
     const params = new URLSearchParams(payload);
     const requestUrl = `${apiUrl}?${params.toString()}`;
 
@@ -834,8 +830,6 @@ async function adicionarNovoAgendamento() {
             await carregarAgenda(); // Recarrega para atualizar a grade
             renderizarAgendaParaData(dataISO); // Força a atualização da grade
         } else {
-            // PONTO 5: Se retornar "Ação não reconhecida", o erro está no Apps Script!
-            // Avisa o admin sobre isso.
              throw new Error(result.message || 'Erro de comunicação. Verifique se o seu Apps Script reconhece a "action=create".');
         }
 
@@ -921,4 +915,3 @@ btnAdminLogout.addEventListener('click', processarLogoutAdmin);
 selectAdminProfissional.addEventListener('change', popularAtividadesAdmin);
 selectAdminAtividade.addEventListener('change', renderizarFormAdmin);
 btnAdicionarHorario.addEventListener('click', adicionarNovoAgendamento);
-
