@@ -296,3 +296,244 @@ function processarDadosParaGrade(dataSelecionada) {
     return atividades;
 }
 carregarAgenda();
+
+document.addEventListener('DOMContentLoaded', () => {
+    // ... (Seu código inicial de captura de botões e a lógica de login do administrador permanece aqui)
+    const btnAdminLogin = document.getElementById('btn-admin-login');
+    const SENHA_ADMIN_CORRETA = "admin123"; 
+
+    // NOVOS ELEMENTOS DO ADMIN
+    const modalAdminGerenciar = document.getElementById('modal-admin-gerenciar');
+    const btnAdminFechar = document.getElementById('btn-admin-fechar');
+    const btnAdminAdicionar = document.getElementById('btn-admin-adicionar');
+    
+    // Inputs do formulário de adição
+    const inputAdminData = document.getElementById('input-admin-data');
+    const inputAdminHora = document.getElementById('input-admin-hora');
+    const inputAdminVagas = document.getElementById('input-admin-vagas');
+    const adminMensagemAdicao = document.getElementById('admin-mensagem-adicao');
+
+    // ... (Lógica de login Admin)
+    btnAdminLogin.addEventListener('click', () => {
+        // ... (Verificação da senha aqui)
+        const senhaInserida = prompt("Insira a senha de administrador:");
+        if (senhaInserida === SENHA_ADMIN_CORRETA) {
+            alert("Login de Administrador bem-sucedido!");
+            ativarModoAdmin(); 
+        } else if (senhaInserida !== null && senhaInserida.trim() !== "") {
+            alert("Senha incorreta. Acesso negado.");
+        }
+    });
+    // ... (Fim da lógica de login Admin)
+
+
+    // ----------------------------------------------------
+    // FUNÇÃO PRINCIPAL DO MODO ADMIN
+    // ----------------------------------------------------
+
+    function ativarModoAdmin() {
+        console.log("Modo Administrador Ativado.");
+        
+        let btnGerenciar = document.getElementById('btn-gerenciar-agenda');
+        if (!btnGerenciar) {
+            // Cria o botão "Gerenciar Agenda" se ele não existir
+            btnGerenciar = document.createElement('button');
+            btnGerenciar.id = 'btn-gerenciar-agenda';
+            btnGerenciar.classList.add('btn-acao', 'btn-admin');
+            btnGerenciar.textContent = 'Gerenciar Agenda (Admin)';
+
+            const seletorContainer = document.getElementById('seletor-container');
+            if (seletorContainer) {
+                 // Adiciona o novo botão
+                 seletorContainer.appendChild(btnGerenciar);
+            }
+            
+            // Lógica para ABRIR o modal de gerenciamento
+            btnGerenciar.addEventListener('click', () => {
+                 modalAdminGerenciar.classList.remove('hidden');
+            });
+
+            // Opcional: Desabilitar o botão de login após o sucesso
+            btnAdminLogin.disabled = true; 
+            btnAdminLogin.textContent = 'Modo Admin Ativo';
+        }
+    }
+
+    // ----------------------------------------------------
+    // LÓGICA DO MODAL DE GERENCIAMENTO
+    // ----------------------------------------------------
+
+    // Fechar Modal
+    btnAdminFechar.addEventListener('click', () => {
+        modalAdminGerenciar.classList.add('hidden');
+    });
+
+    // Lógica para ADICIONAR Horário
+    btnAdminAdicionar.addEventListener('click', () => {
+        const data = inputAdminData.value;
+        const hora = inputAdminHora.value;
+        const vagas = parseInt(inputAdminVagas.value, 10);
+
+        // Validação básica
+        if (!data || !hora || isNaN(vagas) || vagas <= 0) {
+            adminMensagemAdicao.textContent = "Por favor, preencha todos os campos corretamente.";
+            adminMensagemAdicao.style.color = "red";
+            return;
+        }
+
+        // --- SIMULAÇÃO DA INCLUSÃO DE DADOS ---
+        // Em um sistema real, você enviaria esta informação para o backend (servidor)
+        // para ser salva em um banco de dados.
+
+        console.log(`Tentando adicionar: Data: ${data}, Horário: ${hora}, Vagas: ${vagas}`);
+
+        // Aqui, você chamaria uma função de backend, por exemplo:
+        // salvarNovoHorario({ data, hora, vagas })
+        
+        // Simulação de sucesso:
+        adminMensagemAdicao.textContent = `Horário de ${hora} na data ${data} com ${vagas} vagas ADICIONADO (Simulação).`;
+        adminMensagemAdicao.style.color = "green";
+
+        // Limpar campos após sucesso
+        inputAdminData.value = '';
+        inputAdminHora.value = '';
+        inputAdminVagas.value = '1';
+        
+        // Opcional: Recarregar a agenda principal para mostrar o novo horário
+        // carregarAgenda(data); 
+    });
+
+
+    // ----------------------------------------------------
+    // (O restante do seu código JavaScript, como a lógica de agendamento e consulta, continua aqui)
+    // ----------------------------------------------------
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    // VARIÁVEL DE ESTADO GLOBAL PARA O MODO ADMIN
+    let isAdminMode = false; 
+
+    // O restante das suas constantes e lógica de captura de elementos...
+    // ...
+
+                          function ativarModoAdmin() {
+        console.log("Modo Administrador Ativado.");
+        
+        // **NOVO: Define o estado de administrador**
+        isAdminMode = true; 
+        
+        // Recarregar a agenda para aplicar estilos e eventos de exclusão
+        // Você precisará garantir que a função 'carregarAgenda' exista e chame 'renderizarHorarios'.
+        const dataSelecionada = document.getElementById('seletor-data').value;
+        if (dataSelecionada) {
+            // Se houver uma data selecionada, recarrega
+            carregarAgenda(dataSelecionada); 
+        } else {
+            // Se não houver, apenas informa que o modo está ativo
+             document.getElementById('agenda-container').innerHTML = 
+                 '<p class="aviso-admin">Modo Administrador Ativo. Selecione uma data para gerenciar os horários.</p>';
+        }
+
+
+        // ... (O restante da lógica de criação do botão 'Gerenciar Agenda' permanece o mesmo)
+        let btnGerenciar = document.getElementById('btn-gerenciar-agenda');
+        if (!btnGerenciar) {
+            // ... (Lógica para criar e adicionar o botão 'Gerenciar Agenda' e abrir o modal)
+            
+            // ... (Continua a lógica de criação do botão)
+            btnGerenciar.addEventListener('click', () => {
+                 modalAdminGerenciar.classList.remove('hidden');
+            });
+
+            btnAdminLogin.disabled = true; 
+            btnAdminLogin.textContent = 'Modo Admin Ativo';
+        }
+    }
+
+    // Exemplo de como sua função de renderização DEVE ser modificada
+function renderizarHorario(horario, vagasDisponiveis, container) {
+    const horarioElement = document.createElement('div');
+    horarioElement.classList.add('horario-slot');
+    horarioElement.textContent = `${horario} (${vagasDisponiveis} vagas)`;
+
+    if (isAdminMode) {
+        // MODO ADMIN: Permite Exclusão
+        horarioElement.classList.add('horario-admin-excluir'); // Para estilização visual
+        horarioElement.title = "Clique para EXCLUIR este horário.";
+
+        horarioElement.addEventListener('click', () => {
+            confirmarExclusao(horario);
+        });
+
+    } else if (vagasDisponiveis > 0) {
+        // MODO USUÁRIO NORMAL: Permite Agendamento
+        horarioElement.classList.add('disponivel');
+        horarioElement.addEventListener('click', () => {
+            // Sua lógica original de agendamento aqui
+        });
+
+    } else {
+        // MODO USUÁRIO NORMAL: Indisponível
+        horarioElement.classList.add('indisponivel');
+    }
+    
+    container.appendChild(horarioElement);
+}
+
+// ----------------------------------------------------
+// NOVA FUNÇÃO DE CONFIRMAÇÃO DE EXCLUSÃO
+// ----------------------------------------------------
+
+function confirmarExclusao(horario) {
+    const dataSelecionada = document.getElementById('seletor-data').value;
+    
+    if (confirm(`Tem certeza que deseja excluir o horário: ${horario} na data ${dataSelecionada}? Esta ação é irreversível (simulação).`)) {
+        
+        // --- LÓGICA DE EXCLUSÃO REAL (SIMULAÇÃO) ---
+        
+        // Em um sistema real, você enviaria a requisição de exclusão para o backend:
+        // excluirHorario({ data: dataSelecionada, hora: horario })
+        
+        alert(`Horário ${horario} EXCLUÍDO com sucesso (SIMULAÇÃO)!`);
+
+        // Recarregar a agenda para remover o item visualmente
+        carregarAgenda(dataSelecionada); 
+    }
+}
+
+// ----------------------------------------------------
+// GARANTIR QUE 'carregarAgenda' FUNCIONE
+// ----------------------------------------------------
+
+// Você precisará garantir que sua função 'carregarAgenda' chame 'renderizarHorario'.
+function carregarAgenda(data) {
+    // 1. Simulação de obtenção de dados (em um sistema real, seria uma chamada fetch/AJAX)
+    const agendaContainer = document.getElementById('agenda-container');
+    agendaContainer.innerHTML = ''; // Limpa a agenda
+
+    const horariosExemplo = [
+        { hora: '09:00', vagas: isAdminMode ? 5 : 2 }, // Exemplo: admin pode ter mais info
+        { hora: '10:00', vagas: 0 },
+        { hora: '11:00', vagas: 4 },
+        // ... outros horários
+    ];
+
+    horariosExemplo.forEach(item => {
+        renderizarHorario(item.hora, item.vagas, agendaContainer);
+    });
+
+    // Se o modo admin estiver ativo, adicione um aviso visual
+    if (isAdminMode) {
+        agendaContainer.insertAdjacentHTML('afterbegin', '<p class="aviso-admin">Modo ADMIN: Clique em um horário abaixo para EXCLUIR.</p>');
+    }
+}
+
+// Adiciona um listener para a mudança de data que dispara o carregamento
+document.getElementById('seletor-data').addEventListener('change', (e) => {
+    carregarAgenda(e.target.value);
+});
+
+// Chame carregarAgenda() uma vez no início, se quiser que algo apareça
+// ...
+
+                          
