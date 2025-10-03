@@ -316,3 +316,60 @@ header {
 #btn-admin-login:hover {
     background-color: #c9302c; /* Cor mais escura ao passar o mouse */
 }
+
+/* Estilo para horários que podem ser excluídos no modo admin */
+.horario-admin-excluir {
+    background-color: #f8d7da !important; /* Vermelho claro */
+    border: 2px solid #dc3545 !important; /* Borda vermelha */
+    cursor: pointer;
+}
+
+.horario-admin-excluir:hover {
+    background-color: #dc3545 !important; /* Vermelho escuro ao passar o mouse */
+    color: white;
+}
+
+/* Aviso para o administrador na tela da agenda */
+.aviso-admin {
+    font-weight: bold;
+    color: #dc3545;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px dashed #dc3545;
+    background-color: #fef7f7;
+    text-align: center;
+}
+/* Estilização para separar as seções do painel admin */
+.painel-secao {
+    padding: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    background-color: #f9f9f9;
+}
+
+.painel-secao h3 {
+    margin-top: 0;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+/* Linha separadora */
+hr {
+    border: 0;
+    height: 1px;
+    background-color: #ddd;
+    margin: 30px 0;
+}
+
+/* Estilo para inputs de admin */
+#modal-admin-gerenciar input[type="date"],
+#modal-admin-gerenciar input[type="time"],
+#modal-admin-gerenciar input[type="number"] {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: calc(100% - 100px); /* Ajuste conforme necessário */
+    margin-bottom: 10px;
+}
