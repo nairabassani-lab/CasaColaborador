@@ -244,42 +244,46 @@ main {
 .btn-cancelar-item:hover { background-color: #c82333; }
 
 
-/* --- Animação Personagem Correndo (Loop Infinito) --- */
+/* --- Animação Personagem Correndo (Loop Infinito com Background) --- */
+
 .personagem-container {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
-    height: 100px;
+    height: 100px; /* Altura da faixa da animação */
     overflow: hidden;
     z-index: -1;
     pointer-events: none;
 }
 
 .personagens-loop {
-    display: flex;
     height: 100%;
-    width: 200%; /* Mantém o dobro da largura para o loop */
-    position: relative;
-    top: 10px;
-    animation: loopPersonagens 30s linear infinite;
-}
+    width: 200vw; /* Largura muito grande para garantir o efeito de rolagem */
+    
+    /* A MÁGICA ESTÁ AQUI: */
+    background-image: url('img/personagem-casa.png'); /* Sua imagem como fundo */
+    background-repeat: repeat-x; /* Repete a imagem horizontalmente */
+    background-size: auto 80px;  /* Altura da imagem de fundo. 'auto' mantém a proporção. */
+    background-position: 0 10px;   /* Posição inicial (0 na horizontal, 10px do topo) */
 
-.personagens-loop img {
-    height: 100%;
-    width: 50%; /* Cada imagem ocupa metade da largura do loop */
-
-    /* A MUDANÇA ESTÁ AQUI: */
-    object-fit: cover; /* Estica a imagem para cobrir o espaço, cortando o excesso */
-
+    /* Inverte a imagem de fundo horizontalmente */
     transform: scaleX(-1);
+
+    /* Aplica a animação */
+    animation: rolarFundo 30s linear infinite;
 }
 
-@keyframes loopPersonagens {
-    0% {
-        transform: translateX(0);
+/* Nova animação que move a posição do fundo */
+@keyframes rolarFundo {
+    from {
+        /* Começa na posição 0 */
+        background-position-x: 0;
     }
-    100% {
-        transform: translateX(-50%);
+    to {
+        /* Termina movendo a imagem em uma largura completa dela mesma */
+        /* O valor '1920px' deve ser aproximadamente a largura do seu arquivo de imagem. 
+           Ajuste se o loop não parecer perfeito. */
+        background-position-x: -1920px;
     }
 }
