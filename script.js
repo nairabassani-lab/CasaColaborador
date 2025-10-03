@@ -921,3 +921,4 @@ btnAdminLogout.addEventListener('click', processarLogoutAdmin);
 selectAdminProfissional.addEventListener('change', popularAtividadesAdmin);
 selectAdminAtividade.addEventListener('change', renderizarFormAdmin);
 btnAdicionarHorario.addEventListener('click', adicionarNovoAgendamento);
+
