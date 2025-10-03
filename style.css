@@ -244,7 +244,7 @@ main {
 .btn-cancelar-item:hover { background-color: #c82333; }
 
 
-/* --- Animação Personagem Correndo --- */
+/* --- Animação Personagem Correndo (Loop Infinito) --- */
 .personagem-container {
     position: fixed; /* Fixa o container no topo da tela */
     top: 0;
@@ -256,27 +256,35 @@ main {
     pointer-events: none; /* Permite clicar através da animação */
 }
 
-#personagem-casa {
-    position: absolute;
-    top: 10px; /* Distância do topo */
-    height: 80px; /* Altura da imagem */
-    width: auto;
-    
-    /* Vira a imagem para a esquerda para dar a impressão de que está correndo para a esquerda */
-    transform: scaleX(-1); 
-    
-    /* Aplica a animação que definimos abaixo */
-    animation: correrDireitaParaEsquerda 15s linear infinite;
+.personagens-loop {
+    display: flex; /* Para que as imagens fiquem uma ao lado da outra */
+    height: 100%; /* Ocupa a altura total do container */
+    /* Duplica a largura do conteúdo para que as duas imagens fiquem lado a lado */
+    width: 200%; 
+    position: relative; /* Para animar a posição com transform */
+    top: 10px; /* Ajuste vertical da imagem dentro da faixa */
+
+    /* Aplica a nova animação de loop */
+    animation: loopPersonagens 30s linear infinite; /* 30s é a duração, ajuste para mais rápido/lento */
 }
 
-/* Define os passos da animação */
-@keyframes correrDireitaParaEsquerda {
+.personagens-loop img {
+    height: 100%; /* Cada imagem ocupa a altura total do loop */
+    width: 50%; /* Cada imagem ocupa metade da largura do loop (200%/2 = 100%) */
+    object-fit: contain; /* Garante que a imagem se ajuste sem cortar */
+    transform: scaleX(-1); /* Mantém a imagem virada para a esquerda */
+}
+
+/* Define os passos da animação de loop */
+@keyframes loopPersonagens {
     0% {
-        /* Começa 100% à direita da tela (fora da tela) */
-        transform: translateX(100vw) scaleX(-1);
+        /* Começa na posição normal */
+        transform: translateX(0);
     }
     100% {
-        /* Termina 100% à esquerda da sua própria largura (fora da tela) */
-        transform: translateX(-100%) scaleX(-1);
+        /* Move o container (com as duas imagens) em 50% da sua largura total,
+           que é exatamente a largura de uma imagem. Assim, a primeira imagem
+           sai completamente e a segunda ocupa o lugar dela perfeitamente. */
+        transform: translateX(-50%);
     }
 }
