@@ -373,3 +373,116 @@ hr {
     width: calc(100% - 100px); /* Ajuste conforme necessário */
     margin-bottom: 10px;
 }
+/* ====================================
+   1. ESTILIZAÇÃO DO CABEÇALHO E BOTÕES ADMIN
+   ==================================== */
+
+/* Garante que o cabeçalho seja o referencial para o posicionamento absoluto */
+header {
+    position: relative; 
+    /* Garanta que seu padding-top/bottom seja suficiente para o botão */
+    padding-top: 20px; 
+    padding-bottom: 20px;
+}
+
+/* 1.1 Botão de Login do Administrador no canto superior direito */
+#btn-admin-login {
+    position: absolute; 
+    top: 15px; 
+    right: 15px; 
+    z-index: 100; 
+    
+    /* Estilos Visuais */
+    background-color: #d9534f; /* Vermelho/perigo */
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+#btn-admin-login:hover {
+    background-color: #c9302c; 
+}
+
+/* 1.2 Estilo para o botão "Gerenciar Agenda" que aparece após o login */
+.btn-admin {
+    background-color: #337ab7 !important; /* Azul para ação administrativa */
+    margin-left: 10px;
+}
+
+.btn-admin:hover {
+    background-color: #286090 !important;
+}
+
+
+/* ====================================
+   2. ESTILIZAÇÃO DO MODAL DE GERENCIAMENTO (ADMIN)
+   ==================================== */
+
+/* Estilização para separar as seções do painel admin */
+.painel-secao {
+    padding: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    background-color: #f9f9f9;
+}
+
+.painel-secao h3 {
+    margin-top: 0;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+/* Linha separadora */
+hr {
+    border: 0;
+    height: 1px;
+    background-color: #ddd;
+    margin: 30px 0;
+}
+
+/* ====================================
+   3. FEEDBACK VISUAL NA AGENDA (MODO ADMIN)
+   ==================================== */
+
+/* 3.1 Aviso para o administrador na tela da agenda */
+.aviso-admin {
+    font-weight: bold;
+    color: #dc3545; /* Cor de alerta */
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px dashed #dc3545;
+    background-color: #fef7f7;
+    text-align: center;
+}
+
+/* 3.2 Estilo para células DISPONÍVEIS que podem ser excluídas */
+.status-admin-excluir {
+    background-color: #f8d7da !important; /* Vermelho claro */
+    border: 2px solid #dc3545 !important; /* Borda vermelha */
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.status-admin-excluir:hover {
+    background-color: #dc3545 !important; /* Vermelho escuro ao passar o mouse */
+    color: white !important;
+}
+
+/* 3.3 Estilo para células LOTADAS no modo admin (opcional: para indicar que podem ser redefinidas) */
+.status-admin-lotado {
+    background-color: #ffc10740; /* Amarelo claro (aviso) */
+    border: 1px solid #ffc107;
+}
+
+/* Adicione também seus estilos base para modais se eles ainda não estiverem no arquivo */
+/*
+.modal-overlay { ... }
+.modal-content { ... }
+.hidden { display: none !important; }
+*/
