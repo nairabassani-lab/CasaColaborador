@@ -425,3 +425,26 @@ header {
         background-position-x: -1920px; /* Ajuste se o loop não parecer perfeito */
     }
 }
+/* --- Estilos para o Modal de Login e Gerenciamento --- */
+/* ... código anterior ... */
+
+.modal-content { 
+    background-color: white; 
+    padding: 30px; 
+    border-radius: 8px; 
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3); 
+    width: 90%; 
+    max-width: 500px; 
+    text-align: left; 
+}
+
+/* ... código anterior ... */
+
+/* Estilo específico para o Modal de Gerenciamento Admin (AQUI ESTÁ A CORREÇÃO) */
+#modal-admin-gerenciar .modal-content {
+    max-width: 800px;
+    /* APLICA ROLAGEM */
+    max-height: 90vh; 
+    overflow-y: auto;
+}
+
