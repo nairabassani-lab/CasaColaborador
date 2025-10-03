@@ -1,6 +1,6 @@
 
 // COLE AQUI O URL DO SEU APP DA WEB GERADO PELO GOOGLE APPS SCRIPT
-const apiUrl = 'https://script.google.com/macros/s/AKfycbzgsx8ccJ67zwCLeuumIeD_b7Im13BGJXO6vNpDcGH9XGB2Y-i9b4g_dhmn5fqUHCfd/exec';
+const apiUrl = 'https://script.google.com/macros/s/AKfycbzzShDDLK89kO3fgMNNconr-5Y3-PbtkwMacSPwERieNXKEisp3mZxzqfIXA1arv8ZJ/exec';
 
 const container = document.getElementById('agenda-container');
 const seletorData = document.getElementById('seletor-data');
@@ -197,3 +197,4 @@ function atualizarDiaDaSemana(dataCalendario) {
     diaSemanaSpan.textContent = diaDaSemana;
 }
 carregarAgenda();
+
