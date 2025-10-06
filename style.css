@@ -469,3 +469,39 @@ hr {
         background-position-x: -1920px; /* Ajuste se o loop não parecer perfeito */
     }
 }
+/* --- Estilos da Tabela de Horários --- */
+/* ... (Mantenha o código existente) ... */
+
+/* NOVO/AJUSTADO: Estilos da grade de horários */
+.tabela-agenda.grade-agenda {
+    /* Garante que o cabeçalho e as linhas tenham layout fixo para alinhamento */
+    table-layout: fixed; 
+}
+
+/* NOVO: Estilo para o cabeçalho do profissional (Coluna) */
+.cabecalho-profissional {
+    font-weight: bold;
+    color: var(--azul-moinhos);
+    background-color: #e9ecef;
+    min-width: 120px; /* Garante que o nome do profissional não quebre muito */
+}
+
+/* Ajuste na primeira coluna (Horário) para manter o destaque */
+.horario-col {
+    font-weight: bold;
+    color: var(--cinza-texto);
+    background-color: #f0f0f0; /* Cor de fundo ligeiramente diferente para o Horário */
+    min-width: 100px;
+}
+
+/* Fixar primeira coluna (Horário) e scroll */
+.tabela-agenda th:first-child, .tabela-agenda td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+}
+.tabela-agenda thead th:first-child {
+    z-index: 3;
+}
+
+/* ... (Mantenha o restante do código CSS) ... */
