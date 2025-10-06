@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Agenda de Horários - Moinhos de Vento</title>
-    <link rel="stylesheet" href="style.css">
+    <?!= HtmlService.createHtmlOutputFromFile('style').getContent(); ?>
 </head>
 <body>
     <div class="personagem-container">
@@ -169,6 +169,7 @@
         <img src="img/qr-code-aulas.jpg" alt="Código QR para Aulas" id="qr-code-aulas">
     </div>
 
-    <script src="script.js"></script>
+    <?!= HtmlService.createHtmlOutputFromFile('script').getContent(); ?>
 </body>
 </html>
+
