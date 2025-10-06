@@ -8,11 +8,9 @@
 </head>
 <body>
     <div class="personagem-container">
-    <div class="personagens-loop">
+        <div class="personagens-loop">
         </div>
-</div>
-
-    <button id="btn-admin-login" class="btn-acao btn-cinza">Login Admin</button>
+    </div>
 
     <header>
         <div class="logos-container">
@@ -20,6 +18,9 @@
             <img src="img/casa-colaborador.png" alt="Logo Casa do Colaborador" id="logo-casa-colaborador">
         </div>
         <h1>Agenda de Horários para Colaboradores</h1>
+        
+        <button id="btn-admin-login" class="btn-acao btn-cinza">Login Admin</button>
+        
         <p class="observacao">
             Em caso de dúvidas entre em contato com 
             <a href="mailto:casa.colaborador@hmv.org.br">casa.colaborador@hmv.org.br</a>
@@ -32,7 +33,8 @@
         <span id="dia-semana" class="dia-semana-label"></span>
         
         <button id="btn-consultar-reservas" class="btn-acao btn-azul">Minhas Reservas</button>
-        <button id="btn-gerenciar-agenda" class="btn-acao btn-vermelho hidden">Gerenciar Agenda (Admin)</button>
+        
+        <button id="btn-gerenciar-agenda" class="btn-acao btn-vermelho hidden" type="button">Gerenciar Agenda</button>
     </div>
 
     <div id="agenda-container" class="agenda-grid">
@@ -43,7 +45,7 @@
         <div class="modal-content">
             <h2>Confirmar Agendamento</h2>
             <ul id="modal-detalhes" class="detalhes-agendamento-lista">
-                </ul>
+            </ul>
             <div class="form-group">
                 <label for="input-matricula">Sua Matrícula (Ex: 12345):</label>
                 <input type="text" id="input-matricula" placeholder="Digite sua matrícula" required>
@@ -141,7 +143,7 @@
                 <div id="quick-massage-container" class="hidden">
                     <p>Selecione os horários disponíveis (Marque e opcionalmente marque "Indisponível"):</p>
                     <div id="quick-massage-horarios" class="horarios-grid">
-                        </div>
+                    </div>
                 </div>
 
                 <div id="horario-unico-container" class="hidden form-group">
@@ -164,7 +166,7 @@
 
 
     <div class="qr-code-container">
-        <img src="img/qr-code-aulas.jpg" alt="Código QR para Aulas" id="qr-code">
+        <img src="img/qr-code-aulas.jpg" alt="Código QR para Aulas" id="qr-code-aulas">
     </div>
 
     <script src="script.js"></script>
