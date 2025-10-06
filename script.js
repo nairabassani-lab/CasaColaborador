@@ -756,3 +756,4 @@ function renderizarFormularioAdmin() {
                 <select id="select-admin-profissional">
                     <option value="">Selecione um Profissional</option>
                     ${Object.keys(DATA_STORE.atividades).map(p => `<option value="${p}">${p}</option>`).join('')}
+
