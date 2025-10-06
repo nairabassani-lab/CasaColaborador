@@ -22,35 +22,38 @@
             Em caso de dúvidas entre em contato com 
             <a href="mailto:casa.colaborador@hmv.org.br">casa.colaborador@hmv.org.br</a>
         </p>
-        <button id="btn-admin-login" type="button">Login Admin</button>
     </header>
     
     <div id="seletor-container">
         <label for="seletor-data">Selecione uma data:</label>
         <input type="date" id="seletor-data">
-        <span id="dia-semana"></span>
-        <button id="btn-consultar-reservas" class="btn-acao" type="button">Consultar/Cancelar Reservas</button>
-        <button id="btn-gerenciar-agenda" class="btn-acao btn-admin hidden" type="button">Gerenciar Agenda</button>
+        <span id="dia-semana" class="dia-semana-label"></span>
     </div>
 
-    <main id="agenda-container" data-admin-mode="false">
+    <div id="action-buttons">
+        <button id="btn-consultar-reservas" class="btn-acao btn-azul">Minhas Reservas</button>
+        <button id="btn-admin-login" class="btn-acao btn-cinza">Login Admin</button>
+        <button id="btn-gerenciar-agenda" class="btn-acao btn-vermelho hidden">Gerenciar Agenda (Admin)</button>
+    </div>
+
+    <div id="agenda-container" class="agenda-grid">
         <p class="loading">Carregando agenda...</p>
-    </main>
-    
+    </div>
+
     <div id="modal-agendamento" class="modal-overlay hidden">
         <div class="modal-content">
             <h2>Confirmar Agendamento</h2>
-            <p>Você está prestes a agendar o seguinte horário:</p>
-            <ul id="modal-detalhes"></ul>
+            <ul id="modal-detalhes" class="detalhes-agendamento-lista">
+                </ul>
             <div class="form-group">
-                <label for="input-matricula">Sua Matrícula:</label>
-                <input type="text" id="input-matricula" placeholder="Digite sua matrícula">
-            </div>
-            <div class="modal-botoes">
-                <button id="btn-cancelar-agendamento" class="btn-modal btn-cinza" type="button">Cancelar</button> 
-                <button id="btn-confirmar" class="btn-modal btn-verde" type="button">Confirmar</button>
+                <label for="input-matricula">Sua Matrícula (Ex: 12345):</label>
+                <input type="text" id="input-matricula" placeholder="Digite sua matrícula" required>
             </div>
             <div id="modal-mensagem"></div>
+            <div class="modal-botoes">
+                <button id="btn-cancelar-agendamento" class="btn-modal btn-cinza" type="button">Cancelar</button>
+                <button id="btn-confirmar" class="btn-modal btn-verde" type="button">Confirmar Reserva</button>
+            </div>
         </div>
     </div>
 
@@ -81,71 +84,90 @@
 
     <div id="modal-admin-login" class="modal-overlay hidden">
         <div class="modal-content">
-            <h2>Login Administrativo</h2>
+            <h2>Acesso Administrativo</h2>
             <div class="form-group">
-                <label for="input-admin-password">Senha:</label>
-                <input type="password" id="input-admin-password" placeholder="Digite a senha de admin">
-            </div>
-            <div class="modal-botoes">
-                <button id="btn-cancelar-admin-login" class="btn-modal btn-cinza" type="button">Cancelar</button>
-                <button id="btn-confirmar-admin-login" class="btn-modal btn-azul" type="button">Entrar</button>
+                <label for="input-admin-password">Senha Admin:</label>
+                <input type="password" id="input-admin-password" placeholder="Digite a senha">
             </div>
             <div id="admin-login-mensagem"></div>
+            <div class="modal-botoes">
+                <button id="btn-cancelar-admin-login" class="btn-modal btn-cinza" type="button">Cancelar</button>
+                <button id="btn-confirmar-admin-login" class="btn-modal btn-vermelho" type="button">Entrar</button>
+            </div>
         </div>
     </div>
 
     <div id="modal-admin-gerenciar" class="modal-overlay hidden">
         <div class="modal-content">
-            <h2>Gerenciar Agenda</h2>
-            
-            <div class="painel-secao">
-                <h3>Adicionar Novo Horário</h3>
+            <h2>Painel de Administração</h2>
+            <p>Selecione a ação desejada.</p>
+            <div class="modal-botoes vertical-botoes">
+                <button id="btn-admin-adicionar" class="btn-modal btn-verde" type="button">Adicionar Novos Horários</button>
                 
-                <div class="form-group">
-                    <label for="select-admin-profissional">Profissional:</label>
-                    <select id="select-admin-profissional">
-                        </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="select-admin-atividade">Atividade:</label>
-                    <select id="select-admin-atividade">
-                        <option value="">Selecione um profissional primeiro</option>
-                    </select>
-                </div>
-
-                <div class="form-group grid-admin-metadados">
-                    <div>
-                        <label for="input-admin-data">Data:</label>
-                        <input type="date" id="input-admin-data">
-                    </div>
-                    <div>
-                        <label for="input-admin-vagas">Vagas:</label>
-                        <input type="number" id="input-admin-vagas" min="1" value="1">
-                    </div>
-                </div>
-                
-                <div id="admin-form-dinamico">
-                    <p>Selecione um Profissional e Atividade para configurar os horários.</p>
-                    </div>
-                
-                <div class="modal-botoes" style="justify-content: center;">
-                    <button id="btn-adicionar-horario" class="btn-modal btn-verde" type="button">Adicionar Horário(s)</button>
-                </div>
-                <div id="admin-adicionar-mensagem" style="margin-top: 15px;"></div>
-            </div>
-
-            <div class="modal-botoes">
+                <button id="btn-admin-logout" class="btn-modal btn-cinza" type="button">Logout Admin</button>
                 <button id="btn-fechar-admin-gerenciar" class="btn-modal btn-cinza" type="button">Fechar</button>
-                <button id="btn-admin-logout" class="btn-modal btn-azul" type="button">Logout</button>
             </div>
         </div>
     </div>
-    
-    <div class="qr-code-container">
-        <img src="img/qr-code-aulas.jpg" alt="Código QR para Aulas" id="qr-code-aulas">
+
+    <div id="modal-admin-adicionar" class="modal-overlay hidden">
+        <div class="modal-content large-modal">
+            <h2>Adicionar Novo Horário à Agenda</h2>
+            <div id="admin-add-mensagem" class="mensagem-modal"></div>
+            <form id="form-adicionar-horario">
+                <div class="form-group">
+                    <label for="admin-select-data">Data:</label>
+                    <input type="date" id="admin-select-data" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="admin-select-profissional">Profissional:</label>
+                    <select id="admin-select-profissional" required>
+                        <option value="" disabled selected>Selecione o Profissional</option>
+                        <option value="Ana">Ana</option>
+                        <option value="Carlos">Carlos</option>
+                        <option value="Luis">Luis</option>
+                        <option value="Maria Eduarda">Maria Eduarda</option>
+                        <option value="Rafael">Rafael</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="admin-select-atividade">Modalidade:</label>
+                    <select id="admin-select-atividade" required disabled>
+                        <option value="" disabled selected>Selecione o Profissional primeiro</option>
+                    </select>
+                </div>
+                
+                <div id="quick-massage-container" class="hidden">
+                    <p>Selecione os horários disponíveis (Marque e opcionalmente marque "Indisponível"):</p>
+                    <div id="quick-massage-horarios" class="horarios-grid">
+                        </div>
+                </div>
+
+                <div id="horario-unico-container" class="hidden form-group">
+                    <label for="admin-input-horario">Horário de Início (Formato HH:MM):</label>
+                    <input type="text" id="admin-input-horario" pattern="[0-9]{2}:[0-9]{2}" placeholder="Ex: 08:30" required>
+                </div>
+
+                <div id="vagas-container" class="hidden form-group">
+                    <label for="admin-input-vagas">Vagas Totais:</label>
+                    <input type="number" id="admin-input-vagas" min="1" value="1" required>
+                </div>
+
+                <div class="modal-botoes">
+                    <button id="btn-cancelar-adicionar" class="btn-modal btn-cinza" type="button">Cancelar</button>
+                    <button id="btn-confirmar-adicionar" class="btn-modal btn-azul" type="submit" disabled>Adicionar à Agenda</button>
+                </div>
+            </form>
+        </div>
     </div>
-    
+
+
+    <div class="qr-code-container">
+        <img src="img/qr-code-aulas.jpg" alt="Código QR para Aulas" id="qr-code">
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>
