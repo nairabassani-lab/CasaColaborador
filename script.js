@@ -1,13 +1,21 @@
 // COLE AQUI O URL DO SEU APP DA WEB GERADO PELO GOOGLE APPS SCRIPT
 const apiUrl = 'https://script.google.com/macros/s/AKfycbzzShDDLK89kO3fgMNNconr-5Y3-PbtkwMacSPwERieNXKEisp3mZxzqfIXA1arv8ZJ/exec';
 
+// --- Variáveis Globais de Status ---
+// ATENÇÃO: SENHA VISÍVEL NO FRONT-END. ALTERAR PARA VALIDAÇÃO NO Apps Script em ambiente de produção!
+const ADMIN_PASSWORD = 'admin123'; 
+let isAdminLoggedIn = false;
+let todosOsAgendamentos = [];
+let agendamentoAtual = {};
+let celulaClicada = null;
+
 
 // --- Seletores de Elementos (Alinhados com o HTML fornecido) ---
 const container = document.getElementById('agenda-container');
 const seletorData = document.getElementById('seletor-data');
 const diaSemanaSpan = document.getElementById('dia-semana');
 
-// Modal de Agendamento
+// Modal de Agendamento (Usuário)
 const modalAgendamento = document.getElementById('modal-agendamento');
 const modalDetalhes = document.getElementById('modal-detalhes');
 const inputMatricula = document.getElementById('input-matricula');
@@ -15,7 +23,7 @@ const btnCancelarAgendamento = document.getElementById('btn-cancelar-agendamento
 const btnConfirmar = document.getElementById('btn-confirmar');
 const modalMensagem = document.getElementById('modal-mensagem');
 
-// Modal de Consulta
+// Modal de Consulta (Usuário)
 const btnConsultarReservas = document.getElementById('btn-consultar-reservas');
 const modalConsulta = document.getElementById('modal-consulta');
 const consultaViewInicial = document.getElementById('consulta-view-inicial');
@@ -27,13 +35,21 @@ const btnVoltarConsulta = document.getElementById('btn-voltar-consulta');
 const listaAgendamentos = document.getElementById('lista-agendamentos');
 const consultaMensagem = document.getElementById('consulta-mensagem');
 
-// Elementos Admin (incluídos no HTML revisado)
+// Elementos Admin
 const btnAdminLogin = document.getElementById('btn-admin-login');
 const btnGerenciarAgenda = document.getElementById('btn-gerenciar-agenda');
 
-let todosOsAgendamentos = [];
-let agendamentoAtual = {};
-let celulaClicada = null;
+// Modal de Login Admin
+const modalAdminLogin = document.getElementById('modal-admin-login');
+const inputAdminPassword = document.getElementById('input-admin-password');
+const btnConfirmarAdminLogin = document.getElementById('btn-confirmar-admin-login');
+const adminLoginMensagem = document.getElementById('admin-login-mensagem');
+const btnCancelarAdminLogin = document.getElementById('btn-cancelar-admin-login');
+
+// Modal de Gerenciamento Admin
+const modalAdminGerenciar = document.getElementById('modal-admin-gerenciar');
+const btnFecharAdminGerenciar = document.getElementById('btn-fechar-admin-gerenciar');
+const btnAdminLogout = document.getElementById('btn-admin-logout');
 
 
 // --- Funções Principais ---
@@ -94,8 +110,8 @@ function renderizarAgendaParaData(dataCalendario) {
     container.innerHTML = '';
     
     // Adiciona o aviso de Admin se estiver logado
-    if (container.dataset.adminMode === 'true') {
-        container.innerHTML = `<p class="aviso-admin">MODO ADMINISTRADOR ATIVADO: Clique em um horário disponível para EXCLUIR.</p>`;
+    if (isAdminLoggedIn) {
+        container.innerHTML = `<p class="aviso-admin">MODO ADMINISTRADOR ATIVADO: Clique em um horário para AÇÃO ADMIN.</p>`;
     }
 
     if (Object.keys(dadosProcessados).length === 0) {
@@ -130,29 +146,50 @@ function renderizarAgendaParaData(dataCalendario) {
                     let dataAttributes = `data-id="${agendamento.ID_LINHA}"`; // ID da Linha da Planilha
                     let textoStatus = '-';
                     
-                    if (vagasTotais > 0) {
+                    // Adiciona dados para o modal de agendamento/admin
+                    dataAttributes += ` data-atividade="${nomeAtividade}" data-profissional="${profissional}" data-horario="${horario}" data-data="${dataFormatoPlanilha}" data-vagas-disponiveis="${vagasDisponiveis}"`;
+                    
+                    // LÓGICA REVISADA
+                    
+                    // 1. Checa por Indisponível (se o Admin digitou a palavra no campo Vagas ou se Vagas é 0 e não há reservas)
+                    const rawVagas = agendamento.Vagas;
+                    const isExplicitlyIndisponivel = (typeof rawVagas === 'string' && rawVagas.trim().toLowerCase() === 'indisponivel') || (vagasTotais === 0 && vagasOcupadas === 0);
+                    
+                    if (isExplicitlyIndisponivel) {
+                        statusClass = 'status-indisponivel';
+                        textoStatus = 'Indisponível'; 
+                    } 
+                    // 2. Checa se o horário tem vagas (Vagas > 0)
+                    else if (vagasTotais > 0) {
+                        
+                        // 2a. Disponível (Vagas > Reservas)
                         if (vagasDisponiveis > 0) {
                             statusClass = 'status-disponivel';
-                            textoStatus = `${vagasDisponiveis} <span>Vaga(s)</span>`;
-                            // Dados necessários para a requisição de agendamento
-                            dataAttributes += ` data-atividade="${nomeAtividade}" data-profissional="${profissional}" data-horario="${horario}" data-data="${dataFormatoPlanilha}" data-vagas-disponiveis="${vagasDisponiveis}"`;
-                        
-                            // Modo Admin: Célula disponível vira EXCLUIR
-                            if (container.dataset.adminMode === 'true') {
+                            textoStatus = 'Reservar'; 
+
+                            // MODO ADMIN: Célula disponível vira EXCLUIR
+                            if (isAdminLoggedIn) {
                                 statusClass = 'status-admin-excluir';
                                 textoStatus = 'EXCLUIR';
                             }
 
-                        } else {
+                        } 
+                        // 2b. Lotado (Vagas = Reservas)
+                        else {
                             statusClass = 'status-lotado';
-                            textoStatus = 'Lotado';
-                            // Modo Admin: Célula lotada
-                            if (container.dataset.adminMode === 'true') {
+                            textoStatus = 'Reservado'; 
+                            
+                            // MODO ADMIN: Célula lotada
+                            if (isAdminLoggedIn) {
                                 statusClass = 'status-admin-lotado';
-                                textoStatus += ` (${vagasOcupadas} reservas)`;
-                                dataAttributes += ` data-atividade="${nomeAtividade}" data-profissional="${profissional}" data-horario="${horario}" data-data="${dataFormatoPlanilha}" data-reservas="${reservas.join(', ')}"`;
+                                textoStatus = `LOTADO (${vagasOcupadas})`;
+                                dataAttributes += ` data-reservas="${reservas.join(', ')}"`;
                             }
                         }
+                    } else {
+                        // Outros casos que resultem em indisponível (e.g., Vagas é um texto não reconhecido)
+                        statusClass = 'status-indisponivel';
+                        textoStatus = 'Indisponível';
                     }
                     
                     statusHtml = `<div class="status-cell ${statusClass}" ${dataAttributes}>${textoStatus}</div>`;
@@ -217,7 +254,8 @@ async function confirmarAgendamento() {
     }
 }
 
-// --- Funções de Modal ---
+// --- Funções de Modal Usuário ---
+
 function abrirModalAgendamento(detalhes) {
     agendamentoAtual = detalhes;
     modalDetalhes.innerHTML = `<li><strong>Data:</strong> ${detalhes.data}</li><li><strong>Horário:</strong> ${detalhes.horario}</li><li><strong>Atividade:</strong> ${detalhes.atividade}</li><li><strong>Profissional:</strong> ${detalhes.profissional}</li>`;
@@ -243,7 +281,61 @@ function fecharModalConsulta() {
     modalConsulta.classList.add('hidden');
 }
 
+// --- Funções de Login e Gerenciamento Admin ---
+
+function abrirModalAdminLogin() {
+    inputAdminPassword.value = '';
+    adminLoginMensagem.textContent = '';
+    modalAdminLogin.classList.remove('hidden');
+}
+
+function fecharModalAdminLogin() {
+    modalAdminLogin.classList.add('hidden');
+}
+
+function abrirModalAdminGerenciar() {
+    // Implementar lógica de carregamento de dados aqui (e.g., carregar lista de profissionais/atividades)
+    modalAdminGerenciar.classList.remove('hidden');
+}
+
+function fecharModalAdminGerenciar() {
+    modalAdminGerenciar.classList.add('hidden');
+}
+
+function adminLogin() {
+    const password = inputAdminPassword.value;
+    adminLoginMensagem.textContent = '';
+
+    if (password === ADMIN_PASSWORD) {
+        isAdminLoggedIn = true;
+        fecharModalAdminLogin();
+        
+        // Atualiza a interface
+        container.dataset.adminMode = 'true';
+        btnAdminLogin.textContent = 'Logout Admin';
+        btnGerenciarAgenda.classList.remove('hidden');
+        
+        // Recarrega a agenda para mostrar o modo Admin
+        carregarAgenda(); 
+        
+    } else {
+        adminLoginMensagem.textContent = 'Senha incorreta.';
+        adminLoginMensagem.style.color = 'red';
+        isAdminLoggedIn = false;
+    }
+}
+
+function adminLogout() {
+    isAdminLoggedIn = false;
+    container.dataset.adminMode = 'false';
+    btnAdminLogin.textContent = 'Login Admin';
+    btnGerenciarAgenda.classList.add('hidden');
+    fecharModalAdminGerenciar(); // Fecha modal de gerenciar se estiver aberto
+    carregarAgenda(); // Recarrega para o modo cliente
+}
+
 // --- Funções de Consulta e Cancelamento ---
+// ... (funções getMyBookings, renderizarListaReservas, cancelarReserva não alteradas, mantidas aqui)
 
 /**
  * Busca reservas do usuário (doGet com action=getMyBookings)
@@ -338,7 +430,7 @@ async function cancelarReserva(event) {
 
 // --- Event Listeners ---
 container.addEventListener('click', function(event) {
-    const target = event.target.closest('.status-disponivel, .titulo-atividade, .status-admin-excluir');
+    const target = event.target.closest('.status-disponivel, .titulo-atividade, .status-admin-excluir, .status-admin-lotado');
     if (!target) return;
     
     // Lógica do Acordeão
@@ -359,26 +451,28 @@ container.addEventListener('click', function(event) {
     
     // Lógica de Agendamento (Modo Cliente)
     if (target.classList.contains('status-disponivel')) {
-        // Verifica se não está em modo admin
-        if (container.dataset.adminMode !== 'true') {
+        if (!isAdminLoggedIn) {
             celulaClicada = target;
             abrirModalAgendamento(target.dataset);
         }
         return;
     }
     
-    // Lógica de Exclusão (Modo Admin)
-    if (target.classList.contains('status-admin-excluir') && container.dataset.adminMode === 'true') {
-        // Aqui você chamaria a função de exclusão de horário para o Admin
-        if (confirm(`ADMIN: Tem certeza que deseja EXCLUIR o horário ${target.dataset.horario} do dia ${target.dataset.data}?`)) {
-            // Chamada à função de API para EXCLUIR (seria um novo endpoint 'deleteBooking')
-            // Exemplo fictício: deleteBooking(target.dataset.id);
-            alert("A função de exclusão de horário Admin ainda precisa ser implementada no Apps Script.");
+    // Lógica de Ação Admin
+    if (isAdminLoggedIn) {
+        if (target.classList.contains('status-admin-excluir')) {
+            if (confirm(`ADMIN: Tem certeza que deseja EXCLUIR o horário ${target.dataset.horario} (${target.dataset.atividade}) do dia ${target.dataset.data}?`)) {
+                // Aqui você chamaria a função de exclusão de horário para o Admin
+                alert(`Função de exclusão do ID ${target.dataset.id} precisa ser implementada no Apps Script.`);
+            }
+        } else if (target.classList.contains('status-admin-lotado')) {
+             alert(`ADMIN: Horário Lotado. Reservas: ${target.dataset.reservas || 'Nenhuma'}`);
         }
         return;
     }
 });
 
+// Event Listeners Usuário
 btnCancelarAgendamento.addEventListener('click', fecharModalAgendamento);
 btnConfirmar.addEventListener('click', confirmarAgendamento);
 btnConsultarReservas.addEventListener('click', abrirModalConsulta);
@@ -388,28 +482,22 @@ btnVoltarConsulta.addEventListener('click', () => {
     consultaViewResultados.classList.add('hidden');
     consultaMensagem.textContent = '';
 });
-
 btnBuscarReservas.addEventListener('click', buscarReservas);
 listaAgendamentos.addEventListener('click', cancelarReserva);
 
-// --- Lógica ADMIN (Simplificada, apenas para mostrar os elementos) ---
-// NOTA: A lógica completa de login e gerenciamento de agenda Admin está fora do escopo desta correção
-// e requer endpoints adicionais no Code.gs (e.g., action=login, action=delete, action=add)
-
+// Event Listeners Admin
 btnAdminLogin.addEventListener('click', () => {
-    // Apenas simula a ativação do modo Admin para fins de demonstração visual
-    if (container.dataset.adminMode === 'true') {
-        container.dataset.adminMode = 'false';
-        btnAdminLogin.textContent = 'Login Admin';
-        btnGerenciarAgenda.classList.add('hidden');
-        carregarAgenda();
+    if (isAdminLoggedIn) {
+        adminLogout();
     } else {
-        container.dataset.adminMode = 'true';
-        btnAdminLogin.textContent = 'Logout Admin';
-        btnGerenciarAgenda.classList.remove('hidden');
-        carregarAgenda();
+        abrirModalAdminLogin();
     }
 });
+btnCancelarAdminLogin.addEventListener('click', fecharModalAdminLogin);
+btnConfirmarAdminLogin.addEventListener('click', adminLogin);
+btnGerenciarAgenda.addEventListener('click', abrirModalAdminGerenciar);
+btnFecharAdminGerenciar.addEventListener('click', fecharModalAdminGerenciar);
+btnAdminLogout.addEventListener('click', adminLogout);
 
 
 // --- Funções Auxiliares ---
@@ -453,4 +541,3 @@ function processarDadosParaGrade(dataSelecionada) {
 
 // Inicia o carregamento da agenda
 carregarAgenda();
-
