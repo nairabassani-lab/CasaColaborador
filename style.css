@@ -485,3 +485,23 @@ header {
     from { background-position-x: 0; }
     to { background-position-x: -1920px; }
 }
+/* --- Correção de Estilo: Adicionar classe de ocultação --- */
+.hidden { 
+    display: none !important; 
+}
+
+/* --- Redimensionamento da imagem de QR Code --- */
+.qr-code-container {
+    max-width: 1200px;
+    margin: 40px auto;
+    text-align: center;
+}
+
+#qr-code-aulas {
+    /* Define a largura máxima para que seja proporcional ao conteúdo principal */
+    max-width: 300px; /* Ajuste este valor se precisar de uma imagem maior ou menor */
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
