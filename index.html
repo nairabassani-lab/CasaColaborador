@@ -7,6 +7,11 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div id="admin-controls-fixed">
+        <button id="btn-admin-login" class="btn-acao btn-vermelho-admin" type="button">Login Admin</button>
+        <button id="btn-admin-logout-top" class="btn-acao btn-cinza hidden" type="button">Logout Admin</button>
+    </div>
+
     <div class="personagem-container">
     <div class="personagens-loop">
         </div>
@@ -15,15 +20,14 @@
     <header>
         <div class="logos-container">
             <img src="https://www.hospitalmoinhos.org.br/assets/images/logo-w-hopkins.png" alt="Logo Hospital Moinhos de Vento" id="logo-hmv">
-            <img src="/img/casa-colaborador.png" alt="Logo Casa do Colaborador" id="logo-casa-colaborador">
+            <img src="img/casa-colaborador.png" alt="Logo Casa do Colaborador" id="logo-casa-colaborador">
         </div>
         <h1>Agenda de Horários para Colaboradores</h1>
         <p class="observacao">
             Em caso de dúvidas entre em contato com 
             <a href="mailto:casa.colaborador@hmv.org.br">casa.colaborador@hmv.org.br</a>
         </p>
-        <button id="btn-admin-login" type="button">Login Admin</button>
-    </header>
+        </header>
     
     <div id="seletor-container">
         <label for="seletor-data">Selecione uma data:</label>
@@ -130,7 +134,7 @@
     </div>
 
     <div class="qr-code-container">
-        <img src="/img/qr-code-aulas.jpg" alt="Código QR para Aulas" id="qr-code-aulas">
+        <img src="img/qr-code-aulas.jpg" alt="Código QR para Aulas" id="qr-code-aulas">
     </div>
 
     <script src="script.js"></script>
