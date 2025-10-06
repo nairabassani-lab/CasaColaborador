@@ -1,4 +1,5 @@
 // COLE AQUI O URL DO SEU APP DA WEB GERADO PELO GOOGLE APPS SCRIPT
+// **VERIFIQUE ESTE LINK A CADA NOVA IMPLANTAÇÃO!**
 const apiUrl = 'https://script.google.com/macros/s/AKfycbzzShDDLK89kO3fgMNNconr-5Y3-PbtkwMacSPwERieNXKEisp3mZxzqfIXA1arv8ZJ/exec';
 
 
@@ -47,10 +48,8 @@ const adminAdicionarMensagem = document.getElementById('admin-adicionar-mensagem
 
 
 // --- CONFIGURAÇÃO GLOBAL ---
-// Estrutura de dados SIMULADA. Estes dados devem ser buscados do Apps Script.
-// O frontend usará uma estrutura real baseada na resposta da API.
 const DATA_STORE = {
-    // A senha de Admin deve ser tratada com cautela!
+    // SENHA SIMPLES - APENAS PARA FINS DE DESENVOLVIMENTO NO CLIENTE
     adminPassword: 'admin', 
     // Dados mestres das atividades para o formulário de criação
     atividades: {
@@ -70,16 +69,14 @@ const DATA_STORE = {
 
 // Variáveis de estado
 let isAdminLoggedIn = false; 
-let agendaCompleta = []; // Armazena a agenda completa (todos os dias)
-let agendaFiltrada = {}; // Agenda filtrada para o dia selecionado
+let agendaCompleta = []; 
+let agendaFiltrada = {}; 
 
 
 // --- UTILIDADES ---
 
 /**
  * Formata a data para o formato DD/MM/AAAA para exibição.
- * @param {string} dateString - Data no formato YYYY-MM-DD.
- * @returns {string} Data no formato DD/MM/AAAA.
  */
 function formatarData(dateString) {
     if (!dateString) return '';
@@ -89,8 +86,6 @@ function formatarData(dateString) {
 
 /**
  * Formata a data para exibir o dia da semana.
- * @param {string} dateString - Data no formato YYYY-MM-DD.
- * @returns {string} Dia da semana por extenso.
  */
 function getDiaDaSemana(dateString) {
     const data = new Date(dateString + 'T00:00:00'); 
@@ -105,19 +100,16 @@ async function carregarAgendaCompleta() {
     try {
         const response = await fetch(apiUrl);
         if (!response.ok) {
-            throw new Error(`Erro de rede: ${response.status}`);
+            throw new Error(`Erro de rede: ${response.status} (Verifique a URL e CORS).`);
         }
         const data = await response.json();
         
-        // Se a API retornar um erro (status: "error")
         if (data.status === "error") {
-             throw new Error(`Erro da API: ${data.message}`);
+             throw new Error(`Erro da API: ${data.message} (Verifique o log de execução do Apps Script).`);
         }
         
-        // O resultado da API é a lista completa de agendamentos.
         agendaCompleta = data; 
         
-        // Filtra para o dia atual ou a data selecionada e renderiza
         const dataParaRenderizar = seletorData.value;
         if (dataParaRenderizar) {
             renderizarAgenda();
@@ -127,30 +119,27 @@ async function carregarAgendaCompleta() {
 
     } catch (error) {
         console.error("Erro ao carregar a agenda:", error);
-        container.innerHTML = `<p class="loading" style="color: red;">Erro ao carregar a agenda: ${error.message}. Verifique a URL e a implantação do Apps Script.</p>`;
+        container.innerHTML = `<p class="loading" style="color: red;">
+            **ERRO CRÍTICO**: Falha ao carregar a agenda. 
+            Verifique o **URL** da sua API no código JS e a **Implantação** do Apps Script (acesso: Qualquer Pessoa).
+            Detalhes: ${error.message}
+        </p>`;
     }
 }
 
 /**
  * Filtra a agenda para o dia selecionado e a estrutura para renderização.
- * @param {string} dataSelecionada - Data no formato YYYY-MM-DD.
- * @returns {Object} Estrutura de atividades com os horários disponíveis e status.
  */
 function construirAgenda(dataSelecionada) {
     const agenda = {};
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
 
-    // 1. Filtra os agendamentos futuros para o dia selecionado
     const agendamentosDoDia = agendaCompleta.filter(item => {
         const dataItem = item.Data; // Item.Data está em DD/MM/AAAA
         
-        // Converte DD/MM/AAAA para Date para comparação com o futuro
         const [day, month, year] = dataItem.split('/');
         const dataObjeto = new Date(year, month - 1, day);
         dataObjeto.setHours(0, 0, 0, 0);
 
-        // Compara com a data selecionada (YYYY-MM-DD)
         const [y, m, d] = dataSelecionada.split('-');
         const dataSelecionadaObjeto = new Date(y, m - 1, d);
         dataSelecionadaObjeto.setHours(0, 0, 0, 0);
@@ -158,7 +147,6 @@ function construirAgenda(dataSelecionada) {
         return dataObjeto.getTime() === dataSelecionadaObjeto.getTime();
     });
 
-    // 2. Agrupa por Profissional e Atividade
     agendamentosDoDia.forEach(item => {
         const key = `${item.Profissional} - ${item.Atividade}`;
         
@@ -170,7 +158,6 @@ function construirAgenda(dataSelecionada) {
             };
         }
         
-        // Converte a string de reservas para um array de matrículas
         const reservas = (item.Reserva || '').split(',').map(m => m.trim()).filter(Boolean);
         const vagas = parseInt(item.Vagas);
 
@@ -181,7 +168,6 @@ function construirAgenda(dataSelecionada) {
             reservas: reservas,
             vagas: vagas - reservas.length,
             status: (vagas > 0 && reservas.length < vagas) ? 'disponivel' : (vagas > 0 ? 'lotado' : 'indisponivel'),
-            // Informações de auditoria para o admin
             adminMatricula: item['Matricula Admin'] || 'N/A', 
             timestamp: item['Timestamp'] || 'N/A'
         });
@@ -196,7 +182,6 @@ function construirAgenda(dataSelecionada) {
 function renderizarAgenda() {
     const dataSelecionada = seletorData.value;
     if (!dataSelecionada) {
-        // Já tratado em carregarAgendaCompleta
         return;
     }
 
@@ -205,9 +190,8 @@ function renderizarAgenda() {
 
     agendaFiltrada = construirAgenda(dataSelecionada);
     let html = '';
-    const horariosProcessados = {}; // Para coletar todos os horários únicos do dia
+    const horariosProcessados = {}; 
 
-    // Coleta todos os horários únicos para a coluna de tempo
     for (const key in agendaFiltrada) {
         agendaFiltrada[key].horarios.forEach(h => {
             horariosProcessados[h.hora] = true;
@@ -217,13 +201,12 @@ function renderizarAgenda() {
     const horariosUnicos = Object.keys(horariosProcessados).sort();
 
     if (horariosUnicos.length === 0) {
-        html = `<p class="loading">Não há horários disponíveis para a data ${formatarData(dataSelecionada)}. Adicione horários pelo Gerenciamento Admin.</p>`;
+        html = `<p class="loading">Não há horários disponíveis para a data ${formatarData(dataSelecionada)}.</p>`;
     } else {
         const atividadesKeys = Object.keys(agendaFiltrada);
 
         html += `<div class="aviso-admin ${isAdminLoggedIn ? '' : 'hidden'}">⚠️ MODO ADMIN: Clique em um horário com vaga para torná-lo indisponível (Vagas=0) ou clique em um horário lotado para remover matrículas.</div>`;
         
-        // Estrutura do Acordeão
         for (const [i, key] of atividadesKeys.entries()) {
             const item = agendaFiltrada[key];
             const titulo = `${item.atividade} com ${item.profissional}`;
@@ -233,10 +216,8 @@ function renderizarAgenda() {
             html += `<div class="tabela-container" id="${idAcordeao}">`;
             html += `<table class="tabela-agenda">`;
 
-            // CABEÇALHO DA TABELA
             html += `<thead><tr><th class="horario-col">Horário</th><th class="cabecalho-atividade">${item.atividade}</th></tr></thead>`;
             
-            // CORPO DA TABELA
             html += `<tbody>`;
 
             horariosUnicos.forEach(hora => {
@@ -252,12 +233,10 @@ function renderizarAgenda() {
                                  'Lotado';
                     
                     if (isAdminLoggedIn) {
-                         // Se tiver vagas ou estiver lotado, o admin pode interagir
                         if (horarioInfo.vagasMaximas > 0) {
                              statusClass += ' status-admin-maintenance';
                         }
                         
-                        // Exibir matrículas no modo Admin
                         if (horarioInfo.reservas.length > 0) {
                             reservasInfo = `Reservas: ${horarioInfo.reservas.join(', ')}`;
                         }
@@ -266,7 +245,6 @@ function renderizarAgenda() {
                             vagasTexto = `Vagas: ${horarioInfo.vagasMaximas}`;
                         }
                     } else if (horarioInfo.vagasMaximas === 0) {
-                         // Para o usuário normal, 0 vagas é indisponível
                          statusClass = 'status-indisponivel';
                     }
                 }
@@ -279,7 +257,7 @@ function renderizarAgenda() {
                             data-status="${horarioInfo ? horarioInfo.status : 'indisponivel'}"
                             data-reservas="${horarioInfo ? horarioInfo.reservas.join(',') : ''}"
                             data-vagasmax="${horarioInfo ? horarioInfo.vagasMaximas : 0}"
-                            class="${horarioInfo ? '' : 'oculto-admin'}">`; // Se não houver info, não é um slot válido
+                            class="${horarioInfo ? '' : 'oculto-admin'}">`; 
                 html += `<td class="horario-col">${hora}</td>`;
                 html += `<td class="${statusClass} status-cell">`;
                 html += `<span>${vagasTexto}</span>`;
@@ -336,14 +314,11 @@ function adicionarListenersCelulas() {
 
             // Lógica para o modo Administrador
             if (isAdminLoggedIn && this.classList.contains('status-admin-maintenance')) {
-                // Se a vaga está disponível ou lotada, o admin pode intervir
                 if (vagasMax > 0 && status === 'disponivel') {
-                    // Mudar vagas para 0 (exclusão lógica)
                     if (confirm(`ADMIN: Deseja tornar o horário de ${atividade} às ${hora} INDISPONÍVEL (Vagas=0)?`)) {
                         adminUpdateVagas(id, 0);
                     }
                 } else if (status === 'lotado' || vagasMax === 0) {
-                     // Se estiver lotado ou indisponível, abre o modal de manutenção
                     abrirModalManutencaoAdmin(id, data, hora, atividade, profissional, vagasMax, reservas);
                 }
                 return;
@@ -365,7 +340,7 @@ function adicionarListenersCelulas() {
 async function realizarAgendamento(data, hora, atividade, profissional, matricula) {
     const params = new URLSearchParams({ 
         action: 'book', 
-        data: formatarData(data), // Envia DD/MM/AAAA para o Apps Script
+        data: formatarData(data), 
         horario: hora, 
         atividade,
         profissional,
@@ -381,8 +356,7 @@ async function realizarAgendamento(data, hora, atividade, profissional, matricul
         modalMensagem.textContent = result.message;
 
         if (result.status === 'success') {
-            await carregarAgendaCompleta(); // Recarrega a agenda
-            // Fecha o modal após um pequeno delay
+            await carregarAgendaCompleta(); 
             setTimeout(fecharModalAgendamento, 1500); 
         }
     } catch (error) {
@@ -413,9 +387,8 @@ async function cancelarReserva(id, matricula) {
         consultaMensagem.textContent = result.message;
 
         if (result.status === 'success') {
-            // Se o cancelamento for bem-sucedido, refaz a busca
             await buscarReservas();
-            await carregarAgendaCompleta(); // Atualiza a agenda principal também
+            await carregarAgendaCompleta(); 
         }
     } catch (error) {
         consultaMensagem.style.color = 'red';
@@ -429,7 +402,7 @@ async function cancelarReserva(id, matricula) {
 async function criarHorarios(data, profissional, atividade, matriculaAdmin, bookingsData) {
     const formData = new URLSearchParams();
     formData.append('action', 'create');
-    formData.append('data', formatarData(data)); // Envia DD/MM/AAAA
+    formData.append('data', formatarData(data)); 
     formData.append('profissional', profissional);
     formData.append('atividade', atividade);
     formData.append('matriculaAdmin', matriculaAdmin);
@@ -445,8 +418,7 @@ async function criarHorarios(data, profissional, atividade, matriculaAdmin, book
         adminAdicionarMensagem.textContent = result.message;
 
         if (result.status === 'success') {
-            await carregarAgendaCompleta(); // Recarrega a agenda
-            // Limpa o formulário (menos a data e matrícula admin)
+            await carregarAgendaCompleta(); 
             document.getElementById('select-admin-profissional').value = '';
             document.getElementById('select-admin-atividade').innerHTML = '<option value="">Selecione uma Atividade</option>';
             document.getElementById('admin-lista-horarios').innerHTML = '';
@@ -664,7 +636,6 @@ function abrirModalManutencaoAdmin(id, data, hora, atividade, profissional, vaga
             const id = this.getAttribute('data-id');
             const mat = this.getAttribute('data-matricula');
             if (confirm(`ADMIN: Deseja remover a reserva da matrícula ${mat} deste horário?`)) {
-                 // Reutiliza a função de cancelamento, mas do ponto de vista admin
                 adminUpdateMatricula(id, mat); 
             }
         });
@@ -685,9 +656,9 @@ async function adminUpdateMatricula(id, matriculaToRemove) {
             // Reabre o modal de manutenção com dados atualizados
             await carregarAgendaCompleta(); 
             fecharModalAgendamento();
-            // Tenta forçar a reabertura do modal de manutenção (requer dados de agendamento)
             const rowData = agendaCompleta.find(a => a.ID == id);
             if(rowData) {
+                // Tenta reabrir o modal com a nova string de reservas
                 abrirModalManutencaoAdmin(id, seletorData.value, rowData.Horário, rowData.Atividade, rowData.Profissional, parseInt(rowData.Vagas), rowData.Reserva);
             } else {
                  renderizarAgenda();
@@ -756,4 +727,112 @@ function renderizarFormularioAdmin() {
                 <select id="select-admin-profissional">
                     <option value="">Selecione um Profissional</option>
                     ${Object.keys(DATA_STORE.atividades).map(p => `<option value="${p}">${p}</option>`).join('')}
+                </select>
+            </div>
+            <div>
+                <label for="select-admin-atividade">Atividade:</label>
+                <select id="select-admin-atividade">
+                    <option value="">Selecione uma Atividade</option>
+                </select>
+            </div>
+        </div>
+        <div id="admin-lista-horarios" style="margin-top: 20px;">
+            <p>Selecione um Profissional e Atividade.</p>
+        </div>
+    `;
+    adminFormDinamico.innerHTML = html;
+    
+    const selectProfissional = document.getElementById('select-admin-profissional');
+    const selectAtividade = document.getElementById('select-admin-atividade');
+    
+    selectProfissional.addEventListener('change', () => {
+        const profissional = selectProfissional.value;
+        selectAtividade.innerHTML = '<option value="">Selecione uma Atividade</option>';
+        document.getElementById('admin-lista-horarios').innerHTML = '';
 
+        if (profissional && DATA_STORE.atividades[profissional]) {
+            for (const atividade in DATA_STORE.atividades[profissional]) {
+                selectAtividade.innerHTML += `<option value="${atividade}">${atividade} (Vagas: ${DATA_STORE.atividades[profissional][atividade].vagas})</option>`;
+            }
+        }
+    });
+
+    selectAtividade.addEventListener('change', () => {
+        const profissional = selectProfissional.value;
+        const atividade = selectAtividade.value;
+        const listaHorariosDiv = document.getElementById('admin-lista-horarios');
+
+        if (profissional && atividade) {
+             listaHorariosDiv.innerHTML = `
+                <p>Adicione horários (formato HH:MM) para **${atividade}**:</p>
+                <div id="horarios-grid" style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+                    <input type="text" class="input-horario-admin" placeholder="09:00">
+                    <input type="text" class="input-horario-admin" placeholder="10:00">
+                    <input type="text" class="input-horario-admin" placeholder="11:00">
+                    <button id="btn-add-horario-input" type="button">+</button>
+                </div>
+             `;
+             document.getElementById('btn-add-horario-input').addEventListener('click', () => {
+                 const newSlot = document.createElement('input');
+                 newSlot.type = 'text';
+                 newSlot.className = 'input-horario-admin';
+                 newSlot.placeholder = 'HH:MM';
+                 document.getElementById('horarios-grid').insertBefore(newSlot, document.getElementById('btn-add-horario-input'));
+             });
+        } else {
+             listaHorariosDiv.innerHTML = '<p>Selecione um Profissional e Atividade.</p>';
+        }
+    });
+}
+
+btnAdicionarHorario.addEventListener('click', () => {
+    const data = inputAdminData.value;
+    const profissional = document.getElementById('select-admin-profissional').value;
+    const atividade = document.getElementById('select-admin-atividade').value;
+    const matriculaAdmin = inputAdminMatricula.value.trim();
+    const vagasMax = DATA_STORE.atividades[profissional]?.[atividade]?.vagas;
+
+    if (!data || !profissional || !atividade || !vagasMax) {
+        adminAdicionarMensagem.textContent = 'Por favor, preencha Data, Profissional e Atividade.';
+        adminAdicionarMensagem.style.color = 'red';
+        return;
+    }
+
+    const horariosInput = document.querySelectorAll('.input-horario-admin');
+    const bookingsData = [];
+    const regexHora = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/; // HH:MM
+
+    horariosInput.forEach(input => {
+        const hora = input.value.trim();
+        if (regexHora.test(hora)) {
+            bookingsData.push({ horario: hora, vagas: vagasMax });
+        }
+    });
+
+    if (bookingsData.length === 0) {
+        adminAdicionarMensagem.textContent = 'Por favor, insira pelo menos um horário válido no formato HH:MM.';
+        adminAdicionarMensagem.style.color = 'red';
+        return;
+    }
+    
+    adminAdicionarMensagem.textContent = 'Adicionando horários...';
+    adminAdicionarMensagem.style.color = 'var(--azul-moinhos)';
+    
+    criarHorarios(data, profissional, atividade, matriculaAdmin, bookingsData);
+});
+
+
+// --- INICIALIZAÇÃO ---
+
+// Define a data atual como padrão no input
+const hoje = new Date();
+const yyyy = hoje.getFullYear();
+const mm = String(hoje.getMonth() + 1).padStart(2, '0'); 
+const dd = String(hoje.getDate()).padStart(2, '0');
+
+const dataAtual = `${yyyy}-${mm}-${dd}`;
+seletorData.value = dataAtual;
+
+// Carrega a agenda e adiciona o listener para mudança de data
+seletorData.addEventListener('change', renderizarAgenda);
+carregarAgendaCompleta();
