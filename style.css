@@ -447,4 +447,62 @@ header {
     max-height: 90vh; 
     overflow-y: auto;
 }
+/* ====================================
+   5. ESTILOS DO MODAL ADMIN ADICIONAR
+   ==================================== */
+
+.large-modal {
+    max-width: 600px;
+}
+
+.horarios-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* 4 colunas */
+    gap: 10px;
+    margin-top: 10px;
+    padding: 10px;
+    border: 1px solid var(--cinza-borda);
+    border-radius: 4px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.horario-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px;
+    border: 1px solid var(--cinza-borda);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.15s;
+    user-select: none; /* Para evitar seleção de texto */
+}
+
+.horario-item:hover {
+    background-color: var(--cinza-claro);
+}
+
+.horario-item input[type="checkbox"] {
+    margin: 0;
+    accent-color: var(--verde-moinhos);
+}
+
+.mensagem-modal {
+    margin-bottom: 15px;
+    padding: 10px;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.mensagem-modal.success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.mensagem-modal.error {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
 
