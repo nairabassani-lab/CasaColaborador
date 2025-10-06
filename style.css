@@ -328,6 +328,14 @@ header {
     max-width: 650px;
 }
 
+/* CORREÇÃO 2: Permite Rolagem no Modal de Adicionar/Gerenciar Agenda */
+#modal-admin-adicionar .modal-content,
+#modal-admin-gerenciar .modal-content {
+    max-height: 90vh; /* Define uma altura máxima */
+    overflow-y: auto; /* Adiciona barra de rolagem se exceder a altura */
+}
+
+
 .modal-content h2 { 
     margin-top: 0; 
     color: var(--azul-moinhos); 
@@ -400,15 +408,17 @@ header {
 
 
 /* ====================================
-   ESTILOS DO MODAL ADMIN ADICIONAR
+    ESTILOS DO MODAL ADMIN ADICIONAR
    ==================================== */
 
+/* CORREÇÃO 3: Melhorar Espaçamento e Layout da Grade de Horários do Quick Massage */
 .horarios-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); /* Colunas flexíveis */
-    gap: 8px;
+    /* 3 colunas, com espaço mínimo de 15px */
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 15px;
     margin-top: 10px;
-    padding: 10px;
+    padding: 15px; /* Aumenta o padding interno */
     border: 1px solid var(--cinza-borda);
     border-radius: 4px;
     max-height: 400px;
@@ -418,27 +428,44 @@ header {
 .horario-item {
     display: flex;
     align-items: center;
-    gap: 5px;
-    padding: 5px;
+    justify-content: space-between; /* Alinha o checkbox à direita */
+    gap: 10px;
+    padding: 10px; /* Aumenta o padding do item */
     border: 1px solid var(--cinza-borda);
     border-radius: 4px;
     user-select: none;
-    background-color: #f9f9f9;
+    background-color: #fff; /* Fundo branco para destaque */
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.horario-item:hover {
+    background-color: #f1f3f5;
+    border-color: var(--verde-moinhos);
 }
 
 .horario-item label {
     font-weight: normal;
     flex-grow: 1; /* Permite que o label ocupe o espaço */
     cursor: pointer;
+    margin: 0; /* Remove margem padrão do label */
 }
 
-.horario-item input[type="checkbox"] {
-    width: auto;
+/* Estilo para quando o item principal estiver checado */
+.horario-item input[type="checkbox"]:checked {
     accent-color: var(--verde-moinhos);
 }
 
+/* Esconder o checkbox principal, pois o item inteiro é clicável */
+.horario-item input[type="checkbox"] {
+    width: auto;
+}
+
+
+/* Estilo da Seção Indisponível/Vagas para Quick Massage */
 .admin-input-indisponivel {
-    width: 80px !important;
+    /* Deixamos o input de texto menor */
+    width: 60px !important; 
     padding: 4px !important;
     font-size: 0.9em !important;
     text-align: center;
@@ -485,7 +512,7 @@ header {
     from { background-position-x: 0; }
     to { background-position-x: -1920px; }
 }
-/* --- Correção de Estilo: Adicionar classe de ocultação --- */
+/* CORREÇÃO 1: Mantém o botão Admin oculto até o login */
 .hidden { 
     display: none !important; 
 }
@@ -504,4 +531,3 @@ header {
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
-
