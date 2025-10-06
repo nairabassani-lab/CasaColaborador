@@ -818,3 +818,4 @@ async function cancelarReserva(event) {
 
 // Inicia o carregamento da agenda
 carregarAgenda();
+
