@@ -1,151 +1,455 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agenda de Horários - Moinhos de Vento</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <div class="personagem-container">
-    <div class="personagens-loop">
-        </div>
-</div>
+// COLE AQUI O URL DO SEU APP DA WEB GERADO PELO GOOGLE APPS SCRIPT
+const apiUrl = 'https://script.google.com/macros/s/AKfycbzzShDDLK89kO3fgMNNconr-5Y3-PbtkwMacSPwERieNXKEisp3mZxzqfIXA1arv8ZJ/exec';
 
-    <header>
-        <div class="logos-container">
-            <img src="https://www.hospitalmoinhos.org.br/assets/images/logo-w-hopkins.png" alt="Logo Hospital Moinhos de Vento" id="logo-hmv">
-            <img src="/img/casa-colaborador.png" alt="Logo Casa do Colaborador" id="logo-casa-colaborador">
-        </div>
-        <h1>Agenda de Horários para Colaboradores</h1>
-        <p class="observacao">
-            Em caso de dúvidas entre em contato com 
-            <a href="mailto:casa.colaborador@hmv.org.br">casa.colaborador@hmv.org.br</a>
-        </p>
-        <button id="btn-admin-login" type="button">Login Admin</button>
-    </header>
-    
-    <div id="seletor-container">
-        <label for="seletor-data">Selecione uma data:</label>
-        <input type="date" id="seletor-data">
-        <span id="dia-semana"></span>
-        <button id="btn-consultar-reservas" class="btn-acao" type="button">Consultar/Cancelar Reservas</button>
-        <button id="btn-gerenciar-agenda" class="btn-acao btn-admin hidden" type="button">Gerenciar Agenda</button>
-    </div>
 
-    <main id="agenda-container">
-        <p class="loading">Carregando agenda...</p>
-    </main>
-    
-    <div id="modal-agendamento" class="modal-overlay hidden">
-        <div class="modal-content">
-            <h2>Confirmar Agendamento</h2>
-            <p>Você está prestes a agendar o seguinte horário:</p>
-            <ul id="modal-detalhes"></ul>
-            <div class="form-group">
-                <label for="input-matricula">Sua Matrícula:</label>
-                <input type="text" id="input-matricula" placeholder="Digite sua matrícula">
-            </div>
-            <div class="modal-botoes">
-                <button id="btn-cancelar-agendamento" class="btn-modal btn-cinza" type="button">Cancelar</button>
-                <button id="btn-confirmar" class="btn-modal btn-verde" type="button">Confirmar</button>
-            </div>
-            <div id="modal-mensagem"></div>
-        </div>
-    </div>
+// --- Seletores de Elementos (Alinhados com o HTML fornecido) ---
+const container = document.getElementById('agenda-container');
+const seletorData = document.getElementById('seletor-data');
+const diaSemanaSpan = document.getElementById('dia-semana');
 
-    <div id="modal-consulta" class="modal-overlay hidden">
-        <div class="modal-content">
-            <div id="consulta-view-inicial">
-                <h2>Minhas Reservas</h2>
-                <p>Digite sua matrícula para ver ou cancelar seus agendamentos futuros.</p>
-                <div class="form-group">
-                    <label for="input-consulta-matricula">Sua Matrícula:</label>
-                    <input type="text" id="input-consulta-matricula" placeholder="Digite sua matrícula">
-                </div>
-                <div class="modal-botoes">
-                    <button id="btn-fechar-consulta" class="btn-modal btn-cinza" type="button">Fechar</button>
-                    <button id="btn-buscar-reservas" class="btn-modal btn-azul" type="button">Buscar</button>
-                </div>
-            </div>
-            <div id="consulta-view-resultados" class="hidden">
-                <h2>Seus Agendamentos</h2>
-                <div id="lista-agendamentos"></div>
-                <div class="modal-botoes">
-                    <button id="btn-voltar-consulta" class="btn-modal btn-cinza" type="button">Voltar</button>
-                </div>
-            </div>
-            <div id="consulta-mensagem"></div>
-        </div>
-    </div>
+// Modal de Agendamento
+const modalAgendamento = document.getElementById('modal-agendamento');
+const modalDetalhes = document.getElementById('modal-detalhes');
+const inputMatricula = document.getElementById('input-matricula');
+const btnCancelarAgendamento = document.getElementById('btn-cancelar-agendamento');
+const btnConfirmar = document.getElementById('btn-confirmar');
+const modalMensagem = document.getElementById('modal-mensagem');
 
-    <div id="modal-admin-login" class="modal-overlay hidden">
-        <div class="modal-content">
-            <h2>Login Administrativo</h2>
-            <div class="form-group">
-                <label for="input-admin-password">Senha:</label>
-                <input type="password" id="input-admin-password" placeholder="Digite a senha de admin">
-            </div>
-            <div class="modal-botoes">
-                <button id="btn-cancelar-admin-login" class="btn-modal btn-cinza" type="button">Cancelar</button>
-                <button id="btn-confirmar-admin-login" class="btn-modal btn-azul" type="button">Entrar</button>
-            </div>
-            <div id="admin-login-mensagem"></div>
-        </div>
-    </div>
+// Modal de Consulta
+const btnConsultarReservas = document.getElementById('btn-consultar-reservas');
+const modalConsulta = document.getElementById('modal-consulta');
+const consultaViewInicial = document.getElementById('consulta-view-inicial');
+const consultaViewResultados = document.getElementById('consulta-view-resultados');
+const inputConsultaMatricula = document.getElementById('input-consulta-matricula');
+const btnFecharConsulta = document.getElementById('btn-fechar-consulta');
+const btnBuscarReservas = document.getElementById('btn-buscar-reservas');
+const btnVoltarConsulta = document.getElementById('btn-voltar-consulta');
+const listaAgendamentos = document.getElementById('lista-agendamentos');
+const consultaMensagem = document.getElementById('consulta-mensagem');
 
-    <div id="modal-admin-gerenciar" class="modal-overlay hidden">
-        <div class="modal-content">
-            <h2>Gerenciar Agenda</h2>
+// Elementos Admin (incluídos no HTML revisado)
+const btnAdminLogin = document.getElementById('btn-admin-login');
+const btnGerenciarAgenda = document.getElementById('btn-gerenciar-agenda');
+
+let todosOsAgendamentos = [];
+let agendamentoAtual = {};
+let celulaClicada = null;
+
+
+// --- Funções Principais ---
+
+/**
+ * Carrega a agenda da API (doGet sem action)
+ */
+async function carregarAgenda() {
+    try {
+        const response = await fetch(apiUrl, { cache: 'no-cache' }); 
+        
+        if (!response.ok) {
+             throw new Error(`Erro de rede: Status ${response.status}. Verifique o URL da API.`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.status === "error") {
+            throw new Error(data.message || "Erro desconhecido ao carregar a agenda.");
+        }
+        
+        todosOsAgendamentos = data;
+        
+        // Inicialização de data e renderização
+        const hoje = new Date();
+        hoje.setMinutes(hoje.getMinutes() - hoje.getTimezoneOffset());
+        const hojeFormatado = hoje.toISOString().slice(0, 10);
+        
+        if (seletorData) {
+            // Verifica se a data selecionada é válida, caso contrário usa hoje
+            const dataParaRenderizar = seletorData.value || hojeFormatado; 
+            seletorData.value = dataParaRenderizar;
+            renderizarAgendaParaData(dataParaRenderizar);
             
-            <div class="painel-secao">
-                <h3>Adicionar Novo Horário</h3>
-                
-                <div class="form-group">
-                    <label for="select-admin-profissional">Profissional:</label>
-                    <select id="select-admin-profissional">
-                        </select>
-                </div>
+            if (!seletorData.dataset.listenerAdded) {
+                 seletorData.addEventListener('change', () => renderizarAgendaParaData(seletorData.value));
+                 seletorData.dataset.listenerAdded = 'true';
+            }
+        } else {
+            renderizarAgendaParaData(hojeFormatado);
+        }
 
-                <div class="form-group">
-                    <label for="select-admin-atividade">Atividade:</label>
-                    <select id="select-admin-atividade">
-                        <option value="">Selecione um profissional primeiro</option>
-                    </select>
-                </div>
+    } catch (error) {
+        console.error('Erro ao carregar a agenda:', error);
+        container.innerHTML = `<p class="loading error-message">⚠️ Erro ao carregar: ${error.message}.</p>`;
+    }
+}
 
-                <div class="form-group grid-admin-metadados">
-                    <div>
-                        <label for="input-admin-data">Data:</label>
-                        <input type="date" id="input-admin-data">
-                    </div>
-                    <div>
-                        <label for="input-admin-matricula">Matrícula Admin (Opcional):</label>
-                        <input type="text" id="input-admin-matricula" placeholder="Sua matrícula (para registro)">
-                    </div>
-                </div>
-                
-                <div id="admin-form-dinamico">
-                    <p>Selecione um Profissional e Atividade para configurar os horários.</p>
-                </div>
-                
-                <div class="modal-botoes" style="justify-content: center;">
-                    <button id="btn-adicionar-horario" class="btn-modal btn-verde" type="button">Adicionar Horário(s)</button>
-                </div>
-                <div id="admin-adicionar-mensagem" style="margin-top: 15px;"></div>
-            </div>
-
-            <div class="modal-botoes">
-                <button id="btn-fechar-admin-gerenciar" class="btn-modal btn-cinza" type="button">Fechar</button>
-                <button id="btn-admin-logout" class="btn-modal btn-azul" type="button">Logout</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="qr-code-container">
-        <img src="/img/qr-code-aulas.jpg" alt="Código QR para Aulas" id="qr-code-aulas">
-    </div>
+/**
+ * Renderiza a grade de horários para a data selecionada
+ */
+function renderizarAgendaParaData(dataCalendario) {
+    const [ano, mes, dia] = dataCalendario.split('-');
+    const dataFormatoPlanilha = `${dia}/${mes}/${ano}`;
     
-    <script src="script.js"></script>
-</body>
-</html>
+    atualizarDiaDaSemana(dataCalendario);
+    const dadosProcessados = processarDadosParaGrade(dataFormatoPlanilha);
+    container.innerHTML = '';
+    
+    // Adiciona o aviso de Admin se estiver logado
+    if (container.dataset.adminMode === 'true') {
+        container.innerHTML = `<p class="aviso-admin">MODO ADMINISTRADOR ATIVADO: Clique em um horário disponível para EXCLUIR.</p>`;
+    }
+
+    if (Object.keys(dadosProcessados).length === 0) {
+        container.innerHTML += `<p class="loading">Nenhum horário encontrado para a data ${dataFormatoPlanilha}.</p>`;
+        return;
+    }
+
+    for (const nomeAtividade in dadosProcessados) {
+        const { horarios, profissionais, grade } = dadosProcessados[nomeAtividade];
+        const titulo = document.createElement('h2');
+        titulo.className = 'titulo-atividade';
+        titulo.textContent = nomeAtividade;
+        container.appendChild(titulo);
+
+        let tabelaHtml = `<div class="tabela-container"><table class="tabela-agenda"><thead><tr><th>Horário</th>${profissionais.map(p => `<th>${p}</th>`).join('')}</tr></thead><tbody>`;
+        
+        horarios.forEach(horario => {
+            tabelaHtml += `<tr><td class="horario-col">${horario}</td>`;
+            
+            profissionais.forEach(profissional => {
+                const agendamento = grade[horario][profissional];
+                let statusHtml = '<div class="status-indisponivel">-</div>';
+
+                if (agendamento) {
+                    const vagasTotais = parseInt(agendamento.Vagas) || 0;
+                    // Filtra para remover valores vazios caso haja vírgulas extras
+                    const reservas = agendamento.Reserva ? agendamento.Reserva.split(',').map(m => m.trim()).filter(Boolean) : [];
+                    const vagasOcupadas = reservas.length;
+                    const vagasDisponiveis = vagasTotais - vagasOcupadas;
+                    
+                    let statusClass = 'status-indisponivel';
+                    let dataAttributes = `data-id="${agendamento.ID_LINHA}"`; // ID da Linha da Planilha
+                    let textoStatus = '-';
+                    
+                    if (vagasTotais > 0) {
+                        if (vagasDisponiveis > 0) {
+                            statusClass = 'status-disponivel';
+                            textoStatus = `${vagasDisponiveis} <span>Vaga(s)</span>`;
+                            // Dados necessários para a requisição de agendamento
+                            dataAttributes += ` data-atividade="${nomeAtividade}" data-profissional="${profissional}" data-horario="${horario}" data-data="${dataFormatoPlanilha}" data-vagas-disponiveis="${vagasDisponiveis}"`;
+                        
+                            // Modo Admin: Célula disponível vira EXCLUIR
+                            if (container.dataset.adminMode === 'true') {
+                                statusClass = 'status-admin-excluir';
+                                textoStatus = 'EXCLUIR';
+                            }
+
+                        } else {
+                            statusClass = 'status-lotado';
+                            textoStatus = 'Lotado';
+                            // Modo Admin: Célula lotada
+                            if (container.dataset.adminMode === 'true') {
+                                statusClass = 'status-admin-lotado';
+                                textoStatus += ` (${vagasOcupadas} reservas)`;
+                                dataAttributes += ` data-atividade="${nomeAtividade}" data-profissional="${profissional}" data-horario="${horario}" data-data="${dataFormatoPlanilha}" data-reservas="${reservas.join(', ')}"`;
+                            }
+                        }
+                    }
+                    
+                    statusHtml = `<div class="status-cell ${statusClass}" ${dataAttributes}>${textoStatus}</div>`;
+                }
+                tabelaHtml += `<td>${statusHtml}</td>`;
+            });
+            tabelaHtml += `</tr>`;
+        });
+        tabelaHtml += `</tbody></table></div>`;
+        titulo.insertAdjacentHTML('afterend', tabelaHtml);
+    }
+}
+
+
+/**
+ * Envia o agendamento para a API (doGet com action=book)
+ */
+async function confirmarAgendamento() {
+    const matricula = inputMatricula.value.trim();
+    if (!matricula) {
+        modalMensagem.textContent = 'Por favor, insira sua matrícula.';
+        modalMensagem.style.color = 'red';
+        return;
+    }
+    
+    btnConfirmar.disabled = true;
+    modalMensagem.textContent = 'Agendando, aguarde...';
+    modalMensagem.style.color = 'var(--cinza-texto)';
+    
+    // USANDO GET COM PARÂMETROS NA URL
+    const params = new URLSearchParams({
+        action: 'book',
+        ...agendamentoAtual,
+        matricula: matricula
+    });
+    const requestUrl = `${apiUrl}?${params.toString()}`;
+
+    try {
+        const response = await fetch(requestUrl);
+        const result = await response.json();
+
+        if (result.status === "success") {
+            modalMensagem.textContent = result.message;
+            modalMensagem.style.color = 'var(--verde-moinhos)';
+            
+            // Recarrega e re-renderiza para refletir a nova reserva
+            setTimeout(async () => {
+                await carregarAgenda(); 
+                fecharModalAgendamento();
+            }, 1000); 
+
+        } else {
+            throw new Error(result.message);
+        }
+
+    } catch (error) {
+        console.error('Erro ao enviar agendamento:', error);
+        modalMensagem.textContent = error.message || 'Erro de comunicação. Tente novamente.';
+        modalMensagem.style.color = 'red';
+    } finally {
+        btnConfirmar.disabled = false;
+    }
+}
+
+// --- Funções de Modal ---
+function abrirModalAgendamento(detalhes) {
+    agendamentoAtual = detalhes;
+    modalDetalhes.innerHTML = `<li><strong>Data:</strong> ${detalhes.data}</li><li><strong>Horário:</strong> ${detalhes.horario}</li><li><strong>Atividade:</strong> ${detalhes.atividade}</li><li><strong>Profissional:</strong> ${detalhes.profissional}</li>`;
+    inputMatricula.value = '';
+    modalMensagem.innerHTML = '';
+    btnConfirmar.disabled = false;
+    modalAgendamento.classList.remove('hidden');
+}
+
+function fecharModalAgendamento() {
+    modalAgendamento.classList.add('hidden');
+}
+
+function abrirModalConsulta() {
+    consultaViewInicial.classList.remove('hidden');
+    consultaViewResultados.classList.add('hidden');
+    inputConsultaMatricula.value = '';
+    consultaMensagem.textContent = '';
+    modalConsulta.classList.remove('hidden');
+}
+
+function fecharModalConsulta() {
+    modalConsulta.classList.add('hidden');
+}
+
+// --- Funções de Consulta e Cancelamento ---
+
+/**
+ * Busca reservas do usuário (doGet com action=getMyBookings)
+ */
+async function buscarReservas() {
+    const matricula = inputConsultaMatricula.value.trim();
+    if (!matricula) {
+        consultaMensagem.textContent = 'Por favor, digite sua matrícula.';
+        consultaMensagem.style.color = 'red';
+        return;
+    }
+    consultaMensagem.textContent = 'Buscando...';
+    consultaMensagem.style.color = 'var(--cinza-texto)';
+    
+    const params = new URLSearchParams({ action: 'getMyBookings', matricula });
+    const requestUrl = `${apiUrl}?${params.toString()}`;
+    
+    try {
+        const response = await fetch(requestUrl);
+        const result = await response.json();
+
+        if (result.status === "success") {
+            renderizarListaReservas(result.data);
+            consultaViewInicial.classList.add('hidden');
+            consultaViewResultados.classList.remove('hidden');
+        } else {
+            throw new Error(result.message);
+        }
+    } catch (error) {
+        consultaMensagem.textContent = error.message || 'Erro ao buscar reservas.';
+        consultaMensagem.style.color = 'red';
+    }
+}
+
+function renderizarListaReservas(reservas) {
+    listaAgendamentos.innerHTML = '';
+    if (reservas.length === 0) {
+        listaAgendamentos.innerHTML = '<p>Nenhum agendamento futuro encontrado para esta matrícula.</p>';
+        consultaMensagem.textContent = '';
+        return;
+    }
+    consultaMensagem.textContent = '';
+    reservas.forEach(reserva => {
+        const item = document.createElement('div');
+        item.className = 'item-agendamento';
+        // O campo data-id é o índice da linha na planilha (ID_LINHA no GAS)
+        item.innerHTML = `
+            <div class="detalhes-agendamento">
+                <strong>${reserva.atividade}</strong>
+                <span>${reserva.data} às ${reserva.horario} com ${reserva.profissional}</span>
+            </div>
+            <button class="btn-cancelar-item" data-id="${reserva.id}" data-matricula="${inputConsultaMatricula.value.trim()}">Cancelar</button>
+        `;
+        listaAgendamentos.appendChild(item);
+    });
+}
+
+/**
+ * Cancela a reserva (doGet com action=cancelBooking)
+ */
+async function cancelarReserva(event) {
+    if (!event.target.classList.contains('btn-cancelar-item')) return;
+    if (!confirm('Tem certeza que deseja cancelar este agendamento?')) return;
+    
+    const { id, matricula } = event.target.dataset;
+    
+    consultaMensagem.textContent = 'Cancelando...';
+    consultaMensagem.style.color = 'var(--cinza-texto)';
+    
+    // O id é o índice da linha da planilha (bookingId no GAS)
+    const params = new URLSearchParams({ action: 'cancelBooking', bookingId: id, matricula });
+    const requestUrl = `${apiUrl}?${params.toString()}`;
+    
+    try {
+        const response = await fetch(requestUrl);
+        const result = await response.json();
+        
+        if (result.status === "success") {
+            consultaMensagem.textContent = result.message;
+            consultaMensagem.style.color = 'var(--verde-moinhos)';
+            event.target.closest('.item-agendamento').remove();
+            carregarAgenda(); // Recarrega a agenda principal
+        } else {
+            throw new Error(result.message);
+        }
+    } catch (error) {
+        consultaMensagem.textContent = error.message || 'Erro ao cancelar reserva.';
+        consultaMensagem.style.color = 'red';
+    }
+}
+
+
+// --- Event Listeners ---
+container.addEventListener('click', function(event) {
+    const target = event.target.closest('.status-disponivel, .titulo-atividade, .status-admin-excluir');
+    if (!target) return;
+    
+    // Lógica do Acordeão
+    if (target.classList.contains('titulo-atividade')) {
+        target.classList.toggle('ativo');
+        const painel = target.nextElementSibling;
+        
+        if (painel.style.maxHeight && painel.style.maxHeight !== "0px") {
+            painel.style.maxHeight = null;
+            painel.style.padding = "0 10px";
+        } else {
+            painel.style.padding = "10px";
+            // Usa scrollHeight + um buffer para garantir que o conteúdo caiba
+            painel.style.maxHeight = (painel.scrollHeight + 40) + "px"; 
+        }
+        return;
+    }
+    
+    // Lógica de Agendamento (Modo Cliente)
+    if (target.classList.contains('status-disponivel')) {
+        // Verifica se não está em modo admin
+        if (container.dataset.adminMode !== 'true') {
+            celulaClicada = target;
+            abrirModalAgendamento(target.dataset);
+        }
+        return;
+    }
+    
+    // Lógica de Exclusão (Modo Admin)
+    if (target.classList.contains('status-admin-excluir') && container.dataset.adminMode === 'true') {
+        // Aqui você chamaria a função de exclusão de horário para o Admin
+        if (confirm(`ADMIN: Tem certeza que deseja EXCLUIR o horário ${target.dataset.horario} do dia ${target.dataset.data}?`)) {
+            // Chamada à função de API para EXCLUIR (seria um novo endpoint 'deleteBooking')
+            // Exemplo fictício: deleteBooking(target.dataset.id);
+            alert("A função de exclusão de horário Admin ainda precisa ser implementada no Apps Script.");
+        }
+        return;
+    }
+});
+
+btnCancelarAgendamento.addEventListener('click', fecharModalAgendamento);
+btnConfirmar.addEventListener('click', confirmarAgendamento);
+btnConsultarReservas.addEventListener('click', abrirModalConsulta);
+btnFecharConsulta.addEventListener('click', fecharModalConsulta);
+btnVoltarConsulta.addEventListener('click', () => {
+    consultaViewInicial.classList.remove('hidden');
+    consultaViewResultados.classList.add('hidden');
+    consultaMensagem.textContent = '';
+});
+
+btnBuscarReservas.addEventListener('click', buscarReservas);
+listaAgendamentos.addEventListener('click', cancelarReserva);
+
+// --- Lógica ADMIN (Simplificada, apenas para mostrar os elementos) ---
+// NOTA: A lógica completa de login e gerenciamento de agenda Admin está fora do escopo desta correção
+// e requer endpoints adicionais no Code.gs (e.g., action=login, action=delete, action=add)
+
+btnAdminLogin.addEventListener('click', () => {
+    // Apenas simula a ativação do modo Admin para fins de demonstração visual
+    if (container.dataset.adminMode === 'true') {
+        container.dataset.adminMode = 'false';
+        btnAdminLogin.textContent = 'Login Admin';
+        btnGerenciarAgenda.classList.add('hidden');
+        carregarAgenda();
+    } else {
+        container.dataset.adminMode = 'true';
+        btnAdminLogin.textContent = 'Logout Admin';
+        btnGerenciarAgenda.classList.remove('hidden');
+        carregarAgenda();
+    }
+});
+
+
+// --- Funções Auxiliares ---
+
+function atualizarDiaDaSemana(dataCalendario) {
+    const dataObj = new Date(dataCalendario + 'T00:00:00');
+    let diaDaSemana = dataObj.toLocaleDateString('pt-BR', { weekday: 'long' });
+    diaDaSemana = diaDaSemana.replace('-feira', '');
+    diaSemanaSpan.textContent = diaDaSemana;
+}
+
+/**
+ * Transforma a lista plana de dados da API em uma estrutura de grade.
+ */
+function processarDadosParaGrade(dataSelecionada) {
+    const dadosFiltrados = todosOsAgendamentos.filter(item => item.Data === dataSelecionada);
+    const atividades = {};
+    const dadosPorAtividade = dadosFiltrados.reduce((acc, item) => {
+        (acc[item.Atividade] = acc[item.Atividade] || []).push(item);
+        return acc;
+    }, {});
+
+    for (const nomeAtividade in dadosPorAtividade) {
+        const agendamentos = dadosPorAtividade[nomeAtividade];
+        const horarios = [...new Set(agendamentos.map(item => item.Horario))].sort();
+        const profissionais = [...new Set(agendamentos.map(item => item.Profissional))].sort();
+        const grade = {};
+
+        horarios.forEach(horario => {
+            grade[horario] = {};
+            profissionais.forEach(profissional => {
+                const agendamento = agendamentos.find(item => item.Horario === horario && item.Profissional === profissional);
+                // Armazena o objeto completo para ter acesso a Vagas e ID_LINHA
+                grade[horario][profissional] = agendamento; 
+            });
+        });
+        atividades[nomeAtividade] = { horarios, profissionais, grade };
+    }
+    return atividades;
+}
+
+// Inicia o carregamento da agenda
+carregarAgenda();
