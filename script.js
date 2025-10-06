@@ -453,3 +453,4 @@ function processarDadosParaGrade(dataSelecionada) {
 
 // Inicia o carregamento da agenda
 carregarAgenda();
+
