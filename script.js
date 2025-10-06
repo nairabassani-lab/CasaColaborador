@@ -30,6 +30,8 @@ const consultaMensagem = document.getElementById('consulta-mensagem');
 
 // Modal Admin Login
 const btnAdminLogin = document.getElementById('btn-admin-login');
+// NOVO: Botão Logout no canto superior (fora do modal)
+const btnAdminLogoutTop = document.getElementById('btn-admin-logout-top'); 
 const modalAdminLogin = document.getElementById('modal-admin-login');
 const inputAdminSenha = document.getElementById('input-admin-senha');
 const btnConfirmarAdminLogin = document.getElementById('btn-confirmar-admin-login');
@@ -39,7 +41,7 @@ const adminLoginMensagem = document.getElementById('admin-login-mensagem');
 const btnGerenciarAgenda = document.getElementById('btn-gerenciar-agenda');
 const modalAdminGerenciar = document.getElementById('modal-admin-gerenciar');
 const btnFecharAdminGerenciar = document.getElementById('btn-fechar-admin-gerenciar');
-const btnAdminLogout = document.getElementById('btn-admin-logout');
+const btnAdminLogout = document.getElementById('btn-admin-logout'); // Logout interno do modal
 const inputAdminData = document.getElementById('input-admin-data');
 const inputAdminMatricula = document.getElementById('input-admin-matricula');
 const adminFormDinamico = document.getElementById('admin-form-dinamico');
@@ -688,7 +690,11 @@ btnConfirmarAdminLogin.addEventListener('click', () => {
     const senha = inputAdminSenha.value;
     if (senha === DATA_STORE.adminPassword) {
         isAdminLoggedIn = true;
+        
+        // Esconde Login e mostra Logout NO TOPO DA PÁGINA
         btnAdminLogin.classList.add('hidden');
+        btnAdminLogoutTop.classList.remove('hidden'); 
+        
         btnGerenciarAgenda.classList.remove('hidden');
         modalAdminLogin.classList.add('hidden');
         adminLoginMensagem.textContent = '';
@@ -699,13 +705,23 @@ btnConfirmarAdminLogin.addEventListener('click', () => {
     }
 });
 
-btnAdminLogout.addEventListener('click', () => {
+/** NOVO: Função para lidar com o Logout (reutilizável) */
+function handleAdminLogout() {
     isAdminLoggedIn = false;
+    
+    // Mostra Login e esconde Logout NO TOPO DA PÁGINA
     btnAdminLogin.classList.remove('hidden');
+    btnAdminLogoutTop.classList.add('hidden'); 
+    
     btnGerenciarAgenda.classList.add('hidden');
-    modalAdminGerenciar.classList.add('hidden');
+    modalAdminGerenciar.classList.add('hidden'); // Fecha modal Gerenciar se estiver aberto
     renderizarAgenda(); // Volta para o modo normal
-});
+}
+
+// Vincula a nova função aos botões de logout
+btnAdminLogout.addEventListener('click', handleAdminLogout); // Logout dentro do modal
+btnAdminLogoutTop.addEventListener('click', handleAdminLogout); // Logout no topo da página
+
 
 // Modal de Gerenciamento Admin
 btnGerenciarAgenda.addEventListener('click', () => {
