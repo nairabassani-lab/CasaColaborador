@@ -489,14 +489,12 @@ header {
 }
 /* --- Animação Personagem (Manter) --- */
 .personagem-container {
-    position: fixed;
+    position: relative;
     top: 0;
     left: 0;
     width: 100%;
     height: 100px;
     overflow: hidden;
-    z-index: -1;
-    pointer-events: none;
 }
 .personagens-loop {
     height: 100%;
@@ -606,6 +604,7 @@ header {
 .modal-overlay.hidden { 
     pointer-events: none; 
 }
+
 
 
 
