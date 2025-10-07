@@ -22,7 +22,11 @@ const btnConsultarReservas = document.getElementById('btn-consultar-reservas');
 const modalAdminLogin = document.getElementById('modal-admin-login');
 const inputAdminPassword = document.getElementById('input-admin-password');
 const adminLoginMensagem = document.getElementById('admin-login-mensagem');
+
+const modalAdminGerenciar = document.getElementById('modal-admin-gerenciar');
+const btnAdminAdicionar = document.getElementById('btn-admin-adicionar');
 const modalAdminAdicionar = document.getElementById('modal-admin-adicionar');
+const formAdicionarHorario = document.getElementById('form-adicionar-horario');
 
 const modalConsulta = document.getElementById('modal-consulta'); 
 const inputConsultaMatricula = document.getElementById('input-consulta-matricula'); // Também deve estar faltando, é bom adicionar
@@ -33,11 +37,6 @@ const btnFecharConsulta = document.getElementById('btn-fechar-consulta'); // E e
 const btnBuscarReservas = document.getElementById('btn-buscar-reservas'); // E este
 const btnVoltarConsulta = document.getElementById('btn-voltar-consulta'); // E este
 
-const modalAdminGerenciar = document.getElementById('modal-admin-gerenciar');
-const btnAdminAdicionar = document.getElementById('btn-admin-adicionar');
-
-const modalAdminAdicionar = document.getElementById('modal-admin-adicionar');
-const formAdicionarHorario = document.getElementById('form-adicionar-horario');
 
 // --- NOVAS REFERÊNCIAS ESPECÍFICAS DO MODAL ADICIONAR ---
 const adminSelectProfissional = document.getElementById('admin-select-profissional');
@@ -517,6 +516,7 @@ container.addEventListener('click', function(event) {
 
 // Inicialização
 carregarAgenda();
+
 
 
 
