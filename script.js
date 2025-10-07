@@ -23,8 +23,8 @@ const modalAdminLogin = document.getElementById('modal-admin-login');
 const inputAdminPassword = document.getElementById('input-admin-password');
 const adminLoginMensagem = document.getElementById('admin-login-mensagem');
 const modalAdminAdicionar = document.getElementById('modal-admin-adicionar');
-const modalConsulta = document.getElementById('modal-consulta'); 
 
+const modalConsulta = document.getElementById('modal-consulta'); 
 const inputConsultaMatricula = document.getElementById('input-consulta-matricula'); // Também deve estar faltando, é bom adicionar
 const consultaViewInicial = document.getElementById('consulta-view-inicial'); // Também deve estar faltando
 const consultaViewResultados = document.getElementById('consulta-view-resultados'); // Também deve estar faltando
@@ -517,5 +517,6 @@ container.addEventListener('click', function(event) {
 
 // Inicialização
 carregarAgenda();
+
 
 
