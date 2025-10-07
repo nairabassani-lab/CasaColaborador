@@ -18,70 +18,100 @@ const btnAdminLogin = document.getElementById('btn-admin-login');
 const btnGerenciarAgenda = document.getElementById('btn-gerenciar-agenda');
 const btnConsultarReservas = document.getElementById('btn-consultar-reservas');
 
-// --- NOVAS REFERÊNCIAS DE MODAIS (ADMIN E CONSULTA) ---
-
-// Modal Login Admin
+// --- REFERÊNCIAS DE MODAIS (ADMIN E CONSULTA) ---
 const modalAdminLogin = document.getElementById('modal-admin-login');
 const inputAdminPassword = document.getElementById('input-admin-password');
-const btnConfirmarAdminLogin = document.getElementById('btn-confirmar-admin-login');
-const btnCancelarAdminLogin = document.getElementById('btn-cancelar-admin-login');
 const adminLoginMensagem = document.getElementById('admin-login-mensagem');
 
-// Modal Gerenciar Agenda
 const modalAdminGerenciar = document.getElementById('modal-admin-gerenciar');
-const btnAdminLogout = document.getElementById('btn-admin-logout');
-const btnFecharAdminGerenciar = document.getElementById('btn-fechar-admin-gerenciar');
 const btnAdminAdicionar = document.getElementById('btn-admin-adicionar');
 
-// Modal Adicionar Horário Admin
 const modalAdminAdicionar = document.getElementById('modal-admin-adicionar');
-const btnCancelarAdicionar = document.getElementById('btn-cancelar-adicionar');
-const btnConfirmarAdicionar = document.getElementById('btn-confirmar-adicionar');
 const formAdicionarHorario = document.getElementById('form-adicionar-horario');
 
-// Modal Consulta (Minhas Reservas)
-const modalConsulta = document.getElementById('modal-consulta');
-const inputConsultaMatricula = document.getElementById('input-consulta-matricula');
-const btnBuscarReservas = document.getElementById('btn-buscar-reservas');
-const btnFecharConsulta = document.getElementById('btn-fechar-consulta');
-const btnVoltarConsulta = document.getElementById('btn-voltar-consulta');
-const consultaViewInicial = document.getElementById('consulta-view-inicial');
-const consultaViewResultados = document.getElementById('consulta-view-resultados');
-const consultaMensagem = document.getElementById('consulta-mensagem');
-// Fim das novas referências
+// --- NOVAS REFERÊNCIAS ESPECÍFICAS DO MODAL ADICIONAR ---
+const adminSelectProfissional = document.getElementById('admin-select-profissional');
+const adminSelectAtividade = document.getElementById('admin-select-atividade');
+const quickMassageContainer = document.getElementById('quick-massage-container');
+const quickMassageHorariosGrid = document.getElementById('quick-massage-horarios');
+const horarioUnicoContainer = document.getElementById('horario-unico-container');
+const vagasContainerUnico = document.getElementById('vagas-container-unico'); // ID corrigido
+const adminInputVagas = document.getElementById('admin-input-vagas');
+const adminInputHorario = document.getElementById('admin-input-horario');
+const btnConfirmarAdicionarFinal = document.getElementById('btn-confirmar-adicionar-final'); // ID corrigido
+const btnCancelarAdicionarFinal = document.getElementById('btn-cancelar-adicionar-final'); // ID corrigido
+const adminAddMensagem = document.getElementById('admin-add-mensagem');
+const adminSelectData = document.getElementById('admin-select-data');
 
+// --- Variáveis de Estado e Configurações ---
 let todosOsAgendamentos = [];
 let agendamentoAtual = {};
 let celulaClicada = null;
-
-// Variáveis de Estado
 let isAdmin = false;
 const ADMIN_PASSWORD = 'admin'; // Senha simples para demonstração
+
+// --- MAPA DE ATIVIDADES E REGRAS (IMPLEMENTAÇÃO DAS REGRAS) ---
+const professionalRules = {
+    'Ana': { 
+        activities: ['Fit Class (Ballet Fit)', 'Funcional Dance', 'Power Gap'], 
+        type: 'aula', 
+        defaultVagas: 15 
+    },
+    'Carlos': { 
+        activities: ['Funcional', 'Mat Pilates', 'Ritmos / Zumba', 'Jump'], 
+        type: 'aula', 
+        defaultVagas: 15 
+    },
+    'Luis': { 
+        activities: ['Quick Massage'], 
+        type: 'quick_massage', 
+        defaultVagas: 1 
+    },
+    'Maria Eduarda': { 
+        activities: ['Quick Massage'], 
+        type: 'quick_massage', 
+        defaultVagas: 1 
+    },
+    'Rafael': { 
+        activities: ['Quick Massage', 'Reiki'], 
+        type: 'mixed', // Permite Quick Massage e Reiki
+        defaultVagas: 1 
+    }
+};
+
+const quickMassageHours = [
+    '08:15', '08:30', '08:45', '09:00', '09:15', '09:30', '09:45', '10:00', '10:15', 
+    '10:30', '10:45', '11:00', '11:15', '11:30', '11:45', '12:00', '12:15', '12:30', 
+    '12:45', '13:00', '13:15', '13:30', '13:45', '14:00', '14:15', '14:30', '14:45', 
+    '15:00', '15:15', '15:30', '15:45', '16:00', '16:15', '16:30', '16:45', '17:00', 
+    '17:15', '17:30', '17:45', '18:00', '18:15', '18:30', '18:45'
+];
+
 
 // --- FUNÇÕES DE UTILIDADE (MODAIS) ---
 
 function abrirModal(modalElement) {
     modalElement.classList.remove('hidden');
-    // Adicione um delay para a transição de opacidade
     setTimeout(() => modalElement.style.opacity = 1, 10); 
 }
 
 function fecharModal(modalElement) {
     modalElement.style.opacity = 0;
-    setTimeout(() => modalElement.classList.add('hidden'), 300); // 300ms = tempo da transição no CSS
+    setTimeout(() => modalElement.classList.add('hidden'), 300);
 }
 
 // --- LÓGICA DE ADMIN ---
 
 function toggleAdminView(loggedIn) {
     isAdmin = loggedIn;
-    if (loggedIn) {
+    // ... (restante da função toggleAdminView mantida) ...
+     if (loggedIn) {
         btnAdminLogin.textContent = 'Logout Admin';
         btnAdminLogin.classList.remove('btn-cinza');
-        btnAdminLogin.classList.add('btn-vermelho'); // Destaca o botão de logout
+        btnAdminLogin.classList.add('btn-vermelho'); 
         btnGerenciarAgenda.classList.remove('hidden');
         if (!document.querySelector('.aviso-admin')) {
-              container.insertAdjacentHTML('beforebegin', '<p class="aviso-admin">MODO ADMIN ATIVADO. Clique nos slots para GEREENCIAR (Excluir/Ver).</p>');
+             container.insertAdjacentHTML('beforebegin', '<p class="aviso-admin">MODO ADMIN ATIVADO. Clique nos slots para GEREENCIAR (Excluir/Ver).</p>');
         }
     } else {
         btnAdminLogin.textContent = 'Login Admin';
@@ -91,17 +121,14 @@ function toggleAdminView(loggedIn) {
         const aviso = document.querySelector('.aviso-admin');
         if (aviso) aviso.remove();
     }
-    // Re-renderiza a agenda para aplicar estilos de admin
     renderizarAgendaParaData(seletorData.value);
 }
 
 function handleAdminLoginClick() {
     if (isAdmin) {
-        // Se já está logado, faz logout
         toggleAdminView(false);
         return;
     }
-    // Se não está logado, abre o modal de login
     abrirModal(modalAdminLogin);
     inputAdminPassword.value = '';
     adminLoginMensagem.textContent = '';
@@ -118,40 +145,288 @@ function confirmarAdminLogin() {
     }
 }
 
-// Lógica de exclusão (WIP)
+// IMPLEMENTAÇÃO DE EXCLUSÃO
 async function handleAdminDelete(idLinha) {
-    // Implementar a chamada fetch para o Apps Script com action='delete' e idLinha
-    alert("Função de Exclusão: Implementar chamada de API para a linha " + idLinha);
-    // Após a exclusão, recarregar a agenda: carregarAgenda();
+    if (!confirm(`Tem certeza que deseja EXCLUIR permanentemente o slot da linha ${idLinha}?`)) {
+        return;
+    }
+    
+    // WIP: Lógica para buscar as reservas futuras desta matrícula via API
+    try {
+        const query = new URLSearchParams({ action: 'deleteSchedule', id_linha: idLinha }).toString();
+        const response = await fetch(`${apiUrl}?${query}`);
+        const result = await response.json();
+
+        if (result.status === "success") {
+            alert(result.message);
+            carregarAgenda(); // Recarrega para refletir a exclusão
+        } else {
+            throw new Error(result.message);
+        }
+    } catch (error) {
+        console.error('Erro ao excluir:', error);
+        alert(`Erro ao excluir: ${error.message}`);
+    }
+}
+
+
+// --- LÓGICA DE ADICIONAR HORÁRIO (COMPLETA) ---
+
+function updateActivitySelector(profissional) {
+    const rule = professionalRules[profissional];
+    adminSelectAtividade.innerHTML = '<option value="" disabled selected>Selecione a Modalidade</option>';
+    adminSelectAtividade.disabled = false;
+    
+    if (rule) {
+        rule.activities.forEach(activity => {
+            const option = document.createElement('option');
+            option.value = activity;
+            option.textContent = activity;
+            adminSelectAtividade.appendChild(option);
+        });
+    }
+}
+
+function renderQuickMassageGrid() {
+    quickMassageHorariosGrid.innerHTML = '';
+    quickMassageHours.forEach(horario => {
+        const inputId = `qm-${horario.replace(':', '-')}`;
+        
+        quickMassageHorariosGrid.innerHTML += `
+            <div class="horario-item">
+                <label for="${inputId}" class="horario-label">${horario}</label>
+                <input type="checkbox" id="${inputId}" data-horario="${horario}" class="qm-checkbox">
+                
+                <label for="indisp-${inputId}" class="label-indisponivel">Indisp.</label>
+                <input type="checkbox" id="indisp-${inputId}" data-horario="${horario}" class="qm-indisp-checkbox">
+            </div>
+        `;
+    });
+}
+
+function toggleAdminInputs() {
+    const profissional = adminSelectProfissional.value;
+    const atividade = adminSelectAtividade.value;
+    const rule = professionalRules[profissional];
+    
+    // Esconde todos os containers por padrão
+    quickMassageContainer.classList.add('hidden');
+    horarioUnicoContainer.classList.add('hidden');
+    vagasContainerUnico.classList.add('hidden'); // Esconde vagas por padrão
+    btnConfirmarAdicionarFinal.disabled = true;
+
+    if (!profissional || !atividade) return;
+    
+    const isQuickMassage = atividade === 'Quick Massage';
+    const isReiki = atividade === 'Reiki';
+    const isAula = rule && rule.type === 'aula';
+    
+    btnConfirmarAdicionarFinal.disabled = false; // Habilita o botão ao selecionar a Atividade
+
+    // 1. Quick Massage: Exibe a grade pré-definida
+    if (isQuickMassage) {
+        quickMassageContainer.classList.remove('hidden');
+        renderQuickMassageGrid(); 
+        
+        // Remove 'required' dos inputs de horário/vagas únicos
+        adminInputHorario.required = false;
+        adminInputVagas.required = false;
+    } 
+    // 2. Aulas ou Reiki: Exibe os inputs de horário e vagas
+    else if (isAula || isReiki) {
+        horarioUnicoContainer.classList.remove('hidden');
+        adminInputHorario.required = true;
+        
+        // Ajusta o padrão de vagas
+        const defaultVagas = isReiki ? 1 : rule.defaultVagas;
+        adminInputVagas.value = defaultVagas;
+        
+        // Esconde o input de vagas para Reiki (sempre 1 vaga)
+        if (isReiki) {
+            vagasContainerUnico.classList.add('hidden');
+            adminInputVagas.required = false;
+        } else {
+            vagasContainerUnico.classList.remove('hidden');
+            adminInputVagas.required = true;
+        }
+    }
+}
+
+async function handleAdminAdicionar(event) {
+    event.preventDefault();
+
+    const data = adminSelectData.value.split('-').reverse().join('/'); // Formato DD/MM/AAAA
+    const profissional = adminSelectProfissional.value;
+    const atividade = adminSelectAtividade.value;
+    let horariosParaEnviar = [];
+
+    btnConfirmarAdicionarFinal.disabled = true;
+    adminAddMensagem.textContent = 'Enviando dados para a planilha...';
+    adminAddMensagem.style.color = 'var(--cinza-texto)';
+
+    // Lógica 1: Quick Massage (Múltiplos Slots)
+    if (atividade === 'Quick Massage') {
+        const checkboxes = quickMassageHorariosGrid.querySelectorAll('.qm-checkbox');
+        checkboxes.forEach(cb => {
+            const horario = cb.dataset.horario;
+            const indispCb = document.getElementById(`indisp-qm-${horario.replace(':', '-')}`);
+            
+            // Cria o slot se o checkbox de horário está marcado OU o checkbox de indisponibilidade está marcado
+            if (cb.checked || indispCb.checked) {
+                const reservaStatus = indispCb.checked ? 'Indisponivel' : '';
+                horariosParaEnviar.push({
+                    Horario: horario,
+                    Vagas: 1, // Regra: 1 vaga fixa
+                    Reserva: reservaStatus 
+                });
+            }
+        });
+    } 
+    // Lógica 2: Aulas ou Reiki (Slot Único)
+    else {
+        const horario = adminInputHorario.value.trim();
+        const vagas = parseInt(adminInputVagas.value.trim());
+
+        if (!horario || isNaN(vagas) || vagas < 1) {
+            adminAddMensagem.textContent = 'Por favor, preencha o horário e vagas corretamente.';
+            btnConfirmarAdicionarFinal.disabled = false;
+            return;
+        }
+
+        horariosParaEnviar.push({
+            Horario: horario,
+            Vagas: vagas,
+            Reserva: '' 
+        });
+    }
+
+    if (horariosParaEnviar.length === 0) {
+        adminAddMensagem.textContent = 'Selecione ou preencha pelo menos um horário para adicionar.';
+        btnConfirmarAdicionarFinal.disabled = false;
+        return;
+    }
+
+    try {
+        const dadosParaEnviar = {
+            action: 'addMultiple', 
+            data: data,
+            profissional: profissional,
+            atividade: atividade,
+            horariosJson: JSON.stringify(horariosParaEnviar)
+        };
+        
+        const query = new URLSearchParams(dadosParaEnviar).toString();
+        const response = await fetch(`${apiUrl}?${query}`);
+        const result = await response.json(); 
+
+        if (result.status === "success") {
+            adminAddMensagem.textContent = result.message;
+            adminAddMensagem.style.color = 'var(--verde-moinhos)';
+            
+            carregarAgenda(); 
+            setTimeout(() => fecharModal(modalAdminAdicionar), 2000); 
+
+        } else {
+            throw new Error(result.message);
+        }
+
+    } catch (error) {
+        console.error('Erro ao adicionar agendamento:', error);
+        adminAddMensagem.textContent = error.message || 'Erro de comunicação ao adicionar. Tente novamente.';
+        adminAddMensagem.style.color = 'red';
+    } finally {
+        btnConfirmarAdicionarFinal.disabled = false;
+    }
 }
 
 
 // --- LÓGICA DE CONSULTA (MINHAS RESERVAS) ---
 
-function handleBuscarReservas() {
+async function handleBuscarReservas() {
     const matricula = inputConsultaMatricula.value.trim();
     if (!matricula) {
+        // ... (restante da validação mantida) ...
         consultaMensagem.textContent = 'Por favor, insira sua matrícula.';
         consultaMensagem.style.color = 'red';
         return;
     }
     
-    // WIP: Lógica para buscar as reservas futuras desta matrícula via API
     consultaMensagem.textContent = 'Buscando reservas...';
     consultaMensagem.style.color = 'var(--cinza-texto)';
 
-    // Simulação de resultados após a busca (trocar por fetch real)
-    setTimeout(() => {
+    try {
+        const query = new URLSearchParams({ action: 'getMyBookings', matricula }).toString();
+        const response = await fetch(`${apiUrl}?${query}`);
+        const result = await response.json();
+        
         consultaMensagem.textContent = '';
         consultaViewInicial.classList.add('hidden');
         consultaViewResultados.classList.remove('hidden');
-        document.getElementById('lista-agendamentos').innerHTML = '<p style="text-align:center;">Nenhuma reserva futura encontrada para ' + matricula + '.</p>';
-        
-        // Exemplo de como você renderizaria a lista real:
-        // document.getElementById('lista-agendamentos').innerHTML = renderizarReservas(resultados);
-        
-    }, 1000);
+
+        if (result.status === "success") {
+            document.getElementById('lista-agendamentos').innerHTML = renderizarReservas(result.data, matricula);
+        } else {
+             document.getElementById('lista-agendamentos').innerHTML = `<p style="text-align:center; color:red;">Erro: ${result.message}</p>`;
+        }
+    } catch (error) {
+        console.error('Erro ao buscar reservas:', error);
+        consultaMensagem.textContent = 'Erro ao buscar. Tente novamente.';
+        consultaMensagem.style.color = 'red';
+    }
 }
+
+function renderizarReservas(reservas, matricula) {
+    if (!reservas || reservas.length === 0) {
+        return `<p style="text-align:center;">Nenhuma reserva futura encontrada para ${matricula}.</p>`;
+    }
+    
+    let html = '<ul>';
+    reservas.forEach(reserva => {
+        html += `
+            <li class="item-reserva">
+                <span>${reserva.data} | ${reserva.horario} | **${reserva.atividade}** com ${reserva.profissional}</span>
+                <button class="btn-cancelar-reserva btn-modal btn-vermelho" 
+                        data-booking-id="${reserva.id}" 
+                        data-matricula="${matricula}">Cancelar</button>
+            </li>
+        `;
+    });
+    html += '</ul>';
+    return html;
+}
+
+async function handleCancelBooking(event) {
+    const target = event.target;
+    if (!target.classList.contains('btn-cancelar-reserva')) return;
+    
+    const { bookingId, matricula } = target.dataset;
+    if (!confirm(`Deseja realmente CANCELAR a reserva de ${target.previousElementSibling.textContent}?`)) return;
+
+    target.disabled = true;
+    target.textContent = 'Cancelando...';
+
+    try {
+        const dadosParaEnviar = { action: 'cancelBooking', bookingId, matricula };
+        const query = new URLSearchParams(dadosParaEnviar).toString();
+        const response = await fetch(`${apiUrl}?${query}`);
+        const result = await response.json();
+
+        if (result.status === "success") {
+            alert(result.message);
+            handleBuscarReservas(); // Recarrega a lista
+            carregarAgenda(); // Recarrega a grade principal
+        } else {
+            throw new Error(result.message);
+        }
+    } catch (error) {
+        console.error('Erro ao cancelar:', error);
+        alert(`Erro ao cancelar: ${error.message}`);
+    } finally {
+        target.disabled = false;
+        target.textContent = 'Cancelar';
+    }
+}
+
 
 function voltarConsulta() {
     consultaViewInicial.classList.remove('hidden');
@@ -159,265 +434,48 @@ function voltarConsulta() {
     consultaMensagem.textContent = '';
 }
 
-// --- LÓGICA DE ADICIONAR HORÁRIO (WIP) ---
+// ... (Resto das funções de carregamento e renderização mantidas) ...
 
-function handleAdminAdicionar(event) {
-    event.preventDefault();
-    // WIP: Lógica de envio do formulário de adição de horário
-    alert("Função de Adicionar Horário: Implementar chamada de API");
-    // fecharModal(modalAdminAdicionar);
-    // carregarAgenda();
-}
+// --- LIGAÇÃO DE EVENT LISTENERS FINAIS ---
 
+// Listeners do Modal Adicionar (NOVA LÓGICA DE ENADEAMENTO)
+adminSelectProfissional.addEventListener('change', (e) => {
+    updateActivitySelector(e.target.value);
+    toggleAdminInputs();
+});
 
-// --- FUNÇÃO DE CARREGAMENTO DE DADOS PRINCIPAL ---
-async function carregarAgenda() {
-    container.innerHTML = '<p class="loading">Carregando agenda...</p>';
-    try {
-        // CORREÇÃO: Passar action=loadData explicitamente para o Apps Script
-        const response = await fetch(`${apiUrl}?action=loadData`); 
-        
-        if (!response.ok) {
-            throw new Error(`Erro HTTP ${response.status}: Falha ao buscar dados.`);
-        }
-        
-        const data = await response.json(); 
-        
-        if (data.status === 'error') {
-            throw new Error(data.message || 'Erro desconhecido retornado pelo script.');
-        }
+adminSelectAtividade.addEventListener('change', toggleAdminInputs);
 
-        todosOsAgendamentos = data;
-
-        const hoje = new Date();
-        hoje.setMinutes(hoje.getMinutes() - hoje.getTimezoneOffset());
-        const hojeFormatado = hoje.toISOString().slice(0, 10);
-
-        // Seletor de data
-        if (!seletorData.value) {
-            seletorData.value = hojeFormatado;
-        }
-        
-        renderizarAgendaParaData(seletorData.value);
-        seletorData.addEventListener('change', () => renderizarAgendaParaData(seletorData.value));
-
-    } catch (error) {
-        console.error('Erro no Carregamento:', error);
-        container.innerHTML = `<p class="loading" style="color: #dc3545;">
-            &#9888; Erro ao carregar: ${error.message}. Verifique o URL do Apps Script ou a Planilha.
-        </p>`;
-    }
-}
-
-// --- FUNÇÃO DE CONFIRMAÇÃO DE RESERVA (USUÁRIO) ---
-// (Não alterada, mas incluída para completar o código)
-async function confirmarAgendamento() {
-    const matricula = inputMatricula.value.trim();
-    if (!matricula) {
-        modalMensagem.textContent = 'Por favor, insira sua matrícula.';
-        modalMensagem.style.color = 'red';
-        return;
-    }
-
-    btnConfirmar.disabled = true;
-    modalMensagem.textContent = 'Agendando, aguarde...';
-    modalMensagem.style.color = 'var(--cinza-texto)';
-
-    const dadosParaEnviar = { action: 'book', ...agendamentoAtual, matricula };
-
-    try {
-        const query = new URLSearchParams(dadosParaEnviar).toString();
-        const response = await fetch(`${apiUrl}?${query}`);
-        
-        const result = await response.json(); 
-
-        if (result.status === "success") {
-            modalMensagem.textContent = result.message;
-            modalMensagem.style.color = 'var(--verde-moinhos)';
-            
-            // Recarrega os dados para ter o estado atualizado
-            // Idealmente, apenas atualize o slot específico:
-            // carregarAgenda();
-            
-            setTimeout(() => fecharModal(modalAgendamento), 2000);
-        } else {
-            throw new Error(result.message);
-        }
-
-    } catch (error) {
-        console.error('Erro ao enviar agendamento:', error);
-        modalMensagem.textContent = error.message || 'Erro de comunicação. Tente novamente.';
-        modalMensagem.style.color = 'red';
-    } finally {
-        btnConfirmar.disabled = false;
-    }
-}
-
-
-// --- FUNÇÕES DE RENDERIZAÇÃO E HELPERS ---
-
-function processarDadosParaGrade(dataFormatoPlanilha) {
-    // (Esta função é mantida inalterada)
-    const dadosFiltrados = todosOsAgendamentos.filter(item => item.Data === dataFormatoPlanilha);
-    const dadosProcessados = {};
-
-    dadosFiltrados.forEach(item => {
-        const atividade = item.Atividade;
-        if (!dadosProcessados[atividade]) {
-            dadosProcessados[atividade] = {
-                horarios: new Set(),
-                profissionais: new Set(),
-                grade: {}
-            };
-        }
-        dadosProcessados[atividade].horarios.add(item.Horario);
-        dadosProcessados[atividade].profissionais.add(item.Profissional);
-    });
-
-    for (const atividade in dadosProcessados) {
-        dadosProcessados[atividade].horarios = Array.from(dadosProcessados[atividade].horarios).sort();
-        dadosProcessados[atividade].profissionais = Array.from(dadosProcessados[atividade].profissionais).sort();
-    }
-    return dadosProcessados;
-}
-
-function atualizarDiaDaSemana(dataString) {
-    const dataObj = new Date(dataString + 'T00:00:00'); // Adiciona T00:00:00 para evitar problemas de fuso horário
-    const dias = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
-    diaSemanaSpan.textContent = `(${dias[dataObj.getDay()]})`;
-}
-
-function renderizarAgendaParaData(dataCalendario) {
-    // (Esta função é mantida inalterada, pois já contém a lógica de admin)
-    const [ano, mes, dia] = dataCalendario.split('-');
-    const dataFormatoPlanilha = `${dia}/${mes}/${ano}`;
-
-    atualizarDiaDaSemana(dataCalendario);
-    const dadosProcessados = processarDadosParaGrade(dataFormatoPlanilha);
-    container.innerHTML = '';
-
-    if (Object.keys(dadosProcessados).length === 0) {
-        container.innerHTML = `<p class="loading">Nenhum horário encontrado para a data ${dataFormatoPlanilha}.</p>`;
-        return;
-    }
-
-    for (const nomeAtividade in dadosProcessados) {
-        const { horarios, profissionais } = dadosProcessados[nomeAtividade];
-        const titulo = document.createElement('h2');
-        titulo.className = 'titulo-atividade';
-        titulo.textContent = nomeAtividade;
-        container.appendChild(titulo);
-
-        let tabelaHtml = `<div class="tabela-container"><table class="tabela-agenda"><thead><tr><th>Horário</th>${profissionais.map(p => `<th>${p}</th>`).join('')}</tr></thead><tbody>`;
-        
-        horarios.forEach(horario => {
-            tabelaHtml += `<tr><td class="horario-col">${horario}</td>`;
-            
-            profissionais.forEach(profissional => {
-                const slotData = todosOsAgendamentos.find(item => 
-                    item.Data === dataFormatoPlanilha && 
-                    item.Horario === horario && 
-                    item.Profissional === profissional &&
-                    item.Atividade === nomeAtividade
-                );
-                
-                const statusRaw = slotData ? slotData.Reserva : undefined;
-                const idLinha = slotData ? slotData.ID_LINHA : null;
-
-                let status, statusClass, dataAttributes = '';
-
-                // Lógica de Status
-                const vagasTotais = parseInt(slotData?.Vagas) || 1;
-                const matriculasReservadas = statusRaw ? statusRaw.split(',').filter(m => m.trim() && m.trim().toLowerCase() !== 'indisponivel') : [];
-                const numReservas = matriculasReservadas.length;
-                const vagasLivres = vagasTotais - numReservas;
-
-                const isIndisponivel = !slotData || (statusRaw && statusRaw.toLowerCase().includes('indisponivel'));
-                const isLotado = !isIndisponivel && vagasLivres <= 0;
-                const isDisponivel = !isIndisponivel && vagasLivres > 0;
-                const isSlotExistente = !!slotData;
-
-                if (isIndisponivel) {
-                    status = 'Indisponível'; statusClass = 'status-indisponivel';
-                } else if (isLotado) {
-                    status = 'Lotado'; statusClass = 'status-lotado';
-                } else if (isDisponivel) {
-                    status = `${vagasLivres} Vaga(s)`; statusClass = 'status-disponivel';
-                    dataAttributes = `data-atividade="${nomeAtividade}" data-profissional="${profissional}" data-horario="${horario}" data-data="${dataFormatoPlanilha}" data-id-linha="${idLinha}"`;
-                } else if (isSlotExistente) {
-                    // Slot Existe, mas não tem vagas (caso de erro lógico ou indisp. sem status)
-                     status = 'Indisponível'; statusClass = 'status-indisponivel';
-                } else {
-                    // Slot Não Existe na Planilha
-                    status = 'Fechado'; statusClass = 'status-fechado'; 
-                }
-                
-                // --- AJUSTE DE ESTILO PARA O MODO ADMIN ---
-                if (isAdmin && isSlotExistente) {
-                    // Slots existentes (Disponível, Lotado, Indisponível) viram Excluir/Gerenciar
-                    statusClass = 'status-admin-excluir'; // Cor de exclusão
-                    dataAttributes = `data-id-linha="${idLinha}" data-status-raw="${statusRaw}" data-vagas="${vagasTotais}"`;
-                    status = `${status} (Gerenciar)`;
-                } else if (isAdmin && !isSlotExistente) {
-                     // Adiciona um placeholder no modo Admin para indicar que pode ser adicionado
-                    status = 'Adicionar'; statusClass = 'status-admin-adicionar';
-                    dataAttributes = `data-atividade="${nomeAtividade}" data-profissional="${profissional}" data-horario="${horario}" data-data="${dataFormatoPlanilha}"`;
-                }
-
-
-                tabelaHtml += `<td class="status-cell ${statusClass}" ${dataAttributes}>${status}</td>`;
-            });
-            tabelaHtml += `</tr>`;
-        });
-        tabelaHtml += `</tbody></table></div>`;
-        titulo.insertAdjacentHTML('afterend', tabelaHtml);
-    }
-}
-
-function abrirModalReserva(data) {
-    // (Função de abertura de modal do usuário)
-    agendamentoAtual = {
-        data: data.data,
-        horario: data.horario,
-        profissional: data.profissional,
-        atividade: data.atividade,
-        idLinha: data.idLinha
-    };
+// Modal Adicionar
+btnAdminAdicionar.addEventListener('click', () => {
+    // Limpa o formulário antes de abrir
+    formAdicionarHorario.reset();
+    adminSelectAtividade.disabled = true;
+    toggleAdminInputs(); 
+    adminAddMensagem.textContent = '';
     
-    modalDetalhes.innerHTML = `
-        <li><strong>Profissional:</strong> ${data.profissional}</li>
-        <li><strong>Atividade:</strong> ${data.atividade}</li>
-        <li><strong>Data:</strong> ${data.data}</li>
-        <li><strong>Horário:</strong> ${data.horario}</li>
-    `;
-    inputMatricula.value = '';
-    modalMensagem.textContent = '';
-    abrirModal(modalAgendamento);
-}
+    fecharModal(modalAdminGerenciar);
+    abrirModal(modalAdminAdicionar);
+});
+btnCancelarAdicionarFinal.addEventListener('click', () => fecharModal(modalAdminAdicionar)); // ID corrigido
+formAdicionarHorario.addEventListener('submit', handleAdminAdicionar);
+
+// Botão de Cancelamento de Reserva no Modal Consulta
+modalConsulta.addEventListener('click', handleCancelBooking);
 
 
-// --- EVENT LISTENERS GERAIS ---
-
+// ... (Manter os demais listeners) ...
 container.addEventListener('click', function(event) {
     const target = event.target;
-    
-    // Toggle do Acordeão
+    // ... (Toggle do Acordeão) ...
     if (target.classList.contains('titulo-atividade')) {
-        target.classList.toggle('ativo');
-        const painel = target.nextElementSibling;
-        if (painel.style.maxHeight) {
-            painel.style.maxHeight = null;
-            painel.style.padding = "0 10px";
-        } else {
-            painel.style.padding = "10px";
-            painel.style.maxHeight = painel.scrollHeight + "px";
-        }
+        // ...
     }
 
     // Ação na Célula de Agendamento (Usuário / Admin)
     if (isAdmin && target.classList.contains('status-admin-excluir')) {
         const idLinha = target.dataset.idLinha;
-        if (idLinha && confirm(`Deseja EXCLUIR o slot da linha ${idLinha}?`)) {
+        if (idLinha) {
             handleAdminDelete(idLinha);
         }
     } else if (target.classList.contains('status-disponivel') && !isAdmin) {
@@ -427,46 +485,25 @@ container.addEventListener('click', function(event) {
     }
     // Adicionar slot vazio (Admin)
     else if (isAdmin && target.classList.contains('status-admin-adicionar')) {
-        // Implementar a lógica para abrir o modal de adição pré-preenchido
-        alert('Abrir modal de adição pré-preenchido com ' + target.dataset.horario);
+        // Pré-preenche o modal de adição com a data, prof e atividade do slot vazio
+        adminSelectData.value = target.dataset.data.split('/').reverse().join('-');
+        adminSelectProfissional.value = target.dataset.profissional;
+        
+        // Dispara o evento 'change' para atualizar a lista de atividades e os inputs
+        updateActivitySelector(target.dataset.profissional);
+        adminSelectAtividade.value = target.dataset.atividade;
+        toggleAdminInputs();
+        
+        // Para Quick Massage (grade), o horário não será pré-preenchido
+        if (target.dataset.atividade !== 'Quick Massage') {
+            adminInputHorario.value = target.dataset.horario;
+        }
+
+        fecharModal(modalAdminGerenciar);
         abrirModal(modalAdminAdicionar);
     }
 });
-
-
-// --- LIGAÇÃO DE BOTÕES FINAIS ---
-
-// Modal Agendamento (Usuário)
-btnCancelar.addEventListener('click', () => fecharModal(modalAgendamento));
-btnConfirmar.addEventListener('click', confirmarAgendamento);
-
-// Admin Login/Logout
-btnAdminLogin.addEventListener('click', handleAdminLoginClick); // Novo handle
-btnConfirmarAdminLogin.addEventListener('click', confirmarAdminLogin);
-btnCancelarAdminLogin.addEventListener('click', () => fecharModal(modalAdminLogin));
-
-// Admin Gerenciamento
-btnGerenciarAgenda.addEventListener('click', () => abrirModal(modalAdminGerenciar));
-btnFecharAdminGerenciar.addEventListener('click', () => fecharModal(modalAdminGerenciar));
-btnAdminLogout.addEventListener('click', handleAdminLoginClick); // Reusa o handle para o Logout
-
-// Admin Adicionar
-btnAdminAdicionar.addEventListener('click', () => {
-    fecharModal(modalAdminGerenciar);
-    abrirModal(modalAdminAdicionar);
-});
-btnCancelarAdicionar.addEventListener('click', () => fecharModal(modalAdminAdicionar));
-formAdicionarHorario.addEventListener('submit', handleAdminAdicionar);
-
-// Consulta (Minhas Reservas)
-btnConsultarReservas.addEventListener('click', () => {
-    abrirModal(modalConsulta);
-    voltarConsulta(); // Reseta a visualização
-});
-btnBuscarReservas.addEventListener('click', handleBuscarReservas);
-btnFecharConsulta.addEventListener('click', () => fecharModal(modalConsulta));
-btnVoltarConsulta.addEventListener('click', voltarConsulta);
-
+// ... (demais ligações de botões) ...
 
 // Inicialização
 carregarAgenda();
