@@ -38,7 +38,7 @@ header {
 }
 
 #logo-hmv, #logo-casa-colaborador {
-    max-height: 80px;
+    max-height: 100px;
     width: auto;
 }
 
@@ -604,6 +604,7 @@ header {
 .modal-overlay.hidden { 
     pointer-events: none; 
 }
+
 
 
 
