@@ -526,7 +526,7 @@ header {
 
 #qr-code-aulas {
     /* Define a largura máxima para que seja proporcional ao conteúdo principal */
-    max-width: 300px; /* Ajuste este valor se precisar de uma imagem maior ou menor */
+    max-width: 900px; /* Ajuste este valor se precisar de uma imagem maior ou menor */
     height: 300;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
@@ -606,4 +606,5 @@ header {
 .modal-overlay.hidden { 
     pointer-events: none; 
 }
+
 
