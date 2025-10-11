@@ -5,7 +5,7 @@ const container = document.getElementById('agenda-container');
 const seletorData = document.getElementById('seletor-data');
 const diaSemanaSpan = document.getElementById('dia-semana');
 
-// Modais de Agendamento (Usuário) - Já existentes
+// Modais de Agendamento (Usuário)
 const modalAgendamento = document.getElementById('modal-agendamento');
 const modalDetalhes = document.getElementById('modal-detalhes');
 const inputMatricula = document.getElementById('input-matricula');
@@ -29,13 +29,13 @@ const modalAdminAdicionar = document.getElementById('modal-admin-adicionar');
 const formAdicionarHorario = document.getElementById('form-adicionar-horario');
 
 const modalConsulta = document.getElementById('modal-consulta'); 
-const inputConsultaMatricula = document.getElementById('input-consulta-matricula'); // Também deve estar faltando, é bom adicionar
-const consultaViewInicial = document.getElementById('consulta-view-inicial'); // Também deve estar faltando
-const consultaViewResultados = document.getElementById('consulta-view-resultados'); // Também deve estar faltando
-const consultaMensagem = document.getElementById('consulta-mensagem'); // Também deve estar faltando
-const btnFecharConsulta = document.getElementById('btn-fechar-consulta'); // E este
-const btnBuscarReservas = document.getElementById('btn-buscar-reservas'); // E este
-const btnVoltarConsulta = document.getElementById('btn-voltar-consulta'); // E este
+const inputConsultaMatricula = document.getElementById('input-consulta-matricula'); 
+const consultaViewInicial = document.getElementById('consulta-view-inicial'); 
+const consultaViewResultados = document.getElementById('consulta-view-resultados'); 
+const consultaMensagem = document.getElementById('consulta-mensagem'); 
+const btnFecharConsulta = document.getElementById('btn-fechar-consulta'); 
+const btnBuscarReservas = document.getElementById('btn-buscar-reservas'); 
+const btnVoltarConsulta = document.getElementById('btn-voltar-consulta'); 
 
 
 // --- NOVAS REFERÊNCIAS ESPECÍFICAS DO MODAL ADICIONAR ---
@@ -44,17 +44,17 @@ const adminSelectAtividade = document.getElementById('admin-select-atividade');
 const quickMassageContainer = document.getElementById('quick-massage-container');
 const quickMassageHorariosGrid = document.getElementById('quick-massage-horarios');
 const horarioUnicoContainer = document.getElementById('horario-unico-container');
-const vagasContainerUnico = document.getElementById('vagas-container-unico'); // ID corrigido
+const vagasContainerUnico = document.getElementById('vagas-container-unico'); 
 const adminInputVagas = document.getElementById('admin-input-vagas');
 const adminInputHorario = document.getElementById('admin-input-horario');
-const btnConfirmarAdicionarFinal = document.getElementById('btn-confirmar-adicionar-final'); // ID corrigido
-const btnCancelarAdicionarFinal = document.getElementById('btn-cancelar-adicionar-final'); // ID corrigido
+const btnConfirmarAdicionarFinal = document.getElementById('btn-confirmar-adicionar-final'); 
+const btnCancelarAdicionarFinal = document.getElementById('btn-cancelar-adicionar-final'); 
 const adminAddMensagem = document.getElementById('admin-add-mensagem');
 const adminSelectData = document.getElementById('admin-select-data');
 
 // --- Variáveis de Estado e Configurações ---
 let todosOsAgendamentos = [];
-let agendamentoAtual = {};
+let agendamentoAtual = {}; // Usado para armazenar os dados do slot antes de abrir o modal de agendamento
 let celulaClicada = null;
 let isAdmin = false;
 const ADMIN_PASSWORD = 'admin'; // Senha simples para demonstração
@@ -83,7 +83,7 @@ const professionalRules = {
     },
     'Rafael': { 
         activities: ['Quick Massage', 'Reiki'], 
-        type: 'mixed', // Permite Quick Massage e Reiki
+        type: 'mixed', 
         defaultVagas: 1 
     }
 };
@@ -130,7 +130,10 @@ function toggleAdminView(loggedIn) {
         const aviso = document.querySelector('.aviso-admin');
         if (aviso) aviso.remove();
     }
-    renderizarAgendaParaData(seletorData.value);
+    // A chamada a carregarAgenda() foi substituída por renderizarAgendaParaData
+    if (seletorData.value) {
+        renderizarAgendaParaData(seletorData.value.split('-').reverse().join('/'));
+    }
 }
 
 function handleAdminLoginClick() {
@@ -160,7 +163,6 @@ async function handleAdminDelete(idLinha) {
         return;
     }
     
-    // WIP: Lógica para buscar as reservas futuras desta matrícula via API
     try {
         const query = new URLSearchParams({ action: 'deleteSchedule', id_linha: idLinha }).toString();
         const response = await fetch(`${apiUrl}?${query}`);
@@ -180,6 +182,7 @@ async function handleAdminDelete(idLinha) {
 
 
 // --- LÓGICA DE ADICIONAR HORÁRIO (COMPLETA) ---
+// (Funções updateActivitySelector, renderQuickMassageGrid, toggleAdminInputs, handleAdminAdicionar, mantidas)
 
 function updateActivitySelector(profissional) {
     const rule = professionalRules[profissional];
@@ -221,7 +224,7 @@ function toggleAdminInputs() {
     // Esconde todos os containers por padrão
     quickMassageContainer.classList.add('hidden');
     horarioUnicoContainer.classList.add('hidden');
-    vagasContainerUnico.classList.add('hidden'); // Esconde vagas por padrão
+    vagasContainerUnico.classList.add('hidden'); 
     btnConfirmarAdicionarFinal.disabled = true;
 
     if (!profissional || !atividade) return;
@@ -230,14 +233,13 @@ function toggleAdminInputs() {
     const isReiki = atividade === 'Reiki';
     const isAula = rule && rule.type === 'aula';
     
-    btnConfirmarAdicionarFinal.disabled = false; // Habilita o botão ao selecionar a Atividade
+    btnConfirmarAdicionarFinal.disabled = false; 
 
     // 1. Quick Massage: Exibe a grade pré-definida
     if (isQuickMassage) {
         quickMassageContainer.classList.remove('hidden');
         renderQuickMassageGrid(); 
         
-        // Remove 'required' dos inputs de horário/vagas únicos
         adminInputHorario.required = false;
         adminInputVagas.required = false;
     } 
@@ -246,11 +248,9 @@ function toggleAdminInputs() {
         horarioUnicoContainer.classList.remove('hidden');
         adminInputHorario.required = true;
         
-        // Ajusta o padrão de vagas
         const defaultVagas = isReiki ? 1 : rule.defaultVagas;
         adminInputVagas.value = defaultVagas;
         
-        // Esconde o input de vagas para Reiki (sempre 1 vaga)
         if (isReiki) {
             vagasContainerUnico.classList.add('hidden');
             adminInputVagas.required = false;
@@ -280,12 +280,11 @@ async function handleAdminAdicionar(event) {
             const horario = cb.dataset.horario;
             const indispCb = document.getElementById(`indisp-qm-${horario.replace(':', '-')}`);
             
-            // Cria o slot se o checkbox de horário está marcado OU o checkbox de indisponibilidade está marcado
             if (cb.checked || indispCb.checked) {
                 const reservaStatus = indispCb.checked ? 'Indisponivel' : '';
                 horariosParaEnviar.push({
                     Horario: horario,
-                    Vagas: 1, // Regra: 1 vaga fixa
+                    Vagas: 1, 
                     Reserva: reservaStatus 
                 });
             }
@@ -350,11 +349,11 @@ async function handleAdminAdicionar(event) {
 
 
 // --- LÓGICA DE CONSULTA (MINHAS RESERVAS) ---
+// (Funções handleBuscarReservas, renderizarReservas, handleCancelBooking, voltarConsulta mantidas)
 
 async function handleBuscarReservas() {
     const matricula = inputConsultaMatricula.value.trim();
     if (!matricula) {
-        // ... (restante da validação mantida) ...
         consultaMensagem.textContent = 'Por favor, insira sua matrícula.';
         consultaMensagem.style.color = 'red';
         return;
@@ -443,9 +442,294 @@ function voltarConsulta() {
     consultaMensagem.textContent = '';
 }
 
-// ... (Resto das funções de carregamento e renderização mantidas) ...
+// --- NOVAS FUNÇÕES DE CARREGAMENTO, RENDERIZAÇÃO E AGENDAMENTO (ESSENCIAIS) ---
+
+/**
+ * Retorna o dia da semana em português.
+ * @param {string} data - Data no formato DD/MM/AAAA.
+ */
+function getDiaSemana(data) {
+    const [dia, mes, ano] = data.split('/').map(Number);
+    // Mês é 0-indexed no JavaScript
+    const date = new Date(ano, mes - 1, dia); 
+    const dias = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+    return dias[date.getDay()];
+}
+
+/**
+ * Cria a estrutura HTML da agenda (Acordeão e Tabelas).
+ * **Esta é uma implementação simplificada para fazer o carregamento funcionar.**
+ * @param {Array<Object>} agendamentosFiltrados - Slots da planilha para a data selecionada.
+ * @param {string} dataSelecionada - Data no formato DD/MM/AAAA.
+ */
+function renderizarAgendaParaData(agendamentosFiltrados, dataSelecionada) {
+    if (agendamentosFiltrados.length === 0) {
+        // Se for admin, mostra opção de adicionar; se não, apenas informa que está fechado.
+        container.innerHTML = `<p class="loading">Agenda vazia para esta data. ${isAdmin ? 'Use o botão "Gerenciar Agenda" ou clique em "Adicionar" (se disponível) para criar novos slots.' : 'Nenhum horário disponível.'}</p>`;
+        return;
+    }
+
+    // 1. Agrupa por Atividade e, dentro de cada Atividade, por Horário
+    const agendaAgrupada = agendamentosFiltrados.reduce((acc, curr) => {
+        const key = curr.Atividade;
+        if (!acc[key]) {
+            acc[key] = [];
+        }
+        acc[key].push(curr);
+        return acc;
+    }, {});
+    
+    let htmlAgenda = '';
+
+    // 2. Itera sobre os grupos (Atividades)
+    for (const atividade in agendaAgrupada) {
+        const slotsDaAtividade = agendaAgrupada[atividade];
+        
+        // Agrupa por Horário para construir as colunas da tabela
+        const horariosProfissionais = slotsDaAtividade.reduce((acc, slot) => {
+            const horario = slot.Horário;
+            if (!acc[horario]) {
+                acc[horario] = {};
+            }
+            acc[horario][slot.Profissional] = slot;
+            return acc;
+        }, {});
+
+        const profissionais = Array.from(new Set(slotsDaAtividade.map(s => s.Profissional))).sort();
+        const horariosOrdenados = Object.keys(horariosProfissionais).sort();
+        
+        let tabelaHTML = `
+            <div class="tabela-container">
+                <table class="tabela-agenda">
+                    <thead>
+                        <tr>
+                            <th class="horario-col">Horário</th>
+                            ${profissionais.map(p => `<th>${p}</th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+
+        // 3. Itera sobre os Horários
+        horariosOrdenados.forEach((horario) => {
+            tabelaHTML += `<tr><td class="horario-col">${horario}</td>`;
+            
+            // 4. Itera sobre os Profissionais (Colunas)
+            profissionais.forEach((profissional) => {
+                const slot = horariosProfissionais[horario][profissional];
+                let cellClass = 'status-fechado';
+                let cellContent = '—';
+                let dataAttrs = '';
+                
+                if (slot) {
+                    const matriculas = (slot.Reserva || '').split(',').map(m => m.trim()).filter(Boolean);
+                    const vagasOcupadas = matriculas.filter(m => m.toLowerCase() !== 'indisponivel').length;
+                    const vagasTotais = parseInt(slot.Vagas) || 0;
+                    const vagasDisponiveis = vagasTotais - vagasOcupadas;
+                    const isIndisponivel = matriculas.map(r => r.toLowerCase()).includes('indisponivel');
+
+                    // Data-attributes para o JS
+                    dataAttrs = `data-data="${dataSelecionada}" data-horario="${horario}" data-atividade="${atividade}" data-profissional="${profissional}" data-id-linha="${slot.ID_LINHA}"`;
+
+                    if (isIndisponivel) {
+                        cellClass = 'status-indisponivel';
+                        cellContent = 'Indisponível';
+                    } else if (vagasDisponiveis > 0) {
+                        cellClass = 'status-disponivel';
+                        cellContent = `Disponível <span>${vagasDisponiveis}/${vagasTotais}</span>`;
+                        
+                        if (isAdmin) {
+                            cellClass = 'status-admin-excluir'; // Permite excluir slots existentes
+                            cellContent = `Gerenciar <span>ID: ${slot.ID_LINHA}</span>`;
+                        }
+                    } else {
+                        cellClass = 'status-lotado';
+                        cellContent = `Lotado <span>(${vagasTotais} vagas)</span>`;
+                        
+                        if (isAdmin) {
+                            cellClass = 'status-admin-lotado'; // Mostra que está lotado, mas pode ter reservas
+                            cellContent = `Reservado <span>(${vagasOcupadas}/${vagasTotais})</span>`;
+                        }
+                    }
+                } 
+                
+                // Opção de adicionar slot (modo Admin) para células vazias
+                if (!slot && isAdmin) {
+                     cellClass = 'status-admin-adicionar';
+                     cellContent = 'Adicionar Slot';
+                     dataAttrs = `data-data="${dataSelecionada}" data-horario="${horario}" data-atividade="${atividade}" data-profissional="${profissional}"`;
+                }
+
+
+                tabelaHTML += `<td class="status-cell ${cellClass}" ${dataAttrs}>${cellContent}</td>`;
+            });
+            
+            tabelaHTML += `</tr>`;
+        });
+
+        tabelaHTML += `
+                    </tbody>
+                </table>
+            </div>
+        `;
+
+        htmlAgenda += `
+            <h2 class="titulo-atividade" data-atividade-key="${atividade}">${atividade}</h2>
+            ${tabelaHTML}
+        `;
+    }
+    
+    container.innerHTML = htmlAgenda;
+    
+    // Adiciona listener para o acordeão após a renderização
+    document.querySelectorAll('.titulo-atividade').forEach(titulo => {
+        titulo.addEventListener('click', (e) => {
+            e.target.classList.toggle('ativo');
+            const containerTabela = e.target.nextElementSibling;
+            if (containerTabela.style.maxHeight) {
+                containerTabela.style.maxHeight = null;
+            } else {
+                // Seta a altura para permitir o efeito de transição
+                containerTabela.style.maxHeight = containerTabela.scrollHeight + "px";
+            }
+        });
+    });
+}
+
+/**
+ * Abre o modal de agendamento (usuário) e preenche os detalhes.
+ */
+function abrirModalReserva(dataset) {
+    agendamentoAtual = dataset; // Salva os dados para o botão de confirmação
+    modalDetalhes.innerHTML = `
+        <li>Data: <strong>${dataset.data}</strong></li>
+        <li>Horário: <strong>${dataset.horario}</strong></li>
+        <li>Atividade: <strong>${dataset.atividade}</strong></li>
+        <li>Profissional: <strong>${dataset.profissional}</strong></li>
+    `;
+    inputMatricula.value = '';
+    modalMensagem.textContent = '';
+    abrirModal(modalAgendamento);
+}
+
+/**
+ * Lógica de confirmação de agendamento (usuário).
+ */
+async function confirmarReserva() {
+    const matricula = inputMatricula.value.trim();
+    if (!matricula) {
+        modalMensagem.textContent = 'A matrícula é obrigatória.';
+        modalMensagem.style.color = 'red';
+        return;
+    }
+
+    btnConfirmar.disabled = true;
+    modalMensagem.textContent = 'Reservando...';
+    modalMensagem.style.color = 'var(--cinza-texto)';
+
+    try {
+        const dadosParaEnviar = {
+            action: 'book',
+            matricula: matricula,
+            // Detalhes do agendamento
+            data: agendamentoAtual.data,
+            horario: agendamentoAtual.horario,
+            atividade: agendamentoAtual.atividade,
+            profissional: agendamentoAtual.profissional
+        };
+
+        const query = new URLSearchParams(dadosParaEnviar).toString();
+        const response = await fetch(`${apiUrl}?${query}`);
+        const result = await response.json();
+
+        if (result.status === "success") {
+            modalMensagem.textContent = result.message;
+            modalMensagem.style.color = 'var(--verde-moinhos)';
+            carregarAgenda(); // Recarrega a agenda
+            setTimeout(() => fecharModal(modalAgendamento), 2000);
+
+        } else {
+            throw new Error(result.message);
+        }
+    } catch (error) {
+        console.error('Erro ao reservar:', error);
+        modalMensagem.textContent = error.message || 'Erro de comunicação ao reservar. Tente novamente.';
+        modalMensagem.style.color = 'red';
+    } finally {
+        btnConfirmar.disabled = false;
+    }
+}
+
+
+/**
+ * Filtra os agendamentos pela data selecionada e re-renderiza a grade da agenda.
+ * (Chamado após o carregamento inicial e a cada mudança no seletor de data)
+ */
+function filtrarEAtualizarAgenda(dataSelecionada) {
+    // Atualiza o dia da semana na interface
+    const diaSemana = getDiaSemana(dataSelecionada);
+    diaSemanaSpan.textContent = `(${diaSemana})`; // Adicionando parênteses para estética
+
+    if (!todosOsAgendamentos || todosOsAgendamentos.length === 0) {
+        container.innerHTML = `<p class="loading">Nenhuma agenda encontrada. ${isAdmin ? 'Adicione horários no painel Admin.' : 'Aguarde o Administrador cadastrar horários.'}</p>`;
+        return;
+    }
+
+    // Filtra os agendamentos para a data selecionada (DD/MM/AAAA)
+    const agendamentosFiltrados = todosOsAgendamentos.filter(a => a.Data === dataSelecionada);
+
+    // Renderiza o HTML da agenda
+    renderizarAgendaParaData(agendamentosFiltrados, dataSelecionada);
+}
+
+/**
+ * Função principal que busca todos os dados da agenda da API (Google Apps Script).
+ */
+async function carregarAgenda() {
+    container.innerHTML = '<p class="loading">Carregando agenda...</p>';
+
+    // Define a data atual como padrão no seletor na primeira carga
+    if (!seletorData.value) {
+        const today = new Date().toISOString().split('T')[0];
+        seletorData.value = today;
+    }
+    
+    // Converte a data inicial para o formato DD/MM/AAAA para a função de filtragem
+    const dataInicial = seletorData.value.split('-').reverse().join('/');
+
+    try {
+        const response = await fetch(apiUrl); 
+        const result = await response.json(); 
+
+        if (Array.isArray(result)) {
+            todosOsAgendamentos = result;
+            
+            // Chama a função que filtra e renderiza para a data inicial
+            filtrarEAtualizarAgenda(dataInicial);
+            
+        } else if (result && result.status === 'error') {
+            throw new Error(result.message);
+        } else {
+             throw new Error('Erro de formato ou Web App indisponível. Verifique o URL.');
+        }
+
+    } catch (error) {
+        console.error("Erro ao carregar dados da API:", error);
+        container.innerHTML = `<p class="loading" style="color: red;">
+            Erro ao carregar agenda: ${error.message}.
+            <br>Verifique o URL do Apps Script e as permissões de acesso (deve ser 'Qualquer Pessoa').
+        </p>`;
+    }
+}
+
 
 // --- LIGAÇÃO DE EVENT LISTENERS FINAIS ---
+
+// Event Listener para a mudança de data
+seletorData.addEventListener('change', (event) => {
+    const dataSelecionada = event.target.value.split('-').reverse().join('/'); // DD/MM/AAAA
+    filtrarEAtualizarAgenda(dataSelecionada);
+});
 
 // Listeners do Modal Adicionar (NOVA LÓGICA DE ENADEAMENTO)
 adminSelectProfissional.addEventListener('change', (e) => {
@@ -466,23 +750,45 @@ btnAdminAdicionar.addEventListener('click', () => {
     fecharModal(modalAdminGerenciar);
     abrirModal(modalAdminAdicionar);
 });
-btnCancelarAdicionarFinal.addEventListener('click', () => fecharModal(modalAdminAdicionar)); // ID corrigido
+btnCancelarAdicionarFinal.addEventListener('click', () => fecharModal(modalAdminAdicionar)); 
 formAdicionarHorario.addEventListener('submit', handleAdminAdicionar);
 
 // Botão de Cancelamento de Reserva no Modal Consulta
 modalConsulta.addEventListener('click', handleCancelBooking);
 
+// Listeners de Ação Principal
+btnAdminLogin.addEventListener('click', handleAdminLoginClick);
+document.getElementById('btn-confirmar-admin-login').addEventListener('click', confirmarAdminLogin);
+document.getElementById('btn-cancelar-admin-login').addEventListener('click', () => fecharModal(modalAdminLogin));
+btnGerenciarAgenda.addEventListener('click', () => abrirModal(modalAdminGerenciar));
+document.getElementById('btn-fechar-admin-gerenciar').addEventListener('click', () => fecharModal(modalAdminGerenciar));
+document.getElementById('btn-admin-logout').addEventListener('click', () => toggleAdminView(false)); // Logout direto do painel
 
-// ... (Manter os demais listeners) ...
+btnConsultarReservas.addEventListener('click', () => {
+    inputConsultaMatricula.value = '';
+    voltarConsulta();
+    abrirModal(modalConsulta);
+});
+btnFecharConsulta.addEventListener('click', () => fecharModal(modalConsulta));
+btnVoltarConsulta.addEventListener('click', voltarConsulta);
+btnBuscarReservas.addEventListener('click', handleBuscarReservas);
+
+// Listeners do Modal de Agendamento (Usuário)
+btnCancelar.addEventListener('click', () => fecharModal(modalAgendamento));
+btnConfirmar.addEventListener('click', confirmarReserva); // Chamada à nova função
+
+// Listener Geral para cliques na Agenda (Agendamento, Exclusão, Adição)
 container.addEventListener('click', function(event) {
     const target = event.target;
-    // ... (Toggle do Acordeão) ...
+    // Toggle do Acordeão (mantido para compatibilidade, mas a lógica foi movida para renderizarAgendaParaData)
     if (target.classList.contains('titulo-atividade')) {
-        // ...
+        // A lógica de toggle agora é anexada dinamicamente em renderizarAgendaParaData
+        return;
     }
 
     // Ação na Célula de Agendamento (Usuário / Admin)
     if (isAdmin && target.classList.contains('status-admin-excluir')) {
+        // Excluir ou Gerenciar
         const idLinha = target.dataset.idLinha;
         if (idLinha) {
             handleAdminDelete(idLinha);
@@ -508,15 +814,11 @@ container.addEventListener('click', function(event) {
             adminInputHorario.value = target.dataset.horario;
         }
 
-        fecharModal(modalAdminGerenciar);
+        // Não fecha o modal de gerenciar, apenas abre o de adicionar (ou pode fechar para focar)
+        // fecharModal(modalAdminGerenciar); 
         abrirModal(modalAdminAdicionar);
     }
 });
-// ... (demais ligações de botões) ...
 
-// Inicialização
+// Inicialização: Chama a função principal para carregar os dados
 carregarAgenda();
-
-
-
-
