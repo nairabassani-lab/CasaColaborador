@@ -120,7 +120,7 @@ function toggleAdminView(loggedIn) {
         btnAdminLogin.classList.add('btn-vermelho'); 
         btnGerenciarAgenda.classList.remove('hidden');
         if (!document.querySelector('.aviso-admin')) {
-             container.insertAdjacentHTML('beforebegin', '<p class="aviso-admin">MODO ADMIN ATIVADO. Clique nos slots para GEREENCIAR (Excluir/Ver).</p>');
+             container.insertAdjacentHTML('beforebegin', '<p class="aviso-admin">MODO ADMIN ATIVADO. Clique nos slots para GERENCIAR (Excluir/Ver).</p>');
         }
     } else {
         btnAdminLogin.textContent = 'Login Admin';
@@ -822,3 +822,4 @@ container.addEventListener('click', function(event) {
 
 // Inicialização: Chama a função principal para carregar os dados
 carregarAgenda();
+
