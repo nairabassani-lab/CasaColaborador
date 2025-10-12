@@ -823,3 +823,24 @@ container.addEventListener('click', function(event) {
 // Inicialização: Chama a função principal para carregar os dados
 carregarAgenda();
 
+// --- NOVO EVENT LISTENER PARA BOTÕES DE FECHAR 'X' ---
+
+document.addEventListener('click', function(event) {
+    const target = event.target;
+    
+    // Verifica se o elemento clicado tem a classe 'modal-fechar'
+    if (target.classList.contains('modal-fechar')) {
+        // Encontra o elemento pai que é o modal-backdrop (que tem a classe 'modal-backdrop')
+        let modal = target.closest('.modal-backdrop');
+        
+        if (modal) {
+            fecharModal(modal);
+            
+            // Lógica adicional para limpar o input de senha se for o modal de login
+            if (modal.id === 'modal-admin-login') {
+                document.getElementById('input-admin-password').value = '';
+                document.getElementById('admin-login-mensagem').textContent = '';
+            }
+        }
+    }
+});
