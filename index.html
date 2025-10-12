@@ -83,33 +83,40 @@
         </div>
     </div>
 
-    <div id="modal-admin-login" class="modal-overlay hidden">
-        <div class="modal-content">
-            <h2>Acesso Administrativo</h2>
-            <div class="form-group">
-                <label for="input-admin-password">Senha Admin:</label>
-                <input type="password" id="input-admin-password" placeholder="Digite a senha">
-            </div>
-            <div id="admin-login-mensagem"></div>
-            <div class="modal-botoes">
-                <button id="btn-cancelar-admin-login" class="btn-modal btn-cinza" type="button">Cancelar</button>
-                <button id="btn-confirmar-admin-login" class="btn-modal btn-vermelho" type="button">Entrar</button>
-            </div>
+        <div id="modal-admin-login" class="modal-backdrop hidden">
+    <div class="modal-content">
+        <button class="modal-fechar">X</button> 
+        
+        <h2>Acesso Administrativo</h2>
+        
+        <div class="form-group">
+            <label for="input-admin-password">Senha Admin:</label>
+            <input type="password" id="input-admin-password" placeholder="Digite a senha">
+        </div>
+        
+        <div id="admin-login-mensagem"></div>
+        
+        <div class="modal-botoes">
+            <button id="btn-cancelar-admin-login" class="btn-modal btn-cinza" type="button">Cancelar</button>
+            <button id="btn-confirmar-admin-login" class="btn-modal btn-vermelho" type="button">Entrar</button>
         </div>
     </div>
+</div>
 
-    <div id="modal-admin-gerenciar" class="modal-overlay hidden">
-        <div class="modal-content">
-            <h2>Painel de Administração</h2>
-            <p>Selecione a ação desejada.</p>
-            <div class="modal-botoes vertical-botoes">
-                <button id="btn-admin-adicionar" class="btn-modal btn-verde" type="button">Adicionar Novos Horários</button>
-                
-                <button id="btn-admin-logout" class="btn-modal btn-cinza" type="button">Logout Admin</button>
-                <button id="btn-fechar-admin-gerenciar" class="btn-modal btn-cinza" type="button">Fechar</button>
-            </div>
+   <div id="modal-admin-gerenciar" class="modal-overlay hidden">
+    <div class="modal-content">
+        <button class="modal-fechar">X</button>
+        
+        <h2>Painel de Administração</h2>
+        <p>Selecione a ação desejada.</p>
+        
+        <div class="modal-botoes vertical-botoes">
+            <button id="btn-admin-adicionar" class="btn-modal btn-verde" type="button">Adicionar Novos Horários</button>
+            <button id="btn-admin-logout" class="btn-modal btn-cinza" type="button">Logout Admin</button>
+            <button id="btn-fechar-admin-gerenciar" class="btn-modal btn-cinza" type="button">Fechar</button>
         </div>
     </div>
+</div>
 
 <div id="modal-admin-adicionar" class="modal-overlay hidden">
         <div class="modal-content large-modal">
@@ -179,5 +186,6 @@
     <script src="script.js"></script>
 </body>
 </html>
+
 
 
