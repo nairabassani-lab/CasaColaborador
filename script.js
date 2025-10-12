@@ -214,3 +214,4 @@ document.addEventListener('DOMContentLoaded', (event) => {
     // ... outros listeners
     
 }); // Fim do bloco DOMContentLoaded
+
