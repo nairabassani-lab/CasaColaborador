@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="favicon.png"> 
     <title>Agenda de Horários - Moinhos de Vento</title>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -15,7 +16,7 @@
     <header>
         <div class="logos-container">
             <img src="https://www.hospitalmoinhos.org.br/assets/images/logo-w-hopkins.png" alt="Logo Hospital Moinhos de Vento" id="logo-hmv">
-            <img src="img/casa-colaborador.png" alt="Logo Casa do Colaborador" id="logo-casa-colaborador">
+            <img src="favicon.png" alt="Logo Casa do Colaborador" id="logo-casa-colaborador">
         </div>
         <h1>Agenda de Horários para Colaboradores</h1>
         
@@ -28,17 +29,13 @@
     </header>
     
     <div id="seletor-container">
-        <label for="seletor-data">Selecione uma data:</label>
-        <input type="date" id="seletor-data">
-        <span id="dia-semana" class="dia-semana-label"></span>
-        
-        <button id="btn-consultar-reservas" class="btn-acao btn-azul">Minhas Reservas</button>
-        
-        <button id="btn-gerenciar-agenda" class="btn-acao btn-vermelho hidden" type="button">Gerenciar Agenda</button>
+        <label for="seletor-data">Selecione a Data:</label>
+        <input type="date" id="seletor-data" required>
+        <span id="dia-semana" class="dia-semana"></span>
     </div>
 
-    <div id="agenda-container" class="agenda-grid">
-        <p class="loading">Carregando agenda...</p>
+    <div id="agenda-container" class="agenda-container loading">
+        <p class="loading-text">Carregando a agenda...</p>
     </div>
 
     <div id="modal-agendamento" class="modal-backdrop hidden">
@@ -175,4 +172,3 @@
     <script src="script.js"></script>
 </body>
 </html>
-
