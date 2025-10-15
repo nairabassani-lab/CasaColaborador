@@ -213,5 +213,9 @@ document.addEventListener('DOMContentLoaded', (event) => {
     
     // ... outros listeners
     
+    // === CÓDIGO CRÍTICO AUSENTE: INICIA O CARREGAMENTO DA AGENDA ===
+    // É provável que uma função como 'fetchAgenda' ou 'loadAgenda' esteja faltando
+    // e precisa ser chamada aqui para buscar os dados da sua API do Google Apps Script.
+    // Exemplo: fetchAgenda(seletorData.value || dataAtual);
+    
 }); // Fim do bloco DOMContentLoaded
-
