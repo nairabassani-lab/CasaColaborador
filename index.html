@@ -28,13 +28,17 @@
     </header>
     
     <div id="seletor-container">
-        <label for="seletor-data">Selecione a Data:</label>
-        <input type="date" id="seletor-data" required>
-        <span id="dia-semana" class="dia-semana"></span>
+        <label for="seletor-data">Selecione uma data:</label>
+        <input type="date" id="seletor-data">
+        <span id="dia-semana" class="dia-semana-label"></span>
+        
+        <button id="btn-consultar-reservas" class="btn-acao btn-azul">Minhas Reservas</button>
+        
+        <button id="btn-gerenciar-agenda" class="btn-acao btn-vermelho hidden" type="button">Gerenciar Agenda</button>
     </div>
 
-    <div id="agenda-container" class="agenda-container loading">
-        <p class="loading-text">Carregando a agenda...</p>
+    <div id="agenda-container" class="agenda-grid">
+        <p class="loading">Carregando agenda...</p>
     </div>
 
     <div id="modal-agendamento" class="modal-backdrop hidden">
@@ -171,3 +175,4 @@
     <script src="script.js"></script>
 </body>
 </html>
+
