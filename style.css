@@ -604,29 +604,8 @@ header {
 .modal-overlay.hidden { 
     pointer-events: none; 
 }
-/* --- Estilos para o botão de fechar (X) nos modais --- */
-.modal-content {
-    position: relative; /* Essencial para que o 'X' seja posicionado de forma absoluta */
-    /* ... o restante dos seus estilos de modal-content ... */
-}
 
-.modal-fechar {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    background: none;
-    border: none;
-    font-size: 1.5em;
-    font-weight: bold;
-    color: var(--cinza-texto);
-    cursor: pointer;
-    line-height: 1;
-    padding: 5px;
-    transition: color 0.2s;
-}
 
-.modal-fechar:hover {
-    color: var(--vermelho-moinhos, #dc3545); /* Cor de destaque ao passar o mouse */
-}
+
 
 
