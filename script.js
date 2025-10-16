@@ -458,4 +458,35 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Ação de AGENDAMENTO (Botão ou Slot Disponível)
             const btnAgendar = target.closest('.btn-agendar-slot') || target.closest('.agenda-row.status-disponivel');
-
+            if (btnAgendar && !isAdmin) {
+                const row = btnAgendar.closest('.agenda-row');
+                if (row) {
+                    celulaClicada = row;
+                    abrirModalReserva(row.dataset);
+                }
+                return;
+            }
+            
+            // Ação de EXCLUSÃO (Botão Admin)
+            const btnExcluir = target.closest('.btn-excluir-slot');
+            if (btnExcluir && isAdmin) {
+                const rowId = btnExcluir.dataset.rowId;
+                handleAdminDelete(rowId);
+                return;
+            }
+        });
+    }
+    
+    // --- LISTENER DE CANCELAMENTO NA ABA DE RESULTADOS DA CONSULTA ---
+    if (listaAgendamentos) {
+        listaAgendamentos.addEventListener('click', function(event) {
+            const btnCancelar = event.target.closest('.btn-cancelar-reserva');
+            if (btnCancelar) {
+                const rowId = btnCancelar.dataset.rowId; // ID da linha na planilha de Reserva/Dados
+                const slotId = btnCancelar.dataset.slotId; // ID da linha na planilha Dados
+                const atividade = btnCancelar.dataset.atividade;
+                handleCancelamentoReserva(rowId, slotId, atividade);
+            }
+        });
+    }
+}); // <-- CHAVE DE FECHAMENTO FINAL CORRIGIDA
