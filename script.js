@@ -52,7 +52,7 @@ const adminAddMensagem = document.getElementById('admin-add-mensagem');
 const adminSelectData = document.getElementById('admin-select-data');
 
 // Consulta (Minhas Reservas)
-const modalConsulta = document.getElementById('modal-consulta'); 
+const modalConsulta = document.getElementById('modal-consulta'); 
 const inputConsultaMatricula = document.getElementById('input-consulta-matricula');
 const consultaViewInicial = document.getElementById('consulta-view-inicial');
 const consultaViewResultados = document.getElementById('consulta-view-resultados');
@@ -71,36 +71,36 @@ const ADMIN_PASSWORD = 'admin'; // Senha simples para demonstração
 
 // --- MAPA DE ATIVIDADES E REGRAS ---
 const professionalRules = {
-    'Ana': { activities: ['Fit Class (Ballet Fit)', 'Funcional Dance', 'Power Gap'], type: 'aula', defaultVagas: 15 },
-    'Carlos': { activities: ['Funcional', 'Mat Pilates', 'Ritmos / Zumba', 'Jump'], type: 'aula', defaultVagas: 15 },
-    'Luis': { activities: ['Quick Massage'], type: 'quick_massage', defaultVagas: 1 },
-    'Maria Eduarda': { activities: ['Quick Massage'], type: 'quick_massage', defaultVagas: 1 },
-    'Rafael': { activities: ['Quick Massage', 'Reiki'], type: 'mixed', defaultVagas: 1 }
+    'Ana': { activities: ['Fit Class (Ballet Fit)', 'Funcional Dance', 'Power Gap'], type: 'aula', defaultVagas: 15 },
+    'Carlos': { activities: ['Funcional', 'Mat Pilates', 'Ritmos / Zumba', 'Jump'], type: 'aula', defaultVagas: 15 },
+    'Luis': { activities: ['Quick Massage'], type: 'quick_massage', defaultVagas: 1 },
+    'Maria Eduarda': { activities: ['Quick Massage'], type: 'quick_massage', defaultVagas: 1 },
+    'Rafael': { activities: ['Quick Massage', 'Reiki'], type: 'mixed', defaultVagas: 1 }
 };
 
 const quickMassageHours = [
-    '08:15', '08:30', '08:45', '09:00', '09:15', '09:30', '09:45', '10:00', '10:15', 
-    '10:30', '10:45', '11:00', '11:15', '11:30', '11:45', '12:00', '12:15', '12:30', 
-    '12:45', '13:00', '13:15', '13:30', '13:45', '14:00', '14:15', '14:30', '14:45', 
-    '15:00', '15:15', '15:30', '15:45', '16:00', '16:15', '16:30', '16:45', '17:00', 
-    '17:15', '17:30', '17:45', '18:00', '18:15', '18:30', '18:45'
+    '08:15', '08:30', '08:45', '09:00', '09:15', '09:30', '09:45', '10:00', '10:15', 
+    '10:30', '10:45', '11:00', '11:15', '11:30', '11:45', '12:00', '12:15', '12:30', 
+    '12:45', '13:00', '13:15', '13:30', '13:45', '14:00', '14:15', '14:30', '14:45', 
+    '15:00', '15:15', '15:30', '15:45', '16:00', '16:15', '16:30', '16:45', '17:00', 
+    '17:15', '17:30', '17:45', '18:00', '18:15', '18:30', '18:45'
 ];
 
 
 // --- FUNÇÕES DE UTILIDADE (MODAIS) ---
 
 function abrirModal(modalElement) {
-    if (modalElement) {
-        modalElement.classList.remove('hidden');
-        setTimeout(() => modalElement.style.opacity = 1, 10); 
-    }
+    if (modalElement) {
+        modalElement.classList.remove('hidden');
+        setTimeout(() => modalElement.style.opacity = 1, 10); 
+    }
 }
 
 function fecharModal(modalElement) {
-    if (modalElement) {
-        modalElement.style.opacity = 0;
-        setTimeout(() => modalElement.classList.add('hidden'), 300);
-    }
+    if (modalElement) {
+        modalElement.style.opacity = 0;
+        setTimeout(() => modalElement.classList.add('hidden'), 300);
+    }
 }
 
 function mostrarMensagem(titulo, texto, isSuccess = false) {
@@ -150,7 +150,7 @@ function toggleAdminView(loggedIn) {
     if (loggedIn) {
         btnAdminLogin.textContent = 'Logout Admin';
         btnAdminLogin.classList.remove('btn-cinza');
-        btnAdminLogin.classList.add('btn-vermelho'); 
+        btnAdminLogin.classList.add('btn-vermelho'); 
         // CORREÇÃO: MOSTRA o botão de Gerenciar Agenda
         btnGerenciarAgenda.classList.remove('hidden'); 
         
@@ -235,6 +235,7 @@ function renderQuickMassageGrid() {
     });
 }
 
+// *** FUNÇÃO CORRIGIDA PARA TODAS AS MODALIDADES ***
 function toggleAdminInputs() {
     const profissional = adminSelectProfissional.value;
     const atividade = adminSelectAtividade.value;
@@ -244,6 +245,7 @@ function toggleAdminInputs() {
     quickMassageContainer.classList.add('hidden');
     horarioUnicoContainer.classList.add('hidden');
     adminInputHorario.required = false;
+    // Garante que o botão esteja desabilitado por padrão
     btnConfirmarAdicionarFinal.disabled = true;
 
     if (!rule || !atividade) {
@@ -253,18 +255,20 @@ function toggleAdminInputs() {
     const isQuickMassage = (rule.type === 'quick_massage' && atividade === 'Quick Massage');
     const isAula = rule.type === 'aula' || (rule.type === 'mixed' && atividade !== 'Quick Massage');
 
-    // 1. Lógica Quick Massage (seleção múltipla)
+    // 1. Lógica Quick Massage (seleção múltipla) - CORREÇÃO 1
     if (isQuickMassage) {
         quickMassageContainer.classList.remove('hidden');
         renderQuickMassageGrid();
-        // Habilita o botão de confirmar se a grade estiver visível (o usuário selecionará depois)
-        btnConfirmarAdicionarFinal.disabled = false;
+        // CORREÇÃO: Habilita o botão imediatamente para Quick Massage.
+        btnConfirmarAdicionarFinal.disabled = false; 
     } 
-    // 2. Lógica Aulas e Reiki (horário único)
+    // 2. Lógica Aulas e Reiki (horário único) - CORREÇÃO 2 (Consistência)
     else {
         horarioUnicoContainer.classList.remove('hidden');
         adminInputHorario.required = true;
-        btnConfirmarAdicionarFinal.disabled = !adminInputHorario.value;
+        
+        // CORREÇÃO: Habilita o botão se o campo de horário já estiver preenchido com HH:MM
+        btnConfirmarAdicionarFinal.disabled = adminInputHorario.value.trim().length < 5;
 
         if (isAula) {
             adminInputVagas.value = rule.defaultVagas;
@@ -350,6 +354,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Limpa e abre o modal de adição
         formAdicionarHorario.reset();
         adminAddMensagem.textContent = '';
+        // Configura a data inicial para a data atual da agenda principal ou a data de hoje
+        adminSelectData.value = seletorData ? seletorData.value : hoje;
         updateActivitySelector(''); // Reseta o seletor de atividade
         toggleAdminInputs(); // Esconde/Mostra containers
         abrirModal(modalAdminAdicionar);
@@ -370,17 +376,34 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     if (adminInputHorario) {
+        // Listener que garante a ativação do botão ao digitar para AULAS/REIKI
         adminInputHorario.addEventListener('input', () => {
-            // Habilita o botão apenas se for horário único e o campo estiver preenchido
+            // Habilita o botão apenas se for horário único e o campo estiver preenchido (HH:MM = 5 caracteres)
             if (!quickMassageContainer.classList.contains('hidden')) return; // Ignora se for Quick Massage
             btnConfirmarAdicionarFinal.disabled = adminInputHorario.value.trim().length < 5;
         });
     }
     
-    // Listener de submissão do formulário de adição (requer a implementação da função handleAdminAddHorario)
+    // Listener de submissão do formulário de adição (incluindo validação de Quick Massage)
     if (formAdicionarHorario) {
         formAdicionarHorario.addEventListener('submit', (e) => {
             e.preventDefault();
+
+            // Lógica de validação de Quick Massage antes de submeter
+            const isQuickMassageActive = !quickMassageContainer.classList.contains('hidden');
+            if (isQuickMassageActive) {
+                const selectedHorarios = document.querySelectorAll('input[name="quick-horario"]:checked');
+                if (selectedHorarios.length === 0) {
+                    adminAddMensagem.textContent = 'Selecione pelo menos um horário para Quick Massage.';
+                    adminAddMensagem.style.color = 'red';
+                    return; // Bloqueia a submissão
+                }
+            }
+            
+            // Se passar nas validações
+            adminAddMensagem.textContent = 'Adicionando horários...';
+            adminAddMensagem.style.color = 'orange';
+
             // handleAdminAddHorario(new FormData(formAdicionarHorario));
         });
     }
@@ -409,9 +432,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- LISTENERS DE RESERVA (USUÁRIO) ---
     if (inputMatricula) {
-         inputMatricula.addEventListener('input', (e) => {
-            if (btnConfirmar) btnConfirmar.disabled = e.target.value.trim().length === 0;
-        });
+           inputMatricula.addEventListener('input', (e) => {
+             if (btnConfirmar) btnConfirmar.disabled = e.target.value.trim().length === 0;
+         });
     }
     
     if (btnConfirmar) btnConfirmar.addEventListener('click', () => {
@@ -426,8 +449,8 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (isAdmin) {
                  // Lógica de Admin (Excluir/Adicionar Slot Vazio) - Precisa da função handleAdminDelete
-                // if (target.classList.contains('status-admin-excluir')) { ... }
-                // else if (target.classList.contains('status-admin-adicionar')) { ... }
+                 // if (target.classList.contains('status-admin-excluir')) { ... }
+                 // else if (target.classList.contains('status-admin-adicionar')) { ... }
 
             } else if (target.classList.contains('status-disponivel')) {
                 // Lógica de Agendamento do Usuário
