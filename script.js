@@ -43,6 +43,7 @@ const adminSelectProfissional = document.getElementById('admin-select-profission
 const adminSelectAtividade = document.getElementById('admin-select-atividade');
 const quickMassageContainer = document.getElementById('quick-massage-container');
 const quickMassageHorariosGrid = document.getElementById('quick-massage-horarios');
+const quickMassageIndisponivelAll = document.getElementById('qm-indisponivel'); // NOVO ELEMENTO
 const horarioUnicoContainer = document.getElementById('horario-unico-container');
 const adminInputHorario = document.getElementById('admin-input-horario');
 const adminInputVagas = document.getElementById('admin-input-vagas');
@@ -190,7 +191,6 @@ function abrirModalReserva(data) {
 }
 
 // --- Funções de interação com API (Google Apps Script) - APENAS PLACEHOLDERS ---
-// Mantendo placeholders para as funções que não estamos implementando agora.
 
 function carregarAgenda() {
     if (seletorData && container) {
@@ -235,7 +235,7 @@ function renderQuickMassageGrid() {
     });
 }
 
-// *** FUNÇÃO DE CONTROLE DE VISIBILIDADE E BOTÃO DE SUBMISSÃO ***
+// Função para controlar a visibilidade e estado do botão de submissão
 function toggleAdminInputs() {
     const profissional = adminSelectProfissional.value;
     const atividade = adminSelectAtividade.value;
@@ -249,27 +249,25 @@ function toggleAdminInputs() {
     btnConfirmarAdicionarFinal.disabled = true;
 
     if (!rule || !atividade) {
-        return; // Não faz nada se Profissional ou Atividade não estiverem selecionados
+        return; 
     }
 
     const isQuickMassage = (rule.type === 'quick_massage' && atividade === 'Quick Massage');
-    const isAula = rule.type === 'aula' || (rule.type === 'mixed' && atividade !== 'Quick Massage');
 
-    // 1. Lógica Quick Massage (seleção múltipla)
     if (isQuickMassage) {
         quickMassageContainer.classList.remove('hidden');
         renderQuickMassageGrid();
         // Habilita o botão imediatamente para Quick Massage.
         btnConfirmarAdicionarFinal.disabled = false; 
     } 
-    // 2. Lógica Aulas e Reiki (horário único)
     else {
         horarioUnicoContainer.classList.remove('hidden');
         adminInputHorario.required = true;
         
-        // Habilita o botão se o campo de horário já estiver preenchido com HH:MM
         btnConfirmarAdicionarFinal.disabled = adminInputHorario.value.trim().length < 5;
-
+        
+        // Lógica de vagas para Aulas/Reiki
+        const isAula = rule.type === 'aula' || (rule.type === 'mixed' && atividade !== 'Quick Massage');
         if (isAula) {
             adminInputVagas.value = rule.defaultVagas;
             adminInputVagas.parentElement.classList.add('hidden');
@@ -280,11 +278,10 @@ function toggleAdminInputs() {
     }
 }
 
-// --- FUNÇÃO IMPLEMENTADA PARA ENVIAR DADOS AO APPS SCRIPT ---
+// --- FUNÇÃO CORRIGIDA PARA ENVIAR DADOS AO APPS SCRIPT (Quick Massage Indisponível) ---
 async function handleAdminAddHorario(formData) {
     const profissional = formData.get('admin-select-profissional');
     const atividade = formData.get('admin-select-atividade');
-    // Data é a data selecionada no modal
     const dataSelecionada = formData.get('admin-select-data'); 
     const rule = professionalRules[profissional];
     
@@ -298,23 +295,41 @@ async function handleAdminAddHorario(formData) {
         const isQuickMassage = (rule.type === 'quick_massage' && atividade === 'Quick Massage');
 
         if (isQuickMassage) {
-            // Caso Quick Massage: Múltiplos horários selecionados
-            const selectedHorarios = document.querySelectorAll('input[name="quick-horario"]:checked');
-            
-            if (selectedHorarios.length === 0) {
-                 // Este caso já é tratado no listener de submit, mas é um bom ponto de falha
-                 throw new Error('Nenhum horário selecionado para Quick Massage.');
-            }
-            
-            selectedHorarios.forEach(checkbox => {
-                dadosParaEnvio.push({
-                    profissional: profissional,
-                    atividade: atividade,
-                    data: dataSelecionada,
-                    horario: checkbox.value,
-                    vagas: 1 
+            // Verifica se o Admin marcou para bloquear TODOS os horários de QM
+            const indisponivelAll = quickMassageIndisponivelAll && quickMassageIndisponivelAll.checked;
+
+            if (indisponivelAll) {
+                // Caso Indisponível: Envia todos os slots como bloqueados (0 vagas ou 'Indisponível')
+                quickMassageHours.forEach(horario => {
+                    dadosParaEnvio.push({
+                        profissional: profissional,
+                        atividade: atividade,
+                        data: dataSelecionada,
+                        horario: horario,
+                        vagas: 0, // 0 vagas = Bloqueado/Indisponível no Apps Script
+                        status: 'Indisponível' 
+                    });
                 });
-            });
+            } else {
+                // Caso Disponível: Envia apenas os slots marcados (disponíveis)
+                const selectedHorarios = document.querySelectorAll('input[name="quick-horario"]:checked');
+                
+                if (selectedHorarios.length === 0) {
+                     // Este erro deve ser capturado no listener de submit, mas reforçamos
+                     throw new Error('Selecione pelo menos um horário ou marque "Indisponível" para Quick Massage.');
+                }
+                
+                selectedHorarios.forEach(checkbox => {
+                    dadosParaEnvio.push({
+                        profissional: profissional,
+                        atividade: atividade,
+                        data: dataSelecionada,
+                        horario: checkbox.value,
+                        vagas: 1, 
+                        status: 'Disponível'
+                    });
+                });
+            }
 
         } else {
             // Caso Horário Único (Aulas ou Reiki)
@@ -330,7 +345,8 @@ async function handleAdminAddHorario(formData) {
                 atividade: atividade,
                 data: dataSelecionada,
                 horario: horario,
-                vagas: parseInt(vagas) || rule.defaultVagas
+                vagas: parseInt(vagas) || rule.defaultVagas,
+                status: 'Disponível'
             });
         }
         
@@ -338,7 +354,7 @@ async function handleAdminAddHorario(formData) {
         const response = await fetch(apiUrl, {
             method: 'POST',
             body: JSON.stringify({
-                action: 'addSchedule', // Deve corresponder ao que o doPost do GSS espera
+                action: 'addSchedule', 
                 data: dadosParaEnvio
             }),
             headers: {
@@ -371,7 +387,7 @@ async function handleAdminAddHorario(formData) {
 }
 
 
-// --- INICIALIZAÇÃO E LISTENERS GERAIS (Garantindo o fluxo Admin) ---
+// --- INICIALIZAÇÃO E LISTENERS GERAIS ---
 
 document.addEventListener('DOMContentLoaded', () => {
     // 1. Configuração inicial da data
@@ -393,7 +409,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 4. Fechar Modais (Geral)
-    // Fechar Modais genéricos (o modal-mensagem-overlay usa #btn-fechar-mensagem)
     document.querySelectorAll('#btn-cancelar-agendamento, #btn-fechar-consulta, #btn-fechar-admin-gerenciar, #btn-fechar-mensagem').forEach(button => {
         button.addEventListener('click', (e) => {
             const modal = e.target.closest('.modal-overlay');
@@ -401,14 +416,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
     
-    // --- LÓGICA DE LOGIN ADMIN (CORRIGIDA) ---
+    // --- LÓGICA DE LOGIN ADMIN ---
     if (btnAdminLogin) btnAdminLogin.addEventListener('click', () => {
         if (isAdmin) {
             toggleAdminView(false); // Faz Logout
             fecharModal(modalAdminGerenciar);
             return;
         }
-        abrirModal(modalAdminLogin); // Abre o modal
+        abrirModal(modalAdminLogin); 
         inputAdminPassword.value = '';
         adminLoginMensagem.textContent = '';
     });
@@ -421,10 +436,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnConfirmarAdminLogin) btnConfirmarAdminLogin.addEventListener('click', () => {
         const password = inputAdminPassword.value.trim();
         if (password === ADMIN_PASSWORD) {
-            toggleAdminView(true); // Faz Login e mostra o botão 'Gerenciar Agenda'
+            toggleAdminView(true); 
             fecharModal(modalAdminLogin);
-            
-            // CORREÇÃO: Abre o painel de gerenciamento imediatamente após o login
             abrirModal(modalAdminGerenciar); 
         } else {
             adminLoginMensagem.textContent = 'Senha incorreta.';
@@ -432,7 +445,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // CORREÇÃO: Listener para o botão 'Gerenciar Agenda' (agora visível após login)
     if (btnGerenciarAgenda) btnGerenciarAgenda.addEventListener('click', () => {
         if (isAdmin) {
              abrirModal(modalAdminGerenciar);
@@ -441,13 +453,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- ADMIN GERENCIAR / ADICIONAR ---
     if (btnAdminAdicionar) btnAdminAdicionar.addEventListener('click', () => {
-        // Limpa e abre o modal de adição
         formAdicionarHorario.reset();
         adminAddMensagem.textContent = '';
-        // Configura a data inicial para a data atual da agenda principal ou a data de hoje
         adminSelectData.value = seletorData ? seletorData.value : hoje;
-        updateActivitySelector(''); // Reseta o seletor de atividade
-        toggleAdminInputs(); // Esconde/Mostra containers
+        updateActivitySelector(''); 
+        toggleAdminInputs(); 
         abrirModal(modalAdminAdicionar);
     });
     
@@ -466,27 +476,43 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     if (adminInputHorario) {
-        // Listener que garante a ativação do botão ao digitar para AULAS/REIKI
         adminInputHorario.addEventListener('input', () => {
-            // Habilita o botão apenas se for horário único e o campo estiver preenchido (HH:MM = 5 caracteres)
-            if (!quickMassageContainer.classList.contains('hidden')) return; // Ignora se for Quick Massage
+            if (!quickMassageContainer.classList.contains('hidden')) return; 
             btnConfirmarAdicionarFinal.disabled = adminInputHorario.value.trim().length < 5;
         });
     }
-    
+
+    // NOVO LISTENER: Lógica de exclusão/seleção de Quick Massage
+    if (quickMassageIndisponivelAll) {
+        quickMassageIndisponivelAll.addEventListener('change', () => {
+            const checkboxes = document.querySelectorAll('input[name="quick-horario"]');
+            const isChecked = quickMassageIndisponivelAll.checked;
+
+            checkboxes.forEach(checkbox => {
+                // Desabilita/habilita e desmarca/marca os horários individuais
+                checkbox.disabled = isChecked;
+                if (isChecked) {
+                    checkbox.checked = false;
+                }
+            });
+            // O botão permanece habilitado (pois há sempre uma ação a ser feita)
+        });
+    }
+
     // Listener de submissão do formulário de adição (incluindo validação de Quick Massage)
     if (formAdicionarHorario) {
         formAdicionarHorario.addEventListener('submit', (e) => {
             e.preventDefault();
 
-            // Lógica de validação de Quick Massage antes de submeter
             const isQuickMassageActive = !quickMassageContainer.classList.contains('hidden');
-            if (isQuickMassageActive) {
+            const indisponivelAll = quickMassageIndisponivelAll && quickMassageIndisponivelAll.checked;
+
+            if (isQuickMassageActive && !indisponivelAll) {
                 const selectedHorarios = document.querySelectorAll('input[name="quick-horario"]:checked');
                 if (selectedHorarios.length === 0) {
-                    adminAddMensagem.textContent = 'Selecione pelo menos um horário para Quick Massage.';
+                    adminAddMensagem.textContent = 'Selecione pelo menos um horário ou marque "Marcar TODOS como Indisponível".';
                     adminAddMensagem.style.color = 'red';
-                    return; // Bloqueia a submissão
+                    return; 
                 }
             }
             
@@ -494,7 +520,6 @@ document.addEventListener('DOMContentLoaded', () => {
             adminAddMensagem.textContent = 'Adicionando horários...';
             adminAddMensagem.style.color = 'orange';
 
-            // CHAMA A FUNÇÃO DE ENVIO DE DADOS CORRIGIDA
             handleAdminAddHorario(new FormData(formAdicionarHorario));
         });
     }
@@ -502,7 +527,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- LISTENERS DE CONSULTA (USUÁRIO) ---
     if(btnConsultarReservas) btnConsultarReservas.addEventListener('click', () => {
         abrirModal(modalConsulta);
-        // Garante que a view inicial está sendo exibida ao abrir
         if (consultaViewInicial) consultaViewInicial.classList.remove('hidden');
         if (consultaViewResultados) consultaViewResultados.classList.add('hidden');
         consultaMensagem.textContent = '';
@@ -539,9 +563,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!target) return;
             
             if (isAdmin) {
-                 // Lógica de Admin (Excluir/Adicionar Slot Vazio) - Precisa da função handleAdminDelete
-                 // if (target.classList.contains('status-admin-excluir')) { ... }
-                 // else if (target.classList.contains('status-admin-adicionar')) { ... }
+                 // Lógica de Admin (Excluir/Adicionar Slot Vazio) 
+                 // Implementação de exclusão de slots deve ser feita aqui.
 
             } else if (target.classList.contains('status-disponivel')) {
                 // Lógica de Agendamento do Usuário
