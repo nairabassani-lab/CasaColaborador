@@ -156,7 +156,7 @@ function toggleAdminView(loggedIn) {
         
         // Adiciona aviso visual de Admin
         if (!document.querySelector('.aviso-admin')) {
-             container.insertAdjacentHTML('beforebegin', '<p class="aviso-admin">MODO ADMIN ATIVADO. Clique nos slots para GEREENCIAR (Excluir/Ver).</p>');
+             container.insertAdjacentHTML('beforebegin', '<p class="aviso-admin">MODO ADMIN ATIVADO. Clique nos slots para GERENCIAR (Excluir/Ver).</p>');
         }
     } else {
         btnAdminLogin.textContent = 'Login Admin';
@@ -460,3 +460,4 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
