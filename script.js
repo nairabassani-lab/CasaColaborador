@@ -190,6 +190,7 @@ function abrirModalReserva(data) {
 }
 
 // --- Funções de interação com API (Google Apps Script) - APENAS PLACEHOLDERS ---
+// Mantendo placeholders para as funções que não estamos implementando agora.
 
 function carregarAgenda() {
     if (seletorData && container) {
@@ -198,12 +199,11 @@ function carregarAgenda() {
     }
 }
 
-// function fetchAgenda(data) { ... implementação da chamada fetch para apiUrl ... }
-// function renderAgenda(dados) { ... implementação da renderização ... }
-// function handleConfirmarReserva() { ... implementação da reserva no Apps Script ... }
-// function handleAdminDelete(idLinha) { ... implementação da exclusão no Apps Script ... }
-// function handleAdminAddHorario(formData) { ... implementação da adição no Apps Script ... }
-// function handleBuscarReservas(matricula) { ... implementação da busca no Apps Script ... }
+// function fetchAgenda(data) { ... }
+// function renderAgenda(dados) { ... }
+// function handleConfirmarReserva() { ... }
+// function handleAdminDelete(idLinha) { ... }
+// function handleBuscarReservas(matricula) { ... }
 
 // --- FUNÇÕES ESPECÍFICAS DO ADMIN ADICIONAR ---
 
@@ -235,7 +235,7 @@ function renderQuickMassageGrid() {
     });
 }
 
-// *** FUNÇÃO CORRIGIDA PARA TODAS AS MODALIDADES ***
+// *** FUNÇÃO DE CONTROLE DE VISIBILIDADE E BOTÃO DE SUBMISSÃO ***
 function toggleAdminInputs() {
     const profissional = adminSelectProfissional.value;
     const atividade = adminSelectAtividade.value;
@@ -255,19 +255,19 @@ function toggleAdminInputs() {
     const isQuickMassage = (rule.type === 'quick_massage' && atividade === 'Quick Massage');
     const isAula = rule.type === 'aula' || (rule.type === 'mixed' && atividade !== 'Quick Massage');
 
-    // 1. Lógica Quick Massage (seleção múltipla) - CORREÇÃO 1
+    // 1. Lógica Quick Massage (seleção múltipla)
     if (isQuickMassage) {
         quickMassageContainer.classList.remove('hidden');
         renderQuickMassageGrid();
-        // CORREÇÃO: Habilita o botão imediatamente para Quick Massage.
+        // Habilita o botão imediatamente para Quick Massage.
         btnConfirmarAdicionarFinal.disabled = false; 
     } 
-    // 2. Lógica Aulas e Reiki (horário único) - CORREÇÃO 2 (Consistência)
+    // 2. Lógica Aulas e Reiki (horário único)
     else {
         horarioUnicoContainer.classList.remove('hidden');
         adminInputHorario.required = true;
         
-        // CORREÇÃO: Habilita o botão se o campo de horário já estiver preenchido com HH:MM
+        // Habilita o botão se o campo de horário já estiver preenchido com HH:MM
         btnConfirmarAdicionarFinal.disabled = adminInputHorario.value.trim().length < 5;
 
         if (isAula) {
@@ -277,6 +277,96 @@ function toggleAdminInputs() {
             adminInputVagas.value = rule.defaultVagas;
             adminInputVagas.parentElement.classList.remove('hidden');
         }
+    }
+}
+
+// --- FUNÇÃO IMPLEMENTADA PARA ENVIAR DADOS AO APPS SCRIPT ---
+async function handleAdminAddHorario(formData) {
+    const profissional = formData.get('admin-select-profissional');
+    const atividade = formData.get('admin-select-atividade');
+    // Data é a data selecionada no modal
+    const dataSelecionada = formData.get('admin-select-data'); 
+    const rule = professionalRules[profissional];
+    
+    // Feedback inicial
+    adminAddMensagem.textContent = 'Adicionando horários...';
+    adminAddMensagem.style.color = 'orange';
+
+    try {
+        let dadosParaEnvio = [];
+        
+        const isQuickMassage = (rule.type === 'quick_massage' && atividade === 'Quick Massage');
+
+        if (isQuickMassage) {
+            // Caso Quick Massage: Múltiplos horários selecionados
+            const selectedHorarios = document.querySelectorAll('input[name="quick-horario"]:checked');
+            
+            if (selectedHorarios.length === 0) {
+                 // Este caso já é tratado no listener de submit, mas é um bom ponto de falha
+                 throw new Error('Nenhum horário selecionado para Quick Massage.');
+            }
+            
+            selectedHorarios.forEach(checkbox => {
+                dadosParaEnvio.push({
+                    profissional: profissional,
+                    atividade: atividade,
+                    data: dataSelecionada,
+                    horario: checkbox.value,
+                    vagas: 1 
+                });
+            });
+
+        } else {
+            // Caso Horário Único (Aulas ou Reiki)
+            const horario = formData.get('admin-input-horario');
+            const vagas = formData.get('admin-input-vagas');
+
+            if (!horario || horario.trim().length < 5) {
+                throw new Error('Horário de início inválido.');
+            }
+
+            dadosParaEnvio.push({
+                profissional: profissional,
+                atividade: atividade,
+                data: dataSelecionada,
+                horario: horario,
+                vagas: parseInt(vagas) || rule.defaultVagas
+            });
+        }
+        
+        // --- CHAMADA À API DO GOOGLE APPS SCRIPT ---
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: 'addSchedule', // Deve corresponder ao que o doPost do GSS espera
+                data: dadosParaEnvio
+            }),
+            headers: {
+                'Content-Type': 'text/plain;charset=utf-8' 
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`Erro de rede ou Apps Script: Status ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (result.status === 'success') {
+            adminAddMensagem.textContent = `Sucesso! ${result.message}`;
+            adminAddMensagem.style.color = 'green';
+            formAdicionarHorario.reset();
+            toggleAdminInputs();
+            carregarAgenda(); // Recarrega a agenda principal
+        } else {
+            // Se o GSS retornar status: 'error'
+            throw new Error(`Erro do Servidor: ${result.message}`);
+        }
+
+    } catch (error) {
+        console.error('Erro ao adicionar horário:', error);
+        adminAddMensagem.textContent = `Falha ao adicionar: ${error.message}`;
+        adminAddMensagem.style.color = 'red';
     }
 }
 
@@ -404,7 +494,8 @@ document.addEventListener('DOMContentLoaded', () => {
             adminAddMensagem.textContent = 'Adicionando horários...';
             adminAddMensagem.style.color = 'orange';
 
-            // handleAdminAddHorario(new FormData(formAdicionarHorario));
+            // CHAMA A FUNÇÃO DE ENVIO DE DADOS CORRIGIDA
+            handleAdminAddHorario(new FormData(formAdicionarHorario));
         });
     }
 
@@ -460,4 +551,3 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
-
