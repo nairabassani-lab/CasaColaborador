@@ -5,7 +5,7 @@ const container = document.getElementById('agenda-container');
 const seletorData = document.getElementById('seletor-data');
 const diaSemanaSpan = document.getElementById('dia-semana');
 
-// Modais de Agendamento (Usuário) - Já existentes
+// Modais de Agendamento (Usuário)
 const modalAgendamento = document.getElementById('modal-agendamento');
 const modalDetalhes = document.getElementById('modal-detalhes');
 const inputMatricula = document.getElementById('input-matricula');
@@ -25,8 +25,8 @@ const adminLoginMensagem = document.getElementById('admin-login-mensagem');
 
 const modalAdminGerenciar = document.getElementById('modal-admin-gerenciar');
 const btnAdminAdicionar = document.getElementById('btn-admin-adicionar');
-const btnAdminLogout = document.getElementById('btn-admin-logout'); // Adicionado
-const btnFecharAdminGerenciar = document.getElementById('btn-fechar-admin-gerenciar'); // Adicionado
+const btnAdminLogout = document.getElementById('btn-admin-logout'); 
+const btnFecharAdminGerenciar = document.getElementById('btn-fechar-admin-gerenciar'); 
 
 const modalAdminAdicionar = document.getElementById('modal-admin-adicionar');
 const formAdicionarHorario = document.getElementById('form-adicionar-horario');
@@ -39,7 +39,7 @@ const consultaMensagem = document.getElementById('consulta-mensagem');
 const btnFecharConsulta = document.getElementById('btn-fechar-consulta'); 
 const btnBuscarReservas = document.getElementById('btn-buscar-reservas'); 
 const btnVoltarConsulta = document.getElementById('btn-voltar-consulta'); 
-const listaAgendamentos = document.getElementById('lista-agendamentos'); // Adicionado
+const listaAgendamentos = document.getElementById('lista-agendamentos'); 
 
 // --- NOVAS REFERÊNCIAS ESPECÍFICAS DO MODAL ADICIONAR ---
 const adminSelectProfissional = document.getElementById('admin-select-profissional');
@@ -47,11 +47,11 @@ const adminSelectAtividade = document.getElementById('admin-select-atividade');
 const quickMassageContainer = document.getElementById('quick-massage-container');
 const quickMassageHorariosGrid = document.getElementById('quick-massage-horarios');
 const horarioUnicoContainer = document.getElementById('horario-unico-container');
-const vagasContainerUnico = document.getElementById('vagas-container-unico'); // ID corrigido
+const vagasContainerUnico = document.getElementById('vagas-container-unico'); 
 const adminInputVagas = document.getElementById('admin-input-vagas');
 const adminInputHorario = document.getElementById('admin-input-horario');
-const btnConfirmarAdicionarFinal = document.getElementById('btn-confirmar-adicionar-final'); // ID corrigido
-const btnCancelarAdicionarFinal = document.getElementById('btn-cancelar-adicionar-final'); // ID corrigido
+const btnConfirmarAdicionarFinal = document.getElementById('btn-confirmar-adicionar-final'); 
+const btnCancelarAdicionarFinal = document.getElementById('btn-cancelar-adicionar-final'); 
 const adminAddMensagem = document.getElementById('admin-add-mensagem');
 const adminSelectData = document.getElementById('admin-select-data');
 
@@ -62,7 +62,7 @@ let celulaClicada = null;
 let isAdmin = false;
 const ADMIN_PASSWORD = 'admin'; // Senha simples para demonstração
 
-// --- MAPA DE ATIVIDADES E REGRAS (IMPLEMENTAÇÃO DAS REGRAS) ---
+// --- MAPA DE ATIVIDADES E REGRAS ---
 const professionalRules = {
     'Ana': { 
         activities: ['Fit Class (Ballet Fit)', 'Funcional Dance', 'Power Gap'], 
@@ -86,7 +86,7 @@ const professionalRules = {
     },
     'Rafael': { 
         activities: ['Quick Massage', 'Reiki'], 
-        type: 'mixed', // Permite Quick Massage e Reiki
+        type: 'mixed', 
         defaultVagas: 1 
     }
 };
@@ -104,7 +104,6 @@ const quickMassageHours = [
 
 function abrirModal(modalElement) {
     modalElement.classList.remove('hidden');
-    // Adicione um pequeno delay para garantir que o CSS de transição funcione
     setTimeout(() => modalElement.style.opacity = 1, 10); 
 }
 
@@ -120,63 +119,67 @@ function atualizarDiaDaSemana(dataString) {
         diaSemanaSpan.textContent = '';
         return;
     }
-    const partes = dataString.split('-'); // Espera AAAA-MM-DD
+    const partes = dataString.split('-'); 
     const data = new Date(partes[0], partes[1] - 1, partes[2]);
-    const opcoes = { weekday: 'long', timeZone: 'UTC' }; // Use UTC para evitar desvios de fuso horário
+    const opcoes = { weekday: 'long', timeZone: 'UTC' }; 
     let diaDaSemana = data.toLocaleDateString('pt-BR', opcoes);
-    // Capitaliza a primeira letra para melhor apresentação
     diaDaSemana = diaDaSemana.charAt(0).toUpperCase() + diaDaSemana.slice(1);
     diaSemanaSpan.textContent = `(${diaDaSemana})`;
 }
 
 // --- LÓGICA DE CARREGAMENTO E RENDERIZAÇÃO DA AGENDA (ESSENCIAL) ---
 
-// **FUNÇÃO CORRIGIDA/ADICIONADA**
 async function carregarAgenda() {
-    const dataSelecionada = seletorData.value;
-    if (!dataSelecionada) {
-        // Define a data atual como padrão se não houver seleção
-        const hoje = new Date();
-        const yyyy = hoje.getFullYear();
-        const mm = String(hoje.getMonth() + 1).padStart(2, '0');
-        const dd = String(hoje.getDate()).padStart(2, '0');
-        const dataPadrao = `${yyyy}-${mm}-${dd}`;
-        seletorData.value = dataPadrao;
-        atualizarDiaDaSemana(dataPadrao);
-        renderizarAgendaParaData(dataPadrao);
-        return;
-    }
+    const hoje = new Date();
+    const yyyy = hoje.getFullYear();
+    const mm = String(hoje.getMonth() + 1).padStart(2, '0');
+    const dd = String(hoje.getDate()).padStart(2, '0');
+    const dataPadrao = `${yyyy}-${mm}-${dd}`;
+    
+    // Define a data atual se não houver seleção ou se a data for inválida
+    const dataSelecionada = seletorData.value || dataPadrao;
+    
+    seletorData.value = dataSelecionada;
     atualizarDiaDaSemana(dataSelecionada);
     renderizarAgendaParaData(dataSelecionada);
 }
 
-// **FUNÇÃO CORRIGIDA/ADICIONADA**
 async function renderizarAgendaParaData(dataISO) {
     container.innerHTML = '<p class="loading">Carregando agenda...</p>';
 
-    // Converte de AAAA-MM-DD para DD/MM/AAAA para a API (assumindo que a API espera DD/MM/AAAA)
+    // Converte de AAAA-MM-DD para DD/MM/AAAA para a API
     const dataApi = dataISO.split('-').reverse().join('/'); 
 
     try {
         const query = new URLSearchParams({ action: 'getSchedule', date: dataApi }).toString();
         const response = await fetch(`${apiUrl}?${query}`);
+        
+        // Verifica se a resposta foi bem sucedida a nível de rede (código 200)
+        if (!response.ok) {
+            throw new Error(`Erro de rede (${response.status}): Falha ao carregar agenda.`);
+        }
+        
         const result = await response.json();
         
         if (result.status === "success") {
             todosOsAgendamentos = result.data;
             container.innerHTML = criarHTMLAgenda(todosOsAgendamentos);
         } else {
-            container.innerHTML = `<p class="alerta-erro">Erro ao carregar a agenda: ${result.message}</p>`;
+            // Se o status for diferente de 'success' (erro reportado pela API/Script)
+            container.innerHTML = `<p class="alerta-erro">Erro ao carregar a agenda: ${result.message || 'Resposta da API inválida.'}</p>`;
         }
     } catch (error) {
         console.error('Erro de comunicação com a API:', error);
-        container.innerHTML = '<p class="alerta-erro">Erro de conexão. Verifique o console.</p>';
+        container.innerHTML = `<p class="alerta-erro">Erro de conexão. Verifique a URL da API ou o console. Detalhe: ${error.message}</p>`;
     }
 }
 
-// **FUNÇÃO CORRIGIDA/ADICIONADA**
 function criarHTMLAgenda(agendamentos) {
     if (!agendamentos || agendamentos.length === 0) {
+        // Se for admin, mostra a opção de adicionar horários
+        if (isAdmin) {
+             return `<p class="alerta-admin">Não há horários para esta data. Use o botão "Adicionar Novos Horários" no Gerenciador.</p>`;
+        }
         return '<p class="alerta-info">Não há horários disponíveis para a data selecionada.</p>';
     }
 
@@ -199,7 +202,7 @@ function criarHTMLAgenda(agendamentos) {
     // 2. Criar a estrutura HTML para cada grupo (Atividade/Profissional)
     for (const chave in agendaAgrupada) {
         const grupo = agendaAgrupada[chave];
-        const isQuickMassage = grupo.atividade.includes('Quick Massage') || grupo.atividade.includes('Reiki'); // Slots individuais
+        const isQuickMassageOrReiki = grupo.atividade.includes('Quick Massage') || grupo.atividade.includes('Reiki');
 
         html += `
             <div class="bloco-atividade">
@@ -225,7 +228,7 @@ function criarHTMLAgenda(agendamentos) {
                  vagasTexto = 'Indisp.';
             } else if (vagasLivres > 0) {
                 statusClass = 'status-disponivel';
-                vagasTexto = isQuickMassage ? 'Vaga' : `${vagasLivres}/${slot.vagas_totais} Vagas`;
+                vagasTexto = isQuickMassageOrReiki ? 'Vaga' : `${vagasLivres}/${slot.vagas_totais} Vagas`;
             } else {
                 statusClass = 'status-lotado';
                 vagasTexto = 'Esgotado';
@@ -283,7 +286,6 @@ function criarHTMLAgenda(agendamentos) {
 
 // --- LÓGICA DE AGENDAMENTO (USUÁRIO) ---
 
-// **FUNÇÃO CORRIGIDA/ADICIONADA**
 function abrirModalReserva(dadosSlot) {
     agendamentoAtual = {
         idLinha: dadosSlot.idLinha,
@@ -299,12 +301,11 @@ function abrirModalReserva(dadosSlot) {
         <li>**Atividade:** ${agendamentoAtual.atividade}</li>
         <li>**Profissional:** ${agendamentoAtual.profissional}</li>
     `;
-    inputMatricula.value = ''; // Limpa a matrícula
-    modalMensagem.textContent = ''; // Limpa a mensagem
+    inputMatricula.value = ''; 
+    modalMensagem.textContent = ''; 
     abrirModal(modalAgendamento);
 }
 
-// **FUNÇÃO CORRIGIDA/ADICIONADA**
 async function confirmarAgendamento() {
     const matricula = inputMatricula.value.trim();
     if (!matricula) {
@@ -323,14 +324,27 @@ async function confirmarAgendamento() {
             id_linha: agendamentoAtual.idLinha,
             matricula: matricula
         };
-        const query = new URLSearchParams(dadosParaEnviar).toString();
-        const response = await fetch(`${apiUrl}?${query}`);
+        
+        // Usamos POST para operações de escrita
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            mode: 'cors',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams(dadosParaEnviar).toString()
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Erro de rede (${response.status}) ao tentar reservar.`);
+        }
+        
         const result = await response.json();
         
         if (result.status === "success") {
             modalMensagem.textContent = result.message;
             modalMensagem.style.color = 'var(--verde-moinhos)';
-            carregarAgenda(); // Recarrega para mostrar a mudança
+            carregarAgenda(); 
             setTimeout(() => fecharModal(modalAgendamento), 2000);
         } else {
             throw new Error(result.message);
@@ -350,14 +364,13 @@ async function confirmarAgendamento() {
 
 function toggleAdminView(loggedIn) {
     isAdmin = loggedIn;
-    // ... (restante da função toggleAdminView mantida) ...
      if (loggedIn) {
         btnAdminLogin.textContent = 'Logout Admin';
         btnAdminLogin.classList.remove('btn-cinza');
         btnAdminLogin.classList.add('btn-vermelho'); 
         btnGerenciarAgenda.classList.remove('hidden');
         if (!document.querySelector('.aviso-admin')) {
-             container.insertAdjacentHTML('beforebegin', '<p class="aviso-admin">MODO ADMIN ATIVADO. Clique nos slots para GERENCIAR (Excluir/Ver).</p>');
+             container.insertAdjacentHTML('beforebegin', '<p class="aviso-admin">MODO ADMIN ATIVADO. Clique nos slots para **EXCLUIR** (permanentemente).</p>');
         }
     } else {
         btnAdminLogin.textContent = 'Login Admin';
@@ -398,13 +411,27 @@ async function handleAdminDelete(idLinha) {
     }
     
     try {
-        const query = new URLSearchParams({ action: 'deleteSchedule', id_linha: idLinha }).toString();
-        const response = await fetch(`${apiUrl}?${query}`);
+        const dadosParaEnviar = { action: 'deleteSchedule', id_linha: idLinha };
+        
+        // Usamos POST para operações de exclusão
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            mode: 'cors',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams(dadosParaEnviar).toString()
+        });
+
+        if (!response.ok) {
+            throw new Error(`Erro de rede (${response.status}) ao tentar excluir.`);
+        }
+        
         const result = await response.json();
 
         if (result.status === "success") {
             alert(result.message);
-            carregarAgenda(); // Recarrega para refletir a exclusão
+            carregarAgenda(); 
         } else {
             throw new Error(result.message);
         }
@@ -415,7 +442,7 @@ async function handleAdminDelete(idLinha) {
 }
 
 
-// --- LÓGICA DE ADICIONAR HORÁRIO (COMPLETA) ---
+// --- LÓGICA DE ADICIONAR HORÁRIO (FOCO DA CORREÇÃO) ---
 
 function updateActivitySelector(profissional) {
     const rule = professionalRules[profissional];
@@ -454,10 +481,9 @@ function toggleAdminInputs() {
     const atividade = adminSelectAtividade.value;
     const rule = professionalRules[profissional];
     
-    // Esconde todos os containers por padrão
     quickMassageContainer.classList.add('hidden');
     horarioUnicoContainer.classList.add('hidden');
-    vagasContainerUnico.classList.add('hidden'); // Esconde vagas por padrão
+    vagasContainerUnico.classList.add('hidden'); 
     btnConfirmarAdicionarFinal.disabled = true;
 
     if (!profissional || !atividade) return;
@@ -466,14 +492,13 @@ function toggleAdminInputs() {
     const isReiki = atividade === 'Reiki';
     const isAula = rule && rule.type === 'aula';
     
-    btnConfirmarAdicionarFinal.disabled = false; // Habilita o botão ao selecionar a Atividade
+    btnConfirmarAdicionarFinal.disabled = false; 
 
     // 1. Quick Massage: Exibe a grade pré-definida
     if (isQuickMassage) {
         quickMassageContainer.classList.remove('hidden');
         renderQuickMassageGrid(); 
         
-        // Remove 'required' dos inputs de horário/vagas únicos
         adminInputHorario.required = false;
         adminInputVagas.required = false;
     } 
@@ -482,11 +507,9 @@ function toggleAdminInputs() {
         horarioUnicoContainer.classList.remove('hidden');
         adminInputHorario.required = true;
         
-        // Ajusta o padrão de vagas
         const defaultVagas = isReiki ? 1 : rule.defaultVagas;
         adminInputVagas.value = defaultVagas;
         
-        // Esconde o input de vagas para Reiki (sempre 1 vaga)
         if (isReiki) {
             vagasContainerUnico.classList.add('hidden');
             adminInputVagas.required = false;
@@ -497,10 +520,14 @@ function toggleAdminInputs() {
     }
 }
 
+/**
+ * Funçao que coleta os dados e envia a requisição de adição de múltiplos horários
+ * para o Google Apps Script via POST.
+ */
 async function handleAdminAdicionar(event) {
     event.preventDefault();
 
-    const data = adminSelectData.value.split('-').reverse().join('/'); // Formato DD/MM/AAAA
+    const data = adminSelectData.value.split('-').reverse().join('/'); // DD/MM/AAAA
     const profissional = adminSelectProfissional.value;
     const atividade = adminSelectAtividade.value;
     let horariosParaEnviar = [];
@@ -509,30 +536,28 @@ async function handleAdminAdicionar(event) {
     adminAddMensagem.textContent = 'Enviando dados para a planilha...';
     adminAddMensagem.style.color = 'var(--cinza-texto)';
 
-    // Lógica 1: Quick Massage (Múltiplos Slots)
+    // 1. Quick Massage (Múltiplos Slots)
     if (atividade === 'Quick Massage') {
         const checkboxes = quickMassageHorariosGrid.querySelectorAll('.qm-checkbox');
         checkboxes.forEach(cb => {
             const horario = cb.dataset.horario;
             const indispCb = document.getElementById(`indisp-qm-${horario.replace(':', '-')}`);
             
-            // Cria o slot se o checkbox de horário está marcado OU o checkbox de indisponibilidade está marcado
             if (cb.checked || indispCb.checked) {
                 const reservaStatus = indispCb.checked ? 'Indisponivel' : '';
                 horariosParaEnviar.push({
                     Horario: horario,
-                    Vagas: 1, // Regra: 1 vaga fixa
+                    Vagas: 1, 
                     Reserva: reservaStatus 
                 });
             }
         });
     } 
-    // Lógica 2: Aulas ou Reiki (Slot Único)
+    // 2. Aulas ou Reiki (Slot Único)
     else {
         const horario = adminInputHorario.value.trim();
         let vagas = parseInt(adminInputVagas.value.trim());
 
-        // Para Reiki, garante que vagas seja 1 (se estiver sendo usado o slot único)
         if (atividade === 'Reiki') {
             vagas = 1;
         }
@@ -567,8 +592,20 @@ async function handleAdminAdicionar(event) {
             horariosJson: JSON.stringify(horariosParaEnviar)
         };
         
-        const query = new URLSearchParams(dadosParaEnviar).toString();
-        const response = await fetch(`${apiUrl}?${query}`);
+        // CORREÇÃO: Usar o método POST para operações de escrita/adição na API
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            mode: 'cors',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams(dadosParaEnviar).toString()
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Erro de rede (${response.status}) ao tentar adicionar horários.`);
+        }
+        
         const result = await response.json(); 
 
         if (result.status === "success") {
@@ -579,12 +616,13 @@ async function handleAdminAdicionar(event) {
             setTimeout(() => fecharModal(modalAdminAdicionar), 2000); 
 
         } else {
+            // Erro reportado pelo Apps Script
             throw new Error(result.message);
         }
 
     } catch (error) {
         console.error('Erro ao adicionar agendamento:', error);
-        adminAddMensagem.textContent = error.message || 'Erro de comunicação ao adicionar. Tente novamente.';
+        adminAddMensagem.textContent = `Erro de comunicação: ${error.message}`;
         adminAddMensagem.style.color = 'red';
     } finally {
         btnConfirmarAdicionarFinal.disabled = false;
@@ -604,11 +642,17 @@ async function handleBuscarReservas() {
     
     consultaMensagem.textContent = 'Buscando reservas...';
     consultaMensagem.style.color = 'var(--cinza-texto)';
-    listaAgendamentos.innerHTML = ''; // Limpa resultados anteriores
+    listaAgendamentos.innerHTML = ''; 
 
     try {
+        // Usa GET para consulta de dados (leitura)
         const query = new URLSearchParams({ action: 'getMyBookings', matricula }).toString();
         const response = await fetch(`${apiUrl}?${query}`);
+        
+        if (!response.ok) {
+            throw new Error(`Erro de rede (${response.status}) ao buscar reservas.`);
+        }
+        
         const result = await response.json();
         
         consultaMensagem.textContent = '';
@@ -622,7 +666,7 @@ async function handleBuscarReservas() {
         }
     } catch (error) {
         console.error('Erro ao buscar reservas:', error);
-        consultaMensagem.textContent = 'Erro ao buscar. Tente novamente.';
+        consultaMensagem.textContent = `Erro ao buscar: ${error.message}`;
         consultaMensagem.style.color = 'red';
     }
 }
@@ -659,14 +703,27 @@ async function handleCancelBooking(event) {
 
     try {
         const dadosParaEnviar = { action: 'cancelBooking', bookingId, matricula };
-        const query = new URLSearchParams(dadosParaEnviar).toString();
-        const response = await fetch(`${apiUrl}?${query}`);
+        
+        // Usa POST para operações de cancelamento (escrita)
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            mode: 'cors',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams(dadosParaEnviar).toString()
+        });
+
+        if (!response.ok) {
+            throw new Error(`Erro de rede (${response.status}) ao tentar cancelar.`);
+        }
+        
         const result = await response.json();
 
         if (result.status === "success") {
             alert(result.message);
-            handleBuscarReservas(); // Recarrega a lista
-            carregarAgenda(); // Recarrega a grade principal
+            handleBuscarReservas(); 
+            carregarAgenda(); 
         } else {
             throw new Error(result.message);
         }
@@ -689,55 +746,41 @@ function voltarConsulta() {
 
 // --- LIGAÇÃO DE EVENT LISTENERS FINAIS ---
 
-// Data Selector
 seletorData.addEventListener('change', carregarAgenda);
-
-// Modal Reserva (Usuário)
 btnCancelar.addEventListener('click', () => fecharModal(modalAgendamento));
 btnConfirmar.addEventListener('click', confirmarAgendamento);
-
-// Modal Login Admin
 btnAdminLogin.addEventListener('click', handleAdminLoginClick);
 document.getElementById('btn-cancelar-admin-login').addEventListener('click', () => fecharModal(modalAdminLogin));
 document.getElementById('btn-confirmar-admin-login').addEventListener('click', confirmarAdminLogin);
-
-// Modal Gerenciar Admin
 btnGerenciarAgenda.addEventListener('click', () => abrirModal(modalAdminGerenciar));
 btnFecharAdminGerenciar.addEventListener('click', () => fecharModal(modalAdminGerenciar));
 btnAdminLogout.addEventListener('click', () => {
     fecharModal(modalAdminGerenciar);
     toggleAdminView(false);
 });
-
-// Modal Adicionar (Admin)
 adminSelectProfissional.addEventListener('change', (e) => {
     updateActivitySelector(e.target.value);
     toggleAdminInputs();
 });
 adminSelectAtividade.addEventListener('change', toggleAdminInputs);
 btnAdminAdicionar.addEventListener('click', () => {
-    // Limpa o formulário antes de abrir
     formAdicionarHorario.reset();
     adminSelectAtividade.disabled = true;
     toggleAdminInputs(); 
     adminAddMensagem.textContent = '';
-    
     fecharModal(modalAdminGerenciar);
     abrirModal(modalAdminAdicionar);
 });
 btnCancelarAdicionarFinal.addEventListener('click', () => fecharModal(modalAdminAdicionar)); 
 formAdicionarHorario.addEventListener('submit', handleAdminAdicionar);
-
-// Modal Consulta Reservas
 btnConsultarReservas.addEventListener('click', () => {
-    voltarConsulta(); // Reseta para a view inicial
+    voltarConsulta(); 
     abrirModal(modalConsulta);
 });
 btnFecharConsulta.addEventListener('click', () => fecharModal(modalConsulta));
 btnBuscarReservas.addEventListener('click', handleBuscarReservas);
 btnVoltarConsulta.addEventListener('click', voltarConsulta);
 modalConsulta.addEventListener('click', handleCancelBooking);
-
 
 // Listener principal na grade de agendamentos
 container.addEventListener('click', function(event) {
@@ -754,31 +797,28 @@ container.addEventListener('click', function(event) {
         }
     }
 
-    // Ação na Célula de Agendamento (Usuário / Admin)
+    // Ação Admin: Excluir
     if (isAdmin && target.classList.contains('status-admin-excluir')) {
         const idLinha = target.dataset.idLinha;
         if (idLinha) {
             handleAdminDelete(idLinha);
         }
-    } else if (target.closest('.slot-horario') && target.closest('.slot-horario').classList.contains('status-disponivel') && !isAdmin) {
-         // Ação de reserva do Usuário
+    } 
+    // Ação Usuário: Reservar
+    else if (target.closest('.slot-horario') && target.closest('.slot-horario').classList.contains('status-disponivel') && !isAdmin) {
         const slotElement = target.closest('.slot-horario');
         celulaClicada = slotElement;
         abrirModalReserva(slotElement.dataset);
-
     }
-    // Adicionar slot vazio (Admin)
+    // Ação Admin: Adicionar Slot Vazio
     else if (isAdmin && target.classList.contains('status-admin-adicionar')) {
-        // Pré-preenche o modal de adição com a data, prof e atividade do slot vazio
         adminSelectData.value = target.dataset.data.split('/').reverse().join('-');
         adminSelectProfissional.value = target.dataset.profissional;
         
-        // Dispara o evento 'change' para atualizar a lista de atividades e os inputs
         updateActivitySelector(target.dataset.profissional);
         adminSelectAtividade.value = target.dataset.atividade;
         toggleAdminInputs();
         
-        // Para Quick Massage (grade), o horário não será pré-preenchido
         if (target.dataset.atividade !== 'Quick Massage') {
             adminInputHorario.value = target.dataset.horario;
         }
