@@ -1,196 +1,62 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agenda de Horários - Moinhos de Vento</title>
-    <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Agenda de Horários - Moinhos de Vento</title>
+<link rel="stylesheet" href="style.css" />
 </head>
 <body>
-    <div class="personagem-container">
-        <div class="personagens-loop">
-        </div>
-    </div>
-
-    <header>
-        <div class="logos-container">
-            <img src="https://www.hospitalmoinhos.org.br/assets/images/logo-w-hopkins.png" alt="Logo Hospital Moinhos de Vento" id="logo-hmv">
-            <img src="img/casa-colaborador.png" alt="Logo Casa do Colaborador" id="logo-casa-colaborador">
-        </div>
-        <h1>Agenda de Horários para Colaboradores</h1>
-        
-        <button id="btn-admin-login" class="btn-acao btn-cinza">Login Admin</button>
-        
-        <p class="observacao">
-            Em caso de dúvidas entre em contato com 
-            <a href="mailto:casa.colaborador@hmv.org.br">casa.colaborador@hmv.org.br</a>
-        </p>
-    </header>
-    
-    <div id="seletor-container">
-        <label for="seletor-data">Selecione uma data:</label>
-        <input type="date" id="seletor-data">
-        <span id="dia-semana" class="dia-semana-label"></span>
-        
-        <button id="btn-consultar-reservas" class="btn-acao btn-azul">Minhas Reservas</button>
-        
-        <button id="btn-gerenciar-agenda" class="btn-acao btn-vermelho hidden" type="button">Gerenciar Agenda</button>
-    </div>
-
-    <div id="agenda-container" class="agenda-grid">
-        <p class="loading">Carregando agenda...</p>
-    </div>
-
-    <div id="modal-agendamento" class="modal-overlay hidden">
-        <div class="modal-content">
-            <h2>Confirmar Agendamento</h2>
-            <ul id="modal-detalhes" class="detalhes-agendamento-lista">
-            </ul>
-            <div class="form-group">
-                <label for="input-matricula">Sua Matrícula (Ex: 12345):</label>
-                <input type="text" id="input-matricula" placeholder="Digite sua matrícula" required>
-            </div>
-            <div id="modal-mensagem"></div>
-            <div class="modal-botoes">
-                <button id="btn-cancelar-agendamento" class="btn-modal btn-cinza" type="button">Cancelar</button>
-                <button id="btn-confirmar" class="btn-modal btn-verde" type="button">Confirmar Reserva</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-consulta" class="modal-overlay hidden">
-        <div class="modal-content">
-            <div id="consulta-view-inicial">
-                <h2>Minhas Reservas</h2>
-                <p>Digite sua matrícula para ver ou cancelar seus agendamentos futuros.</p>
-                <div class="form-group">
-                    <label for="input-consulta-matricula">Sua Matrícula:</label>
-                    <input type="text" id="input-consulta-matricula" placeholder="Digite sua matrícula">
-                </div>
-                <div class="modal-botoes">
-                    <button id="btn-fechar-consulta" class="btn-modal btn-cinza" type="button">Fechar</button>
-                    <button id="btn-buscar-reservas" class="btn-modal btn-azul" type="button">Buscar</button>
-                </div>
-            </div>
-            <div id="consulta-view-resultados" class="hidden">
-                <h2>Seus Agendamentos</h2>
-                <div id="lista-agendamentos"></div>
-                <div class="modal-botoes">
-                    <button id="btn-voltar-consulta" class="btn-modal btn-cinza" type="button">Voltar</button>
-                </div>
-            </div>
-            <div id="consulta-mensagem"></div>
-        </div>
-    </div>
-
-    <div id="modal-admin-login" class="modal-overlay hidden">
-        <div class="modal-content">
-            <h2>Acesso Administrativo</h2>
-            <div class="form-group">
-                <label for="input-admin-password">Senha Admin:</label>
-                <input type="password" id="input-admin-password" placeholder="Digite a senha">
-            </div>
-            <div id="admin-login-mensagem"></div>
-            <div class="modal-botoes">
-                <button id="btn-cancelar-admin-login" class="btn-modal btn-cinza" type="button">Cancelar</button>
-                <button id="btn-confirmar-admin-login" class="btn-modal btn-vermelho" type="button">Entrar</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-admin-gerenciar" class="modal-overlay hidden">
-        <div class="modal-content">
-            <h2>Painel de Administração</h2>
-            <p>Selecione a ação desejada.</p>
-            <div class="modal-botoes vertical-botoes">
-                <button id="btn-admin-adicionar" class="btn-modal btn-verde" type="button">Adicionar Novos Horários</button>
-                
-                <button id="btn-admin-logout" class="btn-modal btn-cinza" type="button">Logout Admin</button>
-                <button id="btn-fechar-admin-gerenciar" class="btn-modal btn-cinza" type="button">Fechar</button>
-            </div>
-        </div>
-    </div>
-
-<div id="modal-admin-adicionar" class="modal-overlay hidden">
-        <div class="modal-content large-modal">
-            <h2>Adicionar Novo Horário à Agenda</h2>
-            <div id="admin-add-mensagem" class="mensagem-modal"></div>
-            <form id="form-adicionar-horario">
-                
-                <div class="form-row">
-                    <div class="form-group flex-item">
-                        <label for="admin-select-data">Data:</label>
-                        <input type="date" id="admin-select-data" required>
-                    </div>
-
-                    <div class="form-group flex-item">
-                        <label for="admin-select-profissional">Profissional:</label>
-                        <select id="admin-select-profissional" required>
-                            <option value="" disabled selected>Selecione o Profissional</option>
-                            <option value="Ana">Ana (Aulas)</option>
-                            <option value="Carlos">Carlos (Aulas)</option>
-                            <option value="Luis">Luis (Quick Massage)</option>
-                            <option value="Maria Eduarda">Maria Eduarda (Quick Massage)</option>
-                            <option value="Rafael">Rafael (Quick / Reiki)</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="admin-select-atividade">Modalidade:</label>
-                    <select id="admin-select-atividade" required disabled>
-                        <option value="" disabled selected>Selecione o Profissional primeiro</option>
-                    </select>
-                </div>
-                
-                <div id="quick-massage-container" class="hidden">
-                    <p class="alerta-admin">Selecione os horários disponíveis (1 vaga padrão) ou marque "Indisponível":</p>
-                    <div class="form-group">
-                         <input type="checkbox" id="qm-indisponivel" name="quick-indisponivel-all" value="indisponivel">
-                         <label for="qm-indisponivel" class="label-importante">Marcar TODOS como Indisponível (Bloquear Horários)</label>
-                    </div>
-                    
-                    <div id="quick-massage-horarios" class="horarios-grid">
-                        </div>
-                </div>
-                <div id="horario-unico-container" class="hidden">
-                    <div class="form-row">
-                        <div class="form-group flex-item">
-                            <label for="admin-input-horario">Horário de Início (HH:MM):</label>
-                            <input type="text" id="admin-input-horario" pattern="[0-9]{2}:[0-9]{2}" placeholder="Ex: 08:30">
-                        </div>
-
-                        <div id="vagas-container-unico" class="form-group flex-item">
-                            <label for="admin-input-vagas">Vagas Totais:</label>
-                            <input type="number" id="admin-input-vagas" min="1" value="1"> 
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="modal-botoes">
-                    <button id="btn-cancelar-adicionar-final" class="btn-modal btn-cinza" type="button">Cancelar</button>
-                    <button id="btn-confirmar-adicionar-final" class="btn-modal btn-azul" type="submit" disabled>Adicionar à Agenda</button>
-                </div>
-            </form>
-        </div>
-    </div>
+<header>
+<div class="logos-container">
+<img src="https://www.hospitalmoinhos.org.br/assets/images/logo-w-hopkins.png" alt="Logo Hospital Moinhos de Vento" id="logo-hmv" />
+<img src="img/casa-colaborador.png" alt="Logo Casa do Colaborador" id="logo-casa-colaborador" />
+</div>
+<h1>Agenda de Horários para Colaboradores</h1>
 
 
-    <div class="qr-code-container">
-        <img src="img/qr-code-aulas.png" alt="Código QR para Aulas" id="qr-code-aulas">
-    </div>
-
-    <div id="modal-mensagem-overlay" class="modal-overlay hidden">
-        <div class="modal-content">
-            <h2 id="modal-mensagem-titulo"></h2>
-            <p id="modal-mensagem-texto"></p>
-            <div class="modal-botoes">
-                <button id="btn-fechar-mensagem" class="btn-modal btn-cinza" type="button">Fechar</button>
-            </div>
-        </div>
-    </div>
+<button id="btn-admin-login" class="btn-acao btn-cinza" type="button">Login Admin</button>
+<p class="observacao">
+Em caso de dúvidas, entre em contato com
+<a href="mailto:casa.colaborador@hmv.org.br">casa.colaborador@hmv.org.br</a>
+</p>
+</header>
 
 
-    <script src="script.js"></script>
-</body>
+<div id="seletor-container">
+<label for="seletor-data">Selecione uma data:</label>
+<input type="date" id="seletor-data" />
+<span id="dia-semana" class="dia-semana-label"></span>
+<button id="btn-consultar-reservas" class="btn-acao btn-azul" type="button">Minhas Reservas</button>
+</div>
+
+
+<div id="agenda-container" class="agenda-grid">
+<p class="loading">Carregando agenda...</p>
+</div>
+
+
+<div id="modal-agendamento" class="modal-overlay hidden">
+<div class="modal-content">
+<h2>Confirmar Agendamento</h2>
+<ul id="modal-detalhes" class="detalhes-agendamento-lista"></ul>
+<div class="form-group">
+<label for="input-matricula">Sua Matrícula (Ex: 12345):</label>
+<input type="text" id="input-matricula" placeholder="Digite sua matrícula" required />
+</div>
+<div class="modal-botoes">
+<button id="btn-cancelar-agendamento" class="btn-modal btn-cinza" type="button">Cancelar</button>
+<button id="btn-confirmar" class="btn-modal btn-verde" type="button" disabled>Confirmar Reserva</button>
+</div>
+</div>
+</div>
+
+
+<div id="modal-consulta" class="modal-overlay hidden">
+<div class="modal-content">
+<div id="consulta-view-inicial">
+<h2>Minhas Reservas</h2>
+<p>Digite sua matrícula para ver ou cancelar seus agendamentos futuros.</p>
+<input type="text" id="input-consulta-matricula" placeholder="Digite sua matrícula" />
+<div class="modal-botoes">
 </html>
