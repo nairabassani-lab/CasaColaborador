@@ -43,8 +43,33 @@ const btnFecharConsulta = document.getElementById('btn-fechar-consulta'); // Bot
 
 // Variáveis de Estado
 let isAdmin = false;
-const ADMIN_USER = 'admin'; // Substitua por sua lógica real
-const ADMIN_PASS = '12345'; // Substitua por sua lógica real
+const ADMIN_USER = 'admin';
+const ADMIN_PASS = '12345'; // Lembre-se, este dado está exposto!
+
+function realizarLoginAdmin() {
+    const usuarioDigitado = document.getElementById('login-admin-usuario').value;
+    const senhaDigitada = document.getElementById('login-admin-senha').value;
+
+    if (usuarioDigitado === ADMIN_USER && senhaDigitada === ADMIN_PASS) {
+        // Se o login for bem-sucedido, abra o modal de gerenciamento
+        alert('Login de Administrador bem-sucedido!');
+        mostrarModalGerenciamento();
+    } else {
+        alert('Usuário ou Senha inválidos para o Admin.');
+    }
+}
+
+function mostrarModalGerenciamento() {
+    const modal = document.getElementById('modal-gerenciamento-admin');
+    // Usamos o .classList.add() para adicionar uma classe que torna o modal visível
+    modal.classList.add('aberto'); 
+}
+
+function fecharModalGerenciamento() {
+    const modal = document.getElementById('modal-gerenciamento-admin');
+    // Usamos o .classList.remove() para remover a classe e esconder o modal
+    modal.classList.remove('aberto');
+}
 
 
 // --- FUNÇÕES DE UTILIDADE (MODAIS E FORMATAÇÃO) ---
@@ -622,3 +647,4 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
