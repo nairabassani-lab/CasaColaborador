@@ -1,5 +1,5 @@
 // COLE AQUI O URL DO SEU APP DA WEB GERADO PELO GOOGLE APPS SCRIPT
-const apiUrl = 'https://script.google.com/macros/s/AKfycbzzShDDLK89kO3fgMNNconr-5Y3-PbtkwMacSPwERieNXKEisp3mZxzqfIXA1arv8ZJ/exec';
+const apiUrl = 'https://script.google.com/macros/s/AKfycbxY1VsWmQB_4FDolmaMNnmSbyyXMDKjxeQ9RBP_qX8kcmoATHl1h3g-w8NsUfuXlf8B/exec';
 
 const container = document.getElementById('agenda-container');
 const seletorData = document.getElementById('seletor-data');
@@ -831,3 +831,4 @@ container.addEventListener('click', function(event) {
 
 // Inicialização
 carregarAgenda();
+
