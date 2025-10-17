@@ -550,3 +550,4 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 }); // <-- CHAVE DE FECHAMENTO FINAL CORRIGIDA
+
