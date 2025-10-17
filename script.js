@@ -551,4 +551,302 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 }); // <-- CHAVE DE FECHAMENTO FINAL CORRIGIDA
 
+// --- Seleção de Elementos ---
+const body = document.body;
+
+// Modais
+const modalAgendamento = document.getElementById('modal-agendamento');
+const modalConsulta = document.getElementById('modal-consulta');
+const modalAdminLogin = document.getElementById('modal-admin-login');
+const modalMensagem = document.getElementById('modal-mensagem');
+
+// Botões e Inputs Principais
+const btnConsultarReservas = document.getElementById('btn-consultar-reservas');
+const btnAdminLogin = document.getElementById('btn-admin-login');
+const seletorData = document.getElementById('seletor-data'); // NOVO: Seleção de data
+const diaSemanaLabel = document.getElementById('dia-semana'); // NOVO: Label do dia da semana
+const agendaContainer = document.getElementById('agenda-container'); // NOVO: Container da agenda
+
+// Botões do Modal Agendamento
+const btnCancelarAgendamento = document.getElementById('btn-cancelar-agendamento');
+const btnConfirmarReserva = document.getElementById('btn-confirmar'); // NOVO: Botão de confirmação
+const inputMatricula = document.getElementById('input-matricula'); // NOVO: Input de Matrícula
+const modalDetalhes = document.getElementById('modal-detalhes'); // NOVO: Lista de detalhes
+
+// Botões do Modal Consulta
+const btnFecharConsulta = document.getElementById('btn-fechar-consulta');
+const btnConsultar = document.getElementById('btn-consultar'); // NOVO: Botão Consultar (Matrícula)
+
+// Botões do Modal Admin
+const btnAdminCancelar = document.getElementById('btn-admin-cancelar');
+const btnAdminLogar = document.getElementById('btn-admin-logar');
+
+// Botões do Modal Mensagem
+const btnFecharMensagem = document.getElementById('btn-fechar-mensagem');
+
+// Campos de Login Admin
+const inputAdminUsuario = document.getElementById('input-admin-usuario');
+const inputAdminSenha = document.getElementById('input-admin-senha');
+
+// Variáveis de Estado (MUITO SIMPLES - DEVERIA SER BACKEND)
+let horariosDisponiveis = [
+    { hora: '08:00', total: 5, reservas: 3 },
+    { hora: '09:00', total: 5, reservas: 5 }, // Cheio
+    { hora: '10:00', total: 5, reservas: 0 },
+    { hora: '11:00', total: 5, reservas: 1 },
+    // ... mais horários
+];
+let reservaAtual = {}; // Armazena a info do agendamento em andamento
+
+// --- Funções de Controle de Modal ---
+
+/**
+ * Abre um modal específico e bloqueia o scroll do body.
+ * @param {HTMLElement} modal O elemento modal a ser aberto.
+ */
+function abrirModal(modal) {
+    body.style.overflow = 'hidden';
+    modal.classList.remove('hidden');
+}
+
+/**
+ * Fecha um modal específico e restaura o scroll do body.
+ * @param {HTMLElement} modal O elemento modal a ser fechado.
+ */
+function fecharModal(modal) {
+    body.style.overflow = 'auto';
+    modal.classList.add('hidden');
+}
+
+/**
+ * Exibe o modal de mensagem com um título e texto personalizados.
+ * @param {string} titulo O título da mensagem.
+ * @param {string} texto O corpo da mensagem.
+ */
+function exibirMensagem(titulo, texto) {
+    document.getElementById('modal-mensagem-titulo').textContent = titulo;
+    document.getElementById('modal-mensagem-texto').textContent = texto;
+    abrirModal(modalMensagem);
+}
+
+// --- Funções de Login e Ação ---
+
+/**
+ * Implementação de login de administrador (FRONTEND INSEGURO!)
+ */
+function realizarLoginAdmin() {
+    const usuario = inputAdminUsuario.value.trim();
+    const senha = inputAdminSenha.value.trim();
+    
+    const ADMIN_USER = 'admin';
+    const ADMIN_PASS = '12345'; 
+
+    if (usuario === ADMIN_USER && senha === ADMIN_PASS) {
+        fecharModal(modalAdminLogin);
+        exibirMensagem('Login Bem-Sucedido', 'Bem-vindo, Administrador! Você agora tem acesso às funcionalidades de gestão.');
+    } else {
+        exibirMensagem('Erro de Login', 'Usuário ou senha incorretos.');
+        inputAdminSenha.value = ''; 
+    }
+}
+
+// --- Lógica de Data e Agenda ---
+
+/**
+ * Define a data mínima de seleção para amanhã.
+ */
+function configurarDataMinima() {
+    const hoje = new Date();
+    // Avança para o próximo dia para evitar agendamentos no dia atual
+    hoje.setDate(hoje.getDate() + 1); 
+    const amanha = hoje.toISOString().split('T')[0];
+    seletorData.setAttribute('min', amanha);
+    seletorData.value = amanha; // Define a data inicial
+    atualizarAgenda(); // Carrega a agenda inicial
+}
+
+/**
+ * Retorna o nome do dia da semana em português.
+ * @param {Date} date O objeto Date.
+ * @returns {string} O nome do dia da semana.
+ */
+function getDiaSemana(date) {
+    const dias = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+    return dias[date.getDay()];
+}
+
+/**
+ * Atualiza o label do dia da semana e recarrega a agenda.
+ */
+function atualizarAgenda() {
+    const dataSelecionada = seletorData.value;
+    if (!dataSelecionada) {
+        diaSemanaLabel.textContent = 'Selecione uma data';
+        agendaContainer.innerHTML = '<p class="observacao">Nenhuma data selecionada.</p>';
+        return;
+    }
+
+    const dataObj = new Date(dataSelecionada + 'T00:00:00'); // Garante que a data seja interpretada corretamente
+    const diaSemana = getDiaSemana(dataObj);
+
+    diaSemanaLabel.textContent = `(${diaSemana})`;
+    renderizarAgenda(dataSelecionada);
+}
+
+/**
+ * Renderiza os blocos de horário no container da agenda.
+ * @param {string} data A data selecionada.
+ */
+function renderizarAgenda(data) {
+    // Simula o carregamento
+    agendaContainer.innerHTML = '<p class="loading">Carregando horários...</p>';
+
+    // Simulação: Após 500ms, exibe os horários
+    setTimeout(() => {
+        agendaContainer.innerHTML = ''; // Limpa o carregamento
+
+        if (horariosDisponiveis.length === 0) {
+            agendaContainer.innerHTML = '<p class="observacao">Nenhum horário disponível para esta data.</p>';
+            return;
+        }
+
+        horariosDisponiveis.forEach(item => {
+            const vagasRestantes = item.total - item.reservas;
+            const disponivel = vagasRestantes > 0;
+            const classeStatus = disponivel ? 'disponivel' : 'lotado';
+            
+            const bloco = document.createElement('div');
+            bloco.classList.add('horario-bloco', classeStatus);
+            bloco.dataset.hora = item.hora;
+            bloco.dataset.data = data;
+            
+            bloco.innerHTML = `
+                <span class="horario">${item.hora}</span>
+                <span class="vagas">${disponivel ? `${vagasRestantes} vaga(s)` : 'LOTADO'}</span>
+            `;
+
+            if (disponivel) {
+                bloco.classList.add('clicavel');
+                bloco.addEventListener('click', () => abrirModalAgendamento(data, item.hora));
+            }
+
+            agendaContainer.appendChild(bloco);
+        });
+
+    }, 500);
+}
+
+/**
+ * Prepara e abre o modal de agendamento.
+ * @param {string} data A data selecionada (YYYY-MM-DD).
+ * @param {string} hora O horário selecionado (HH:MM).
+ */
+function abrirModalAgendamento(data, hora) {
+    // Armazena a seleção atual
+    reservaAtual = { data, hora };
+
+    // Formata a data para exibição (ex: 18/10/2025)
+    const [ano, mes, dia] = data.split('-');
+    const dataFormatada = `${dia}/${mes}/${ano}`;
+    const diaSemana = getDiaSemana(new Date(data + 'T00:00:00'));
+
+    // Atualiza os detalhes no modal
+    modalDetalhes.innerHTML = `
+        <li><strong>Data:</strong> ${dataFormatada} (${diaSemana})</li>
+        <li><strong>Horário:</strong> ${hora}</li>
+    `;
+
+    // Limpa o input de matrícula e desabilita o botão
+    inputMatricula.value = '';
+    btnConfirmarReserva.disabled = true;
+
+    abrirModal(modalAgendamento);
+}
+
+/**
+ * Simula a confirmação da reserva (Aqui entraria a lógica de BACKEND).
+ */
+function confirmarReserva() {
+    const matricula = inputMatricula.value.trim();
+
+    if (matricula.length < 5 || isNaN(matricula)) {
+        exibirMensagem('Matrícula Inválida', 'Por favor, digite uma matrícula válida (apenas números, mínimo de 5 dígitos).');
+        return;
+    }
+
+    fecharModal(modalAgendamento);
+
+    // Simulação de Sucesso
+    setTimeout(() => {
+        exibirMensagem('Reserva Confirmada! 🎉', `Sua reserva para ${reservaAtual.data} às ${reservaAtual.hora} foi confirmada. Matrícula: ${matricula}.`);
+        // Lógica de atualização da agenda após a reserva (re-renderizar)
+        atualizarAgenda();
+    }, 300);
+}
+
+
+// --- Adição de Event Listeners ---
+
+// NOVO: Monitora a mudança na data
+seletorData.addEventListener('change', atualizarAgenda);
+
+// Abrir Modais
+btnConsultarReservas.addEventListener('click', () => abrirModal(modalConsulta));
+btnAdminLogin.addEventListener('click', () => abrirModal(modalAdminLogin));
+
+// Fechar Modais (Botões de Cancelar/Fechar)
+btnCancelarAgendamento.addEventListener('click', () => fecharModal(modalAgendamento));
+btnFecharConsulta.addEventListener('click', () => fecharModal(modalConsulta));
+btnAdminCancelar.addEventListener('click', () => fecharModal(modalAdminLogin));
+btnFecharMensagem.addEventListener('click', () => fecharModal(modalMensagem));
+
+// Ação de Login Admin
+btnAdminLogar.addEventListener('click', realizarLoginAdmin);
+inputAdminSenha.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        realizarLoginAdmin();
+    }
+});
+
+// Ação de Confirmação de Reserva
+btnConfirmarReserva.addEventListener('click', confirmarReserva);
+
+// NOVO: Validação do campo de Matrícula no Modal Agendamento
+inputMatricula.addEventListener('input', () => {
+    const matricula = inputMatricula.value.trim();
+    // Habilita o botão se a matrícula tiver pelo menos 5 dígitos numéricos
+    const isValid = matricula.length >= 5 && !isNaN(matricula);
+    btnConfirmarReserva.disabled = !isValid;
+});
+
+// NOVO: Ação de Consulta de Reservas (Ainda precisa de implementação completa)
+btnConsultar.addEventListener('click', () => {
+    const mat = document.getElementById('input-consulta-matricula').value;
+    if (mat.trim()) {
+        exibirMensagem('Consultando...', `Buscando reservas para a matrícula ${mat}. (Ainda precisa de lógica de busca)`);
+    } else {
+        exibirMensagem('Atenção', 'Por favor, digite sua matrícula para consultar.');
+    }
+});
+
+
+// Lógica de Fechamento ao Clicar Fora (Overlay)
+[modalAgendamento, modalConsulta, modalAdminLogin, modalMensagem].forEach(modal => {
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            fecharModal(modal);
+        }
+    });
+});
+
+// --- Inicialização ---
+
+/**
+ * Função chamada quando a página é carregada.
+ */
+document.addEventListener('DOMContentLoaded', () => {
+    configurarDataMinima();
+});
+
+
 
