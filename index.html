@@ -1,62 +1,90 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Agenda de Horários - Moinhos de Vento</title>
-<link rel="stylesheet" href="style.css" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Agenda de Horários - Moinhos de Vento</title>
+    <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-<header>
-<div class="logos-container">
-<img src="https://www.hospitalmoinhos.org.br/assets/images/logo-w-hopkins.png" alt="Logo Hospital Moinhos de Vento" id="logo-hmv" />
-<img src="img/casa-colaborador.png" alt="Logo Casa do Colaborador" id="logo-casa-colaborador" />
-</div>
-<h1>Agenda de Horários para Colaboradores</h1>
+    <header>
+        <div class="logos-container">
+            <img src="https://www.hospitalmoinhos.org.br/assets/images/logo-w-hopkins.png" alt="Logo Hospital Moinhos de Vento" id="logo-hmv" />
+            <img src="img/casa-colaborador.png" alt="Logo Casa do Colaborador" id="logo-casa-colaborador" />
+        </div>
+        <h1>Agenda de Horários para Colaboradores</h1>
 
+        <button id="btn-admin-login" class="btn-acao btn-cinza" type="button">Login Admin</button>
+        <p class="observacao">
+            Em caso de dúvidas, entre em contato com
+            <a href="mailto:casa.colaborador@hmv.org.br">casa.colaborador@hmv.org.br</a>
+        </p>
+    </header>
 
-<button id="btn-admin-login" class="btn-acao btn-cinza" type="button">Login Admin</button>
-<p class="observacao">
-Em caso de dúvidas, entre em contato com
-<a href="mailto:casa.colaborador@hmv.org.br">casa.colaborador@hmv.org.br</a>
-</p>
-</header>
+    <div id="seletor-container">
+        <label for="seletor-data">Selecione uma data:</label>
+        <input type="date" id="seletor-data" />
+        <span id="dia-semana" class="dia-semana-label"></span>
+        <button id="btn-consultar-reservas" class="btn-acao btn-azul" type="button">Minhas Reservas</button>
+    </div>
 
+    <div id="agenda-container" class="agenda-grid">
+        <p class="loading">Carregando agenda...</p>
+    </div>
 
-<div id="seletor-container">
-<label for="seletor-data">Selecione uma data:</label>
-<input type="date" id="seletor-data" />
-<span id="dia-semana" class="dia-semana-label"></span>
-<button id="btn-consultar-reservas" class="btn-acao btn-azul" type="button">Minhas Reservas</button>
-</div>
-
-
-<div id="agenda-container" class="agenda-grid">
-<p class="loading">Carregando agenda...</p>
-</div>
-
-
-<div id="modal-agendamento" class="modal-overlay hidden">
-<div class="modal-content">
-<h2>Confirmar Agendamento</h2>
-<ul id="modal-detalhes" class="detalhes-agendamento-lista"></ul>
-<div class="form-group">
-<label for="input-matricula">Sua Matrícula (Ex: 12345):</label>
-<input type="text" id="input-matricula" placeholder="Digite sua matrícula" required />
-</div>
-<div class="modal-botoes">
-<button id="btn-cancelar-agendamento" class="btn-modal btn-cinza" type="button">Cancelar</button>
-<button id="btn-confirmar" class="btn-modal btn-verde" type="button" disabled>Confirmar Reserva</button>
-</div>
-</div>
-</div>
-
-
-<div id="modal-consulta" class="modal-overlay hidden">
-<div class="modal-content">
-<div id="consulta-view-inicial">
-<h2>Minhas Reservas</h2>
-<p>Digite sua matrícula para ver ou cancelar seus agendamentos futuros.</p>
-<input type="text" id="input-consulta-matricula" placeholder="Digite sua matrícula" />
-<div class="modal-botoes">
+    <div id="modal-agendamento" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2>Confirmar Agendamento</h2>
+            <ul id="modal-detalhes" class="detalhes-agendamento-lista"></ul>
+            <div class="form-group">
+                <label for="input-matricula">Sua Matrícula (Ex: 12345):</label>
+                <input type="text" id="input-matricula" placeholder="Digite sua matrícula" required />
+            </div>
+            <div class="modal-botoes">
+                <button id="btn-cancelar-agendamento" class="btn-modal btn-cinza" type="button">Cancelar</button>
+                <button id="btn-confirmar" class="btn-modal btn-verde" type="button" disabled>Confirmar Reserva</button>
+            </div>
+        </div>
+    </div>
+    <div id="modal-consulta" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div id="consulta-view-inicial">
+                <h2>Minhas Reservas</h2>
+                <p>Digite sua matrícula para ver ou cancelar seus agendamentos futuros.</p>
+                <input type="text" id="input-consulta-matricula" placeholder="Digite sua matrícula" />
+                <div class="modal-botoes">
+                    <button id="btn-consultar" class="btn-modal btn-azul" type="button">Consultar</button>
+                    <button id="btn-fechar-consulta" class="btn-modal btn-cinza" type="button">Fechar</button>
+                </div>
+            </div>
+            </div>
+    </div>
+    <div id="modal-admin-login" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2>Login de Administrador</h2>
+            <div class="form-group">
+                <label for="input-admin-usuario">Usuário:</label>
+                <input type="text" id="input-admin-usuario" placeholder="admin" required />
+            </div>
+            <div class="form-group">
+                <label for="input-admin-senha">Senha:</label>
+                <input type="password" id="input-admin-senha" placeholder="******" required />
+            </div>
+            <div class="modal-botoes">
+                <button id="btn-admin-logar" class="btn-modal btn-verde" type="button">Entrar</button>
+                <button id="btn-admin-cancelar" class="btn-modal btn-cinza" type="button">Cancelar</button>
+            </div>
+        </div>
+    </div>
+    <div id="modal-mensagem" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2 id="modal-mensagem-titulo"></h2>
+            <p id="modal-mensagem-texto"></p>
+            <div class="modal-botoes">
+                <button id="btn-fechar-mensagem" class="btn-modal btn-azul" type="button">OK</button>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
 </html>
