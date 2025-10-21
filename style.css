@@ -40,7 +40,6 @@ header {
     width: auto;
 }
 
-
 #agenda-container {
     max-width: 1200px;
     margin: 0 auto;
@@ -53,7 +52,7 @@ header {
     padding: 20px;
 }
 
-/* --- Estilos para o Seletor de Data e Botões de Ação (Combinados) --- */
+/* --- Seletor de Data e Botões de Ação --- */
 #seletor-container {
     max-width: 1200px;
     margin: 0 auto 15px auto;
@@ -99,7 +98,7 @@ header {
     text-transform: capitalize;
 }
 
-/* Botões de Ação Comuns e Admin */
+/* Botões de Ação */
 .btn-acao {
     padding: 10px 15px;
     border: none;
@@ -109,24 +108,12 @@ header {
     cursor: pointer;
     transition: background-color 0.2s;
 }
-.btn-azul {
-    background-color: var(--azul-moinhos);
-    color: white;
-}
-.btn-cinza {
-    background-color: #6c757d;
-    color: white;
-}
-.btn-vermelho {
-    background-color: #dc3545;
-    color: white;
-}
-.btn-verde {
-    background-color: var(--verde-moinhos);
-    color: white;
-}
+.btn-azul { background-color: var(--azul-moinhos); color: white; }
+.btn-cinza { background-color: #6c757d; color: white; }
+.btn-vermelho { background-color: #dc3545; color: white; }
+.btn-verde { background-color: var(--verde-moinhos); color: white; }
 
-/* NOVO POSICIONAMENTO: Botão Admin Login no topo direito, fixo */
+/* Botão Admin Login fixo */
 #btn-admin-login {
     position: fixed;
     top: 10px;
@@ -134,95 +121,105 @@ header {
     z-index: 1000;
     padding: 10px 15px;
 }
+#btn-admin-login:hover { opacity: 0.8; }
 
-#btn-admin-login:hover {
-    opacity: 0.8;
+/* ==============================
+      FILTRO – MENU ATIVIDADES
+   ============================== */
+.filtros-section {
+    max-width: 1200px;
+    margin: 0 auto 10px auto;
+    padding: 10px 20px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+}
+.filtros-section h2 {
+    margin: 5px 0 10px;
+    font-size: 1.2rem;
+    color: var(--azul-moinhos);
+}
+.menu-atividades {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+}
+.chip-atividade {
+    padding: .45rem .9rem;
+    border: 1px solid #d0d7de;
+    border-radius: 999px;
+    background: #fff;
+    color: #111;
+    cursor: pointer;
+    font-weight: 600;
+    transition: transform .08s ease, background-color .15s ease, border-color .15s ease;
+}
+.chip-atividade:hover { transform: translateY(-1px); border-color: var(--azul-moinhos); }
+.chip-atividade.ativo { background: var(--azul-moinhos); color: #fff; border-color: var(--azul-moinhos); }
+.chip-atividade .badge {
+    display: inline-block;
+    font-size: .78em;
+    margin-left: .45rem;
+    padding: .1rem .45rem;
+    border-radius: 999px;
+    background: rgba(0,0,0,.08);
 }
 
-/* --- Estilos para o Efeito Acordeão --- */
+/* ==============================
+        BLOCOS / SLOTS
+   ============================== */
+
+/* Títulos */
 .titulo-atividade {
-    font-size: 1.8em;
+    font-size: 1.6em;
     color: var(--azul-moinhos);
     border-bottom: 2px solid var(--verde-moinhos);
-    margin-top: 30px;
-    margin-bottom: 0; /* Removido margin-bottom para o acordeão */
-    cursor: pointer;
-    position: relative;
-    -webkit-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
+    margin-top: 26px;
+    margin-bottom: 6px;
     background-color: #fff;
-    padding: 15px;
+    padding: 12px 15px;
     border-radius: 8px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
-
-.titulo-atividade::after {
-    content: '▼';
-    font-size: 1em;
-    color: var(--verde-moinhos);
-    position: absolute;
-    right: 15px;
-    top: 50%;
-    transform: translateY(-50%) rotate(0deg);
-    transition: transform 0.3s ease;
+.subtitulo-profissional {
+    margin: 6px 0 6px 2px;
+    font-weight: 600;
+    color: var(--cinza-texto);
+    opacity: .95;
 }
 
-.titulo-atividade.ativo::after {
-    transform: translateY(-50%) rotate(180deg);
-}
-
-/* --- Estilos da Agenda (Layout de Blocos/Slots) --- */
-
-/* Novo container para os slots, substituindo .tabela-container */
+/* Container de slots (sempre visível) */
 .horarios-atividade {
-    display: flex; /* Habilita o flexbox para layout em linha */
-    flex-wrap: wrap; /* Permite quebra de linha quando não houver mais espaço */
-    gap: 10px; /* Espaço entre os slots */
-    padding: 0 15px; /* Padding vertical 0 para ocultar */
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 15px;
     margin-bottom: 20px;
     background: white;
-    border-radius: 0 0 8px 8px; /* Borda redonda apenas embaixo */
+    border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0,0,0,0.05);
-    /* Inicia oculto para o efeito acordeão */
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.5s ease-in-out, padding 0.5s ease;
 }
 
-/* Regra para mostrar o conteúdo quando o título estiver ativo */
-.titulo-atividade.ativo + .horarios-atividade {
-    max-height: 2000px; /* Valor alto para garantir que o conteúdo caiba */
-    padding: 15px;
-}
-
-/* --- Estilos para o Slot de Horário (Substitui .status-cell) --- */
+/* Slot */
 .slot-horario {
-    flex-basis: calc(25% - 10px); /* Tenta 4 colunas em telas maiores (ajuste o 25% conforme necessário) */
-    min-width: 120px; /* Garante tamanho mínimo em telas menores */
+    flex-basis: calc(25% - 10px);
+    min-width: 140px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 10px;
+    padding: 12px 10px;
     border-radius: 6px;
     text-align: center;
     font-weight: bold;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    transition: transform 0.2s ease-in-out, background-color 0.2s;
+    transition: transform 0.2s ease-in-out, background-color 0.2s, border-color .2s;
+    border: 1px solid transparent;
 }
+.horario-label { font-size: 1.05em; margin-bottom: 5px; }
+.vagas-label { font-size: .9em; font-weight: normal; }
 
-.horario-label {
-    font-size: 1.1em;
-    margin-bottom: 5px;
-}
-
-.vagas-label {
-    font-size: 0.9em;
-    font-weight: normal;
-}
-
-/* --- Estilos das Células de Status (APLICADOS aos .slot-horario) --- */
+/* Status */
 .status-disponivel {
     background-color: #d4edda;
     color: #155724;
@@ -249,11 +246,10 @@ header {
     cursor: default;
 }
 
-
-/* --- MODO ADMIN (Estilos Adicionais) --- */
+/* --- MODO ADMIN --- */
 .aviso-admin {
     font-weight: bold;
-    color: #dc3545; /* Cor de alerta */
+    color: #dc3545;
     padding: 10px;
     margin-bottom: 15px;
     border: 1px dashed #dc3545;
@@ -261,20 +257,17 @@ header {
     text-align: center;
 }
 
-/* Estilos de elementos internos do slot admin */
 .slot-horario .admin-id {
     font-size: 0.7em;
     color: #6c757d;
     margin-bottom: 3px;
 }
-
 .slot-horario .status-admin-reservas {
     font-size: 0.8em;
     color: var(--cinza-texto);
     margin-top: 3px;
     font-weight: normal;
 }
-
 .slot-horario button.status-admin-excluir {
     background: none;
     border: none;
@@ -284,27 +277,22 @@ header {
     font-weight: bold;
     cursor: pointer;
     text-decoration: underline;
-    color: #c9302c; 
+    color: #c9302c;
 }
-.slot-horario button.status-admin-excluir:hover {
-    color: #8b0000;
-}
+.slot-horario button.status-admin-excluir:hover { color: #8b0000; }
 
-/* Slot disponível no modo Admin (clicável para Excluir) */
+/* Correção do nome: status-admin-ativo */
 .status-admin-ativo.status-disponivel { 
-    background-color: #ffc9c9 !important; /* Vermelho claro para indicar risco de exclusão */
+    background-color: #ffc9c9 !important;
     color: #c9302c !important;
     border: 1px solid #dc3545 !important;
 }
-
-.status-admin-activo.status-disponivel:hover {
+.status-admin-ativo.status-disponivel:hover {
     background-color: #dc3545 !important;
     color: white !important;
 }
-
-/* Slot não existente (Fechado) vira Adicionar no modo Admin */
 .status-admin-adicionar {
-    background-color: #d4edda !important; /* Verde claro */
+    background-color: #d4edda !important;
     color: #155724 !important;
     border: 1px solid var(--verde-moinhos) !important;
     cursor: pointer;
@@ -315,8 +303,9 @@ header {
     transform: scale(1.02);
 }
 
-
-/* --- Estilos para os Modais --- */
+/* ==============================
+            MODAIS
+   ============================== */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -331,10 +320,7 @@ header {
     opacity: 0;
     transition: opacity 0.3s ease;
 }
-.modal-overlay.hidden {
-    opacity: 0;
-    pointer-events: none;
-}
+.modal-overlay.hidden { opacity: 0; pointer-events: none; }
 .modal-content {
     background-color: white;
     padding: 30px;
@@ -343,19 +329,12 @@ header {
     width: 90%;
     max-width: 500px;
     text-align: left;
-    max-height: 90vh; 
-    overflow-y: auto; 
+    max-height: 90vh;
+    overflow-y: auto;
 }
+.large-modal .modal-content { max-width: 650px; }
+.modal-content h2 { margin-top: 0; color: var(--azul-moinhos); }
 
-/* Modal de Adição Admin (maior) */
-.large-modal .modal-content {
-    max-width: 650px;
-}
-
-.modal-content h2 {
-    margin-top: 0;
-    color: var(--azul-moinhos);
-}
 .detalhes-agendamento-lista {
     list-style: none;
     padding: 0;
@@ -363,13 +342,9 @@ header {
     border-left: 3px solid var(--verde-moinhos);
     padding-left: 15px;
 }
-.detalhes-agendamento-lista li {
-    margin-bottom: 8px;
-    font-size: 1em;
-}
-.form-group {
-    margin: 15px 0;
-}
+.detalhes-agendamento-lista li { margin-bottom: 8px; font-size: 1em; }
+
+.form-group { margin: 15px 0; }
 .form-group label {
     display: block;
     margin-bottom: 5px;
@@ -391,14 +366,8 @@ header {
     gap: 10px;
     margin-top: 20px;
 }
-.vertical-botoes {
-    flex-direction: column;
-    gap: 10px;
-}
-.vertical-botoes button {
-    width: 100%;
-    justify-content: center;
-}
+.vertical-botoes { flex-direction: column; gap: 10px; }
+.vertical-botoes button { width: 100%; justify-content: center; }
 
 .btn-modal {
     padding: 10px 15px;
@@ -411,23 +380,30 @@ header {
 }
 .btn-modal:hover { opacity: 0.8; }
 
-#modal-mensagem, #consulta-mensagem, #admin-add-mensagem { margin-top: 15px; font-weight: bold; text-align: center; }
+#modal-mensagem, #consulta-mensagem, #admin-add-mensagem {
+    margin-top: 15px; font-weight: bold; text-align: center;
+}
 
 /* Lista de Agendamentos (Consulta) */
-#lista-agendamentos { list-style: none; padding: 0; margin: 20px 0; max-height: 300px; overflow-y: auto; border-top: 1px solid var(--cinza-borda); border-bottom: 1px solid var(--cinza-borda); }
-.item-reserva { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #f0f0f0; gap: 10px; }
+#lista-agendamentos {
+    list-style: none; padding: 0; margin: 20px 0;
+    max-height: 300px; overflow-y: auto;
+    border-top: 1px solid var(--cinza-borda); border-bottom: 1px solid var(--cinza-borda);
+}
+.item-reserva {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px; border-bottom: 1px solid #f0f0f0; gap: 10px;
+}
 .item-reserva:last-child { border-bottom: none; }
 .item-reserva span { font-size: 1em; flex-grow: 1; }
 .btn-cancelar-reserva { flex-shrink: 0; }
 
-
-/* ====================================
-    ESTILOS DO MODAL ADMIN ADICIONAR
-   ==================================== */
-
+/* ==============================
+   MODAL ADMIN ADICIONAR
+   ============================== */
 .horarios-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); /* Responsivo com no mínimo 140px por coluna */
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 10px;
     margin-top: 10px;
     padding: 15px;
@@ -436,7 +412,6 @@ header {
     max-height: 400px;
     overflow-y: auto;
 }
-
 .horario-item {
     display: flex;
     align-items: center;
@@ -450,45 +425,24 @@ header {
     cursor: pointer;
     transition: background-color 0.2s, border-color 0.2s;
 }
-
-.horario-item:hover {
-    background-color: #f1f3f5;
-    border-color: var(--verde-moinhos);
-}
-
+.horario-item:hover { background-color: #f1f3f5; border-color: var(--verde-moinhos); }
 .horario-item label {
-    font-weight: normal;
-    flex-grow: 1;
-    cursor: pointer;
-    margin: 0;
+    font-weight: normal; flex-grow: 1; cursor: pointer; margin: 0;
 }
-
-/* Esconder o checkbox principal e exibir o de indisponibilidade */
 .qm-checkbox, .qm-indisp-checkbox {
-    width: 20px !important;
-    height: 20px;
-    flex-shrink: 0;
+    width: 20px !important; height: 20px; flex-shrink: 0;
 }
+.qm-checkbox:checked, .qm-indisp-checkbox:checked { accent-color: var(--verde-moinhos); }
 
-.qm-checkbox:checked, .qm-indisp-checkbox:checked {
-    accent-color: var(--verde-moinhos);
-}
-
-
-/* --- Animação Personagem (Manter) --- */
+/* --- Animação Personagem --- */
 .personagem-container {
     position: relative;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100px;
-    overflow: hidden;
+    top: 0; left: 0;
+    width: 100%; height: 100px; overflow: hidden;
 }
 .personagens-loop {
-    height: 100%;
-    width: 200vw;
-    /* Altere a URL da imagem se necessário */
-    background-image: url('img/personagem-casa.png'); 
+    height: 100%; width: 200vw;
+    background-image: url('img/personagem-casa.png');
     background-repeat: repeat-x;
     background-size: auto 80px;
     background-position: 0 10px;
@@ -499,21 +453,26 @@ header {
     from { background-position-x: 0; }
     to { background-position-x: -1920px; }
 }
-/* Ocultar elementos */
-.hidden {
-    display: none !important;
-}
 
-/* --- Redimensionamento da imagem de QR Code --- */
-.qr-code-container {
-    max-width: 1200px;
-    margin: 40px auto;
-    text-align: center;
-}
+/* Utilidades */
+.hidden { display: none !important; }
 
+/* QR Code */
+.qr-code-container { max-width: 1200px; margin: 40px auto; text-align: center; }
 #qr-code-aulas {
-    max-width: 900px; 
-    height: auto;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    max-width: 900px; height: auto;
+    border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* ==============================
+         RESPONSIVIDADE
+   ============================== */
+@media (max-width: 1100px) {
+  .slot-horario { flex-basis: calc(33.333% - 10px); }
+}
+@media (max-width: 800px) {
+  .slot-horario { flex-basis: calc(50% - 10px); }
+}
+@media (max-width: 520px) {
+  .slot-horario { flex-basis: 100%; }
 }
