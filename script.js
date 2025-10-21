@@ -388,6 +388,8 @@ function updateActivitySelector(prof){
   adminSelectAtividade.disabled=false;
   if(rule){ rule.activities.forEach(a=>{ const op=document.createElement('option'); op.value=a; op.textContent=a; adminSelectAtividade.appendChild(op); }); }
 }
+
+// >>> ALTERADO: grid sem "Indisp." para Quick Massage
 function renderQuickMassageGrid(){
   quickMassageHorariosGrid.innerHTML='';
   quickMassageHours.forEach(h=>{
@@ -396,11 +398,10 @@ function renderQuickMassageGrid(){
       <div class="horario-item">
         <label for="${id}" class="horario-label">${h}</label>
         <input type="checkbox" id="${id}" data-horario="${h}" class="qm-checkbox">
-        <label for="indisp-${id}" class="label-indisponivel">Indisp.</label>
-        <input type="checkbox" id="indisp-${id}" data-horario="${h}" class="qm-indisp-checkbox">
       </div>`;
   });
 }
+
 function toggleAdminInputs(){
   const prof=adminSelectProfissional.value;
   const atividade=adminSelectAtividade.value;
@@ -449,14 +450,11 @@ async function handleAdminAdicionar(e){
   adminAddMensagem.textContent='Enviando dados...'; adminAddMensagem.style.color='var(--cinza-texto)';
 
   if(atividade==='Quick Massage'){
-    const items = quickMassageHorariosGrid.querySelectorAll('.horario-item');
-    items.forEach(item=>{
-      const cb=item.querySelector('.qm-checkbox');
-      const ind=item.querySelector('.qm-indisp-checkbox');
-      const horario=cb.dataset.horario;
-      if(cb.checked || (ind && ind.checked)){
-        const reserva = ind && ind.checked ? 'Indisponivel' : '';
-        horariosParaEnviar.push({ Horario: horario, Vagas: 1, Reserva: reserva });
+    // >>> ALTERADO: envia apenas os horários MARCADOS; sem "Indisponível"
+    const cbs = quickMassageHorariosGrid.querySelectorAll('.qm-checkbox');
+    cbs.forEach(cb=>{
+      if (cb.checked) {
+        horariosParaEnviar.push({ Horario: cb.dataset.horario, Vagas: 1, Reserva: '' });
       }
     });
   } else {
@@ -647,6 +645,3 @@ menuAtividades.addEventListener('click', (e)=>{
 
 // ================== Start ==================
 carregarAgenda();
-
-
-
