@@ -26,7 +26,7 @@
 })();
 
 // ================== CONFIG ==================
-const apiUrl = 'https://script.google.com/macros/s/AKfycbyf2kN2jHA5amUzLWfpzo39PuKYyryZLTpLljTEqnV58SKSai14mkn8eV1tcmIfBhOh/exec';
+const apiUrl = 'https://script.google.com/macros/s/AKfycbzP0ZIMKk80WED0OOfuJ9kl4lGFjzS3Q1WwlfU_B2H4RNCF3Al55eGET32fLNbZIIAF/exec';
 
 // ================== Utils ==================
 function formEncode(obj) {
@@ -647,5 +647,6 @@ menuAtividades.addEventListener('click', (e)=>{
 
 // ================== Start ==================
 carregarAgenda();
+
 
 
