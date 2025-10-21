@@ -1,6 +1,17 @@
 // COLE AQUI O URL DO SEU APP DA WEB GERADO PELO GOOGLE APPS SCRIPT
 const apiUrl = 'https://script.google.com/macros/s/AKfycbxY1VsWmQB_4FDolmaMNnmSbyyXMDKjxeQ9RBP_qX8kcmoATHl1h3g-w8NsUfuXlf8B/exec';
 
+// ---------- Util: encoder x-www-form-urlencoded (sem URLSearchParams) ----------
+function formEncode(obj) {
+  const parts = [];
+  for (const k in obj) {
+    if (!Object.prototype.hasOwnProperty.call(obj, k)) continue;
+    parts.push(encodeURIComponent(k) + '=' + encodeURIComponent(String(obj[k])));
+  }
+  return parts.join('&');
+}
+
+// ---------- Referências de DOM ----------
 const container = document.getElementById('agenda-container');
 const seletorData = document.getElementById('seletor-data');
 const diaSemanaSpan = document.getElementById('dia-semana');
@@ -55,14 +66,14 @@ const btnCancelarAdicionarFinal = document.getElementById('btn-cancelar-adiciona
 const adminAddMensagem = document.getElementById('admin-add-mensagem');
 const adminSelectData = document.getElementById('admin-select-data');
 
-// Estado
+// ---------- Estado ----------
 let todosOsAgendamentos = [];
 let agendamentoAtual = {};
 let celulaClicada = null;
 let isAdmin = false;
 const ADMIN_PASSWORD = 'admin';
 
-// Regras
+// ---------- Regras ----------
 const professionalRules = {
   'Ana': { activities: ['Fit Class (Ballet Fit)', 'Funcional Dance', 'Power Gap'], type: 'aula', defaultVagas: 15 },
   'Carlos': { activities: ['Funcional', 'Mat Pilates', 'Ritmos / Zumba', 'Jump'], type: 'aula', defaultVagas: 15 },
@@ -77,11 +88,11 @@ const quickMassageHours = [
   '17:15','17:30','17:45','18:00','18:15','18:30','18:45'
 ];
 
-// Util – modais
+// ---------- Util – modais ----------
 function abrirModal(m) { m.classList.remove('hidden'); setTimeout(()=>m.style.opacity=1,10); }
 function fecharModal(m) { m.style.opacity=0; setTimeout(()=>m.classList.add('hidden'),300); }
 
-// Util – data
+// ---------- Util – data ----------
 function atualizarDiaDaSemana(dataString) {
   if (!dataString) { diaSemanaSpan.textContent=''; return; }
   const [Y,M,D]=dataString.split('-').map(Number);
@@ -92,7 +103,7 @@ function atualizarDiaDaSemana(dataString) {
   diaSemanaSpan.textContent = `(${dia})`;
 }
 
-// Carregamento agenda
+// ---------- Carregamento agenda ----------
 async function carregarAgenda() {
   const hoje = new Date();
   const yyyy = hoje.getFullYear();
@@ -110,7 +121,7 @@ async function renderizarAgendaParaData(dataISO) {
   const dataApi = dataISO.split('-').reverse().join('/'); 
 
   try {
-    const query = new URLSearchParams({ action:'getSchedule', date:dataApi }).toString();
+    const query = formEncode({ action:'getSchedule', date:dataApi });
     const response = await fetch(`${apiUrl}?${query}`);
 
     if (!response.ok) throw new Error(`Erro de rede (${response.status}): Falha ao carregar agenda.`);
@@ -218,7 +229,7 @@ function criarHTMLAgenda(agendamentos) {
   return html;
 }
 
-// Usuário – reservar
+// ---------- Usuário – reservar ----------
 function abrirModalReserva(dadosSlot) {
   agendamentoAtual = {
     idLinha: dadosSlot.idLinha,
@@ -247,12 +258,17 @@ async function confirmarAgendamento() {
   modalMensagem.style.color = 'var(--cinza-texto)';
 
   try {
-    const params = new URLSearchParams();
-    params.append('action','bookSlot');
-    params.append('id_linha', agendamentoAtual.idLinha);
-    params.append('matricula', matricula);
+    const body = formEncode({
+      action: 'bookSlot',
+      id_linha: agendamentoAtual.idLinha,
+      matricula
+    });
 
-    const response = await fetch(apiUrl, { method:'POST', body: params });
+    const response = await fetch(apiUrl, {
+      method:'POST',
+      headers:{ 'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8' },
+      body
+    });
     if (!response.ok) throw new Error(`Erro de rede (${response.status}) ao tentar reservar.`);
 
     const result = await response.json();
@@ -273,7 +289,7 @@ async function confirmarAgendamento() {
   }
 }
 
-// Admin – login/logout
+// ---------- Admin – login/logout ----------
 function toggleAdminView(loggedIn) {
   isAdmin = loggedIn;
   if (loggedIn) {
@@ -294,15 +310,17 @@ function toggleAdminView(loggedIn) {
 function handleAdminLoginClick(){ if(isAdmin){toggleAdminView(false);return;} abrirModal(modalAdminLogin); inputAdminPassword.value=''; adminLoginMensagem.textContent=''; }
 function confirmarAdminLogin(){ const password=inputAdminPassword.value.trim(); if(password==='admin'){ toggleAdminView(true); fecharModal(modalAdminLogin);} else { adminLoginMensagem.textContent='Senha incorreta.'; adminLoginMensagem.style.color='red'; }}
 
-// Admin – excluir
+// ---------- Admin – excluir ----------
 async function handleAdminDelete(idLinha) {
   if (!confirm(`Tem certeza que deseja EXCLUIR permanentemente o slot da linha ${idLinha}? ATENÇÃO: Isso também cancela quaisquer reservas existentes para este slot.`)) return;
   try {
-    const params = new URLSearchParams();
-    params.append('action','deleteSchedule');
-    params.append('id_linha', idLinha);
+    const body = formEncode({ action:'deleteSchedule', id_linha:idLinha });
 
-    const response = await fetch(apiUrl, { method:'POST', body: params });
+    const response = await fetch(apiUrl, {
+      method:'POST',
+      headers:{ 'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8' },
+      body
+    });
     if (!response.ok) throw new Error(`Erro de rede (${response.status}) ao tentar excluir.`);
 
     const result = await response.json();
@@ -318,7 +336,7 @@ async function handleAdminDelete(idLinha) {
   }
 }
 
-// Admin – adicionar
+// ---------- Admin – adicionar ----------
 function updateActivitySelector(profissional) {
   const rule = professionalRules[profissional];
   adminSelectAtividade.innerHTML = '<option value="" disabled selected>Selecione a Modalidade</option>';
@@ -388,10 +406,11 @@ async function handleAdminAdicionar(event) {
   adminAddMensagem.style.color = 'var(--cinza-texto)';
 
   if (atividade === 'Quick Massage') {
-    const checkboxes = quickMassageHorariosGrid.querySelectorAll('.qm-checkbox');
-    checkboxes.forEach(cb=>{
+    const items = quickMassageHorariosGrid.querySelectorAll('.horario-item');
+    items.forEach(item=>{
+      const cb = item.querySelector('.qm-checkbox');
+      const indispCb = item.querySelector('.qm-indisp-checkbox');
       const horario = cb.dataset.horario;
-      const indispCb = document.getElementById(`indisp-qm-${horario.replace(':','-')}`);
       if (cb.checked || (indispCb && indispCb.checked)) {
         const reservaStatus = indispCb && indispCb.checked ? 'Indisponivel' : '';
         horariosParaEnviar.push({ Horario: horario, Vagas: 1, Reserva: reservaStatus });
@@ -418,14 +437,19 @@ async function handleAdminAdicionar(event) {
   }
 
   try {
-    const params = new URLSearchParams();
-    params.append('action','addMultiple');
-    params.append('data', data);
-    params.append('profissional', profissional);
-    params.append('atividade', atividade);
-    params.append('horariosJson', JSON.stringify(horariosParaEnviar));
+    const body = formEncode({
+      action: 'addMultiple',
+      data,
+      profissional,
+      atividade,
+      horariosJson: JSON.stringify(horariosParaEnviar)
+    });
 
-    const response = await fetch(apiUrl, { method:'POST', body: params });
+    const response = await fetch(apiUrl, {
+      method:'POST',
+      headers:{ 'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8' },
+      body
+    });
     if (!response.ok) throw new Error(`Erro de rede (${response.status}) ao tentar adicionar horários.`);
 
     const result = await response.json();
@@ -439,14 +463,14 @@ async function handleAdminAdicionar(event) {
     }
   } catch (error) {
     console.error('Erro ao adicionar agendamento:', error);
-    adminAddMensagem.textContent = `Erro de comunicação: ${error.message}`;
+    adminAddMensagem.textContent = `Erro de processamento POST: ${error.message}`;
     adminAddMensagem.style.color = 'red';
   } finally {
     btnConfirmarAdicionarFinal.disabled = false;
   }
 }
 
-// Consulta – minhas reservas
+// ---------- Consulta – minhas reservas ----------
 async function handleBuscarReservas() {
   const matricula = inputConsultaMatricula.value.trim();
   if (!matricula) { consultaMensagem.textContent='Por favor, insira sua matrícula.'; consultaMensagem.style.color='red'; return; }
@@ -456,7 +480,7 @@ async function handleBuscarReservas() {
   listaAgendamentos.innerHTML = '';
 
   try {
-    const query = new URLSearchParams({ action:'getMyBookings', matricula }).toString();
+    const query = formEncode({ action:'getMyBookings', matricula });
     const response = await fetch(`${apiUrl}?${query}`);
     if (!response.ok) throw new Error(`Erro de rede (${response.status}) ao buscar reservas.`);
 
@@ -513,13 +537,18 @@ async function handleCancelBooking(event) {
   target.textContent = 'Cancelando...';
 
   try {
-    const params = new URLSearchParams();
-    params.append('action','cancelBooking');
-    params.append('bookingId', bookingId);
-    params.append('slotId', slotId);
-    params.append('matricula', matricula);
+    const body = formEncode({
+      action: 'cancelBooking',
+      bookingId,
+      slotId,
+      matricula
+    });
 
-    const response = await fetch(apiUrl, { method:'POST', body: params });
+    const response = await fetch(apiUrl, {
+      method:'POST',
+      headers:{ 'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8' },
+      body
+    });
     if (!response.ok) throw new Error(`Erro de rede (${response.status}) ao tentar cancelar.`);
 
     const result = await response.json();
@@ -545,7 +574,7 @@ function voltarConsulta() {
   consultaMensagem.textContent = '';
 }
 
-// Listeners
+// ---------- Listeners ----------
 seletorData.addEventListener('change', carregarAgenda);
 btnCancelar.addEventListener('click', () => fecharModal(modalAgendamento));
 btnConfirmar.addEventListener('click', confirmarAgendamento);
@@ -602,5 +631,5 @@ container.addEventListener('click', function(event) {
   }
 });
 
-// Start
+// ---------- Start ----------
 carregarAgenda();
