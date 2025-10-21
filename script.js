@@ -3,12 +3,10 @@
   if (typeof window !== 'undefined' && typeof window.URLSearchParams === 'undefined') {
     function SimpleURLSearchParams(init) {
       this._pairs = [];
-      if (init && typeof init === 'object') {
-        for (var k in init) if (Object.prototype.hasOwnProperty.call(init, k)) this.append(k, init[k]);
-      } else if (typeof init === 'string') {
+      if (init && typeof init === 'object') { for (var k in init) if (Object.prototype.hasOwnProperty.call(init, k)) this.append(k, init[k]); }
+      else if (typeof init === 'string') {
         init.replace(/^\?/, '').split('&').forEach(function (p) {
-          if (!p) return;
-          var i = p.indexOf('=');
+          if (!p) return; var i = p.indexOf('=');
           var key = i >= 0 ? p.slice(0, i) : p;
           var val = i >= 0 ? p.slice(i + 1) : '';
           this.append(decodeURIComponent(key), decodeURIComponent(val));
@@ -17,9 +15,7 @@
     }
     SimpleURLSearchParams.prototype.append = function (k, v) { this._pairs.push([String(k), String(v)]); };
     SimpleURLSearchParams.prototype.toString = function () {
-      return this._pairs.map(function (kv) {
-        return encodeURIComponent(kv[0]) + '=' + encodeURIComponent(kv[1]);
-      }).join('&');
+      return this._pairs.map(function (kv) { return encodeURIComponent(kv[0]) + '=' + encodeURIComponent(kv[1]); }).join('&');
     };
     window.URLSearchParams = SimpleURLSearchParams;
   }
@@ -31,20 +27,14 @@ const apiUrl = 'https://script.google.com/macros/s/AKfycbzP0ZIMKk80WED0OOfuJ9kl4
 // ================== Utils ==================
 function formEncode(obj) {
   const out = [];
-  for (const k in obj) {
-    if (!Object.prototype.hasOwnProperty.call(obj, k)) continue;
+  for (const k in obj) { if (!Object.prototype.hasOwnProperty.call(obj, k)) continue;
     out.push(encodeURIComponent(k) + '=' + encodeURIComponent(String(obj[k])));
   }
   return out.join('&');
 }
-function withQuery(base, paramsObj) {
-  const qs = formEncode(paramsObj);
-  return qs ? `${base}?${qs}` : base;
-}
-// Normaliza horário para HH:MM (00–23 / 00–59). Retorna '' se inválido.
+function withQuery(base, paramsObj) { const qs = formEncode(paramsObj); return qs ? `${base}?${qs}` : base; }
 function padHora(h) {
-  const m = /^(\d{1,2}):(\d{1,2})$/.exec((h || '').trim());
-  if (!m) return '';
+  const m = /^(\d{1,2}):(\d{1,2})$/.exec((h || '').trim()); if (!m) return '';
   let hh = Math.min(23, Math.max(0, parseInt(m[1], 10)));
   let mm = Math.min(59, Math.max(0, parseInt(m[2], 10)));
   return String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0');
@@ -54,62 +44,70 @@ function padHora(h) {
 const container = document.getElementById('agenda-container');
 const seletorData = document.getElementById('seletor-data');
 const diaSemanaSpan = document.getElementById('dia-semana');
-
-// NOVO: menu de atividades
 const menuAtividades = document.getElementById('menu-atividades');
 
 const modalAgendamento = document.getElementById('modal-agendamento');
-const modalDetalhes = document.getElementById('modal-detalhes');
-const inputMatricula = document.getElementById('input-matricula');
-const btnCancelar = document.getElementById('btn-cancelar-agendamento');
-const btnConfirmar = document.getElementById('btn-confirmar');
-const modalMensagem = document.getElementById('modal-mensagem');
+const modalDetalhes   = document.getElementById('modal-detalhes');
+const inputMatricula  = document.getElementById('input-matricula');
+const btnCancelar     = document.getElementById('btn-cancelar-agendamento');
+const btnConfirmar    = document.getElementById('btn-confirmar');
+const modalMensagem   = document.getElementById('modal-mensagem');
 
-const btnAdminLogin = document.getElementById('btn-admin-login');
-const btnGerenciarAgenda = document.getElementById('btn-gerenciar-agenda');
+const btnAdminLogin        = document.getElementById('btn-admin-login');
+const btnGerenciarAgenda   = document.getElementById('btn-gerenciar-agenda');
 const btnConsultarReservas = document.getElementById('btn-consultar-reservas');
 
-const modalAdminLogin = document.getElementById('modal-admin-login');
-const inputAdminPassword = document.getElementById('input-admin-password');
-const adminLoginMensagem = document.getElementById('admin-login-mensagem');
+const modalAdminLogin     = document.getElementById('modal-admin-login');
+const inputAdminPassword  = document.getElementById('input-admin-password');
+const adminLoginMensagem  = document.getElementById('admin-login-mensagem');
 
 const modalAdminGerenciar = document.getElementById('modal-admin-gerenciar');
-const btnAdminAdicionar = document.getElementById('btn-admin-adicionar');
-const btnAdminLogout = document.getElementById('btn-admin-logout');
+const btnAdminAdicionar   = document.getElementById('btn-admin-adicionar');
+const btnAdminDashboard   = document.getElementById('btn-admin-dashboard'); // novo
+const btnAdminLogout      = document.getElementById('btn-admin-logout');
 const btnFecharAdminGerenciar = document.getElementById('btn-fechar-admin-gerenciar');
 
-const modalAdminAdicionar = document.getElementById('modal-admin-adicionar');
-const formAdicionarHorario = document.getElementById('form-adicionar-horario');
+const modalAdminAdicionar   = document.getElementById('modal-admin-adicionar');
+const formAdicionarHorario  = document.getElementById('form-adicionar-horario');
 
-const modalConsulta = document.getElementById('modal-consulta');
+const modalConsulta          = document.getElementById('modal-consulta');
 const inputConsultaMatricula = document.getElementById('input-consulta-matricula');
-const consultaViewInicial = document.getElementById('consulta-view-inicial');
+const consultaViewInicial    = document.getElementById('consulta-view-inicial');
 const consultaViewResultados = document.getElementById('consulta-view-resultados');
-const consultaMensagem = document.getElementById('consulta-mensagem');
-const btnFecharConsulta = document.getElementById('btn-fechar-consulta');
-const btnBuscarReservas = document.getElementById('btn-buscar-reservas');
-const btnVoltarConsulta = document.getElementById('btn-voltar-consulta');
-const listaAgendamentos = document.getElementById('lista-agendamentos');
+const consultaMensagem       = document.getElementById('consulta-mensagem');
+const btnFecharConsulta      = document.getElementById('btn-fechar-consulta');
+const btnBuscarReservas      = document.getElementById('btn-buscar-reservas');
+const btnVoltarConsulta      = document.getElementById('btn-voltar-consulta');
+const listaAgendamentos      = document.getElementById('lista-agendamentos');
 
 const adminSelectProfissional = document.getElementById('admin-select-profissional');
-const adminSelectAtividade = document.getElementById('admin-select-atividade');
-const quickMassageContainer = document.getElementById('quick-massage-container');
-const quickMassageHorariosGrid = document.getElementById('quick-massage-horarios');
-const horarioUnicoContainer = document.getElementById('horario-unico-container');
-const vagasContainerUnico = document.getElementById('vagas-container-unico');
-const adminInputVagas = document.getElementById('admin-input-vagas');
-const adminInputHorario = document.getElementById('admin-input-horario');
+const adminSelectAtividade    = document.getElementById('admin-select-atividade');
+const quickMassageContainer   = document.getElementById('quick-massage-container');
+const quickMassageHorariosGrid= document.getElementById('quick-massage-horarios');
+const horarioUnicoContainer   = document.getElementById('horario-unico-container');
+const vagasContainerUnico     = document.getElementById('vagas-container-unico');
+const adminInputVagas         = document.getElementById('admin-input-vagas');
+const adminInputHorario       = document.getElementById('admin-input-horario');
 const btnConfirmarAdicionarFinal = document.getElementById('btn-confirmar-adicionar-final');
-const btnCancelarAdicionarFinal = document.getElementById('btn-cancelar-adicionar-final');
-const adminAddMensagem = document.getElementById('admin-add-mensagem');
-const adminSelectData = document.getElementById('admin-select-data');
+const btnCancelarAdicionarFinal  = document.getElementById('btn-cancelar-adicionar-final');
+const adminAddMensagem        = document.getElementById('admin-add-mensagem');
+const adminSelectData         = document.getElementById('admin-select-data');
+
+// Dashboard refs
+const modalAdminDashboard = document.getElementById('modal-admin-dashboard');
+const dashSelectDate      = document.getElementById('dash-select-date');
+const dashInfo            = document.getElementById('dash-info');
+const dashActivityTable   = document.getElementById('dash-activity-table');
+const dashProfTable       = document.getElementById('dash-prof-table');
+const dashAPTable         = document.getElementById('dash-ap-table');
+const btnDashClose        = document.getElementById('btn-dash-close');
 
 // ================== Estado ==================
 let todosOsAgendamentos = [];
 let agendamentoAtual = {};
 let isAdmin = false;
 let isSubmittingAdmin = false;
-let atividadeSelecionada = 'TODAS'; // NOVO: filtro de atividade
+let atividadeSelecionada = 'TODAS';
 const ADMIN_PASSWORD = 'admin';
 
 const professionalRules = {
@@ -147,7 +145,6 @@ async function carregarAgenda(){
   const dd=String(hoje.getDate()).padStart(2,'0');
   const dataPadrao=`${yyyy}-${mm}-${dd}`;
 
-  // bloquear datas passadas
   seletorData.min = `${yyyy}-${mm}-${dd}`;
   adminSelectData.min = seletorData.min;
 
@@ -168,9 +165,7 @@ async function renderizarAgendaParaData(dataISO){
     const result = await response.json();
     if(result.status==="success"){
       todosOsAgendamentos = result.data || [];
-      // construir/atualizar menu de atividades com base no dia
       construirMenuAtividades(todosOsAgendamentos);
-      // garantir que a atividade selecionada ainda exista; senão, voltar para "TODAS"
       if (atividadeSelecionada !== 'TODAS' && !getTodasAtividades(todosOsAgendamentos).includes(atividadeSelecionada)) {
         atividadeSelecionada = 'TODAS';
       }
@@ -195,7 +190,6 @@ function getTodasAtividades(agendamentos){
 
 function construirMenuAtividades(agendamentos){
   const atividades = getTodasAtividades(agendamentos);
-  // contagem de disponíveis por atividade (para exibir badge)
   const dispPorAtividade = atividades.reduce((acc, atv)=> (acc[atv]=0, acc), {});
   agendamentos.forEach(s=>{
     const isDisp = (s.vagas_totais - s.reservas) > 0 && !['INDISPONIVEL','BLOQUEADO'].includes((s.reserva||'').toUpperCase());
@@ -209,17 +203,12 @@ function construirMenuAtividades(agendamentos){
     </button>`;
   const totalDisp = Object.values(dispPorAtividade).reduce((a,b)=>a+b,0);
   html += btn('TODAS', atividadeSelecionada==='TODAS', totalDisp);
-
-  atividades.forEach(a=>{
-    html += btn(a, atividadeSelecionada===a, dispPorAtividade[a]);
-  });
-
+  atividades.forEach(a=>{ html += btn(a, atividadeSelecionada===a, dispPorAtividade[a]); });
   menuAtividades.innerHTML = html;
 }
 
-// Gera HTML da agenda filtrando por atividade selecionada
+// HTML agenda filtrada
 function criarHTMLAgendaFiltrada(agendamentos, atividadeFiltro){
-  // agrupa por atividade|profissional
   const grupos = agendamentos.reduce((acc, s)=>{
     if (atividadeFiltro!=='TODAS' && s.atividade !== atividadeFiltro) return acc;
     const k = `${s.atividade}|${s.profissional}`;
@@ -229,35 +218,26 @@ function criarHTMLAgendaFiltrada(agendamentos, atividadeFiltro){
   },{});
 
   const chaves = Object.keys(grupos).sort((a,b)=> a.localeCompare(b,'pt-BR'));
-  if(chaves.length===0){
-    return '<p class="alerta-info">Não há horários para esta atividade nesta data.</p>';
-  }
+  if(chaves.length===0){ return '<p class="alerta-info">Não há horários para esta atividade nesta data.</p>'; }
 
   let html='';
   chaves.forEach(k=>{
     const g = grupos[k];
-    // exibir título por atividade e profissional
     html += `<div class="bloco-atividade">
       <h3 class="titulo-atividade">${g.atividade}</h3>
       <h4 class="subtitulo-profissional">${g.profissional}</h4>
       <div class="horarios-atividade">`;
 
-    // ordena horários
     g.slots.sort((a,b)=>a.horario.localeCompare(b.horario)).forEach(s=>{
       const vagasLivres = s.vagas_totais - s.reservas;
       const indisponivel = ['INDISPONIVEL','BLOQUEADO'].includes((s.reserva||'').toUpperCase());
       let statusClass='', vagasTxt='';
-      if(indisponivel){
-        statusClass='status-indisponivel'; vagasTxt='Indisp.';
-      } else if (vagasLivres>0){
-        statusClass='status-disponivel';
-        const isQuickMassageOrReiki = s.atividade.includes('Quick Massage') || s.atividade.includes('Reiki');
-        vagasTxt = isQuickMassageOrReiki ? 'Vaga' : `${vagasLivres}/${s.vagas_totais} Vagas`;
-      } else {
-        statusClass='status-lotado'; vagasTxt='Esgotado';
-      }
+      if(indisponivel){ statusClass='status-indisponivel'; vagasTxt='Indisp.'; }
+      else if (vagasLivres>0){ statusClass='status-disponivel';
+        const isQM = s.atividade.includes('Quick Massage') || s.atividade.includes('Reiki');
+        vagasTxt = isQM ? 'Vaga' : `${vagasLivres}/${s.vagas_totais} Vagas`;
+      } else { statusClass='status-lotado'; vagasTxt='Esgotado'; }
 
-      // para usuário (não admin), escondemos os não disponíveis/lotados
       if (!isAdmin && statusClass !== 'status-disponivel') return;
 
       let adminExtra='';
@@ -270,9 +250,7 @@ function criarHTMLAgendaFiltrada(agendamentos, atividadeFiltro){
             ? `<span class="status-admin-reservas" data-reservas="${s.reservas}">0 Reservas</span>`
             : `<span class="status-admin-reservas" data-reservas="${s.reservas}">Reservas: ${s.reservas>0?s.reservas:s.reserva||0}</span>`
           }`;
-        if(vagasLivres>0 && !indisponivel){
-          statusClass += ' status-admin-ativo';
-        }
+        if(vagasLivres>0 && !indisponivel){ statusClass += ' status-admin-ativo'; }
       }
 
       const dataApi = seletorData.value.split('-').reverse().join('/');
@@ -291,7 +269,6 @@ function criarHTMLAgendaFiltrada(agendamentos, atividadeFiltro){
         </div>`;
     });
 
-    // atalho admin para criar novo slot dentro do grupo
     if(isAdmin){
       html += `
         <div class="slot-horario status-admin-adicionar"
@@ -301,7 +278,6 @@ function criarHTMLAgendaFiltrada(agendamentos, atividadeFiltro){
           <span class="adicionar-label">+ Adicionar Slot</span>
         </div>`;
     }
-
     html += `</div></div>`;
   });
 
@@ -362,7 +338,6 @@ function toggleAdminView(on){
     btnGerenciarAgenda.classList.add('hidden');
     const aviso=document.querySelector('.aviso-admin'); if(aviso) aviso.remove();
   }
-  // re-render com o filtro atual
   container.innerHTML = criarHTMLAgendaFiltrada(todosOsAgendamentos, atividadeSelecionada);
 }
 function handleAdminLoginClick(){ if(isAdmin){toggleAdminView(false);return;} abrirModal(modalAdminLogin); inputAdminPassword.value=''; adminLoginMensagem.textContent=''; }
@@ -388,9 +363,8 @@ function updateActivitySelector(prof){
   adminSelectAtividade.disabled=false;
   if(rule){ rule.activities.forEach(a=>{ const op=document.createElement('option'); op.value=a; op.textContent=a; adminSelectAtividade.appendChild(op); }); }
 }
-
-// >>> ALTERADO: grid sem "Indisp." para Quick Massage
 function renderQuickMassageGrid(){
+  // 👉 Quick Massage sem “Indisp.”: só o checkbox do horário
   quickMassageHorariosGrid.innerHTML='';
   quickMassageHours.forEach(h=>{
     const id=`qm-${h.replace(':','-')}`;
@@ -401,7 +375,6 @@ function renderQuickMassageGrid(){
       </div>`;
   });
 }
-
 function toggleAdminInputs(){
   const prof=adminSelectProfissional.value;
   const atividade=adminSelectAtividade.value;
@@ -434,214 +407,4 @@ function toggleAdminInputs(){
 }
 
 // anti-Enter no form admin
-formAdicionarHorario.addEventListener('keydown', e => { if (e.key === 'Enter') e.preventDefault(); });
-
-async function handleAdminAdicionar(e){
-  e.preventDefault();
-  if (isSubmittingAdmin) return;
-  isSubmittingAdmin = true;
-
-  const data = adminSelectData.value.split('-').reverse().join('/'); // DD/MM/AAAA
-  const profissional = adminSelectProfissional.value;
-  const atividade = adminSelectAtividade.value;
-  let horariosParaEnviar = [];
-
-  btnConfirmarAdicionarFinal.disabled=true;
-  adminAddMensagem.textContent='Enviando dados...'; adminAddMensagem.style.color='var(--cinza-texto)';
-
-  if(atividade==='Quick Massage'){
-    // >>> ALTERADO: envia apenas os horários MARCADOS; sem "Indisponível"
-    const cbs = quickMassageHorariosGrid.querySelectorAll('.qm-checkbox');
-    cbs.forEach(cb=>{
-      if (cb.checked) {
-        horariosParaEnviar.push({ Horario: cb.dataset.horario, Vagas: 1, Reserva: '' });
-      }
-    });
-  } else {
-    const norm = padHora(adminInputHorario.value);
-    if(!norm){
-      adminAddMensagem.textContent='Horário inválido. Use o formato HH:MM (ex.: 08:30).';
-      adminAddMensagem.style.color='red';
-      btnConfirmarAdicionarFinal.disabled=false;
-      isSubmittingAdmin = false;
-      return;
-    }
-    adminInputHorario.value = norm;
-    let vagas = parseInt(adminInputVagas.value.trim());
-    if(atividade==='Reiki') vagas = 1;
-    if(isNaN(vagas) || vagas<1){
-      adminAddMensagem.textContent='Preencha Vagas com um número válido (>=1).';
-      adminAddMensagem.style.color='red';
-      btnConfirmarAdicionarFinal.disabled=false;
-      isSubmittingAdmin = false;
-      return;
-    }
-    horariosParaEnviar.push({ Horario: norm, Vagas: vagas, Reserva: '' });
-  }
-
-  if(horariosParaEnviar.length===0){
-    adminAddMensagem.textContent='Selecione/preencha pelo menos um horário.';
-    adminAddMensagem.style.color='orange';
-    btnConfirmarAdicionarFinal.disabled=false;
-    isSubmittingAdmin = false;
-    return;
-  }
-
-  try{
-    const body = formEncode({
-      action:'addMultiple',
-      data, profissional, atividade,
-      horariosJson: JSON.stringify(horariosParaEnviar)
-    });
-    const resp = await fetch(apiUrl, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'}, body });
-    if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    const result = await resp.json();
-    if(result.status==='success'){
-      adminAddMensagem.textContent=result.message; adminAddMensagem.style.color='var(--verde-moinhos)';
-      await renderizarAgendaParaData(seletorData.value); // re-render mantendo filtro
-      setTimeout(()=>fecharModal(modalAdminAdicionar), 1500);
-    } else { throw new Error(result.message); }
-  }catch(err){
-    console.error('Erro ao adicionar agendamento:', err);
-    adminAddMensagem.textContent = `Erro de processamento POST: ${err.message}`;
-    adminAddMensagem.style.color='red';
-  }finally{
-    btnConfirmarAdicionarFinal.disabled=false;
-    isSubmittingAdmin = false;
-  }
-}
-
-// ================== Consulta – minhas reservas ==================
-async function handleBuscarReservas(){
-  const matricula=inputConsultaMatricula.value.trim();
-  if(!matricula){ consultaMensagem.textContent='Informe sua matrícula.'; consultaMensagem.style.color='red'; return; }
-  consultaMensagem.textContent='Buscando...'; consultaMensagem.style.color='var(--cinza-texto)';
-  listaAgendamentos.innerHTML='';
-
-  try{
-    const url = withQuery(apiUrl, { action:'getMyBookings', matricula });
-    const resp = await fetch(url);
-    if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    const result = await resp.json();
-    consultaMensagem.textContent='';
-    consultaViewInicial.classList.add('hidden');
-    consultaViewResultados.classList.remove('hidden');
-
-    if(result.status==='success'){
-      listaAgendamentos.innerHTML = renderizarReservas(result.data, matricula);
-    } else {
-      listaAgendamentos.innerHTML = `<p style="text-align:center;color:red;">${result.message || 'Erro ao buscar.'}</p>`;
-    }
-  }catch(err){
-    consultaMensagem.textContent=`Erro ao buscar: ${err.message}`; consultaMensagem.style.color='red';
-  }
-}
-
-function renderizarReservas(reservas, matricula){
-  reservas.sort((a,b)=>{
-    const [da,ma,aa]=a.data.split('/'); const [db,mb,ab]=b.data.split('/');
-    const A=new Date(aa,ma-1,da); const B=new Date(ab,mb-1,db);
-    if(A.getTime()!==B.getTime()) return A-B;
-    return a.horario.localeCompare(b.horario);
-  });
-  if(!reservas||reservas.length===0) return `<p style="text-align:center;">Nenhuma reserva futura encontrada para ${matricula}.</p>`;
-  let html='<ul>';
-  reservas.forEach(r=>{
-    html += `<li class="item-reserva">
-      <span>${r.data} | ${r.horario} | <strong>${r.atividade}</strong> com ${r.profissional}</span>
-      <button class="btn-cancelar-reserva btn-modal btn-vermelho"
-        data-booking-id="${r.id}" data-slot-id="${r.slotId}" data-matricula="${matricula}">Cancelar</button>
-    </li>`;
-  });
-  html+='</ul>'; return html;
-}
-
-async function handleCancelBooking(event){
-  const t=event.target;
-  if(!t.classList.contains('btn-cancelar-reserva')) return;
-  const { bookingId, slotId, matricula } = t.dataset;
-  if(!confirm(`Cancelar ${t.previousElementSibling.textContent}?`)) return;
-  t.disabled=true; t.textContent='Cancelando...';
-  try{
-    const body = formEncode({ action:'cancelBooking', bookingId, slotId, matricula });
-    const resp = await fetch(apiUrl, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'}, body });
-    if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    const result = await resp.json();
-    if(result.status==='success'){ alert(result.message); handleBuscarReservas(); carregarAgenda(); }
-    else { throw new Error(result.message); }
-  }catch(err){ alert(`Erro ao cancelar: ${err.message}`); }
-  finally{ t.disabled=false; t.textContent='Cancelar'; }
-}
-
-function voltarConsulta(){
-  consultaViewInicial.classList.remove('hidden');
-  consultaViewResultados.classList.add('hidden');
-  consultaMensagem.textContent='';
-}
-
-// ================== Listeners ==================
-seletorData.addEventListener('change', ()=>{ atividadeSelecionada='TODAS'; carregarAgenda(); });
-btnCancelar.addEventListener('click', ()=>fecharModal(modalAgendamento));
-btnConfirmar.addEventListener('click', confirmarAgendamento);
-
-btnAdminLogin.addEventListener('click', handleAdminLoginClick);
-document.getElementById('btn-cancelar-admin-login').addEventListener('click', ()=>fecharModal(modalAdminLogin));
-document.getElementById('btn-confirmar-admin-login').addEventListener('click', confirmarAdminLogin);
-btnGerenciarAgenda.addEventListener('click', ()=>abrirModal(modalAdminGerenciar));
-btnFecharAdminGerenciar.addEventListener('click', ()=>fecharModal(modalAdminGerenciar));
-btnAdminLogout.addEventListener('click', ()=>{ fecharModal(modalAdminGerenciar); toggleAdminView(false); });
-
-adminSelectProfissional.addEventListener('change', e=>{ updateActivitySelector(e.target.value); toggleAdminInputs(); });
-adminSelectAtividade.addEventListener('change', toggleAdminInputs);
-
-btnAdminAdicionar.addEventListener('click', ()=>{
-  formAdicionarHorario.reset();
-  adminSelectAtividade.disabled=true;
-  toggleAdminInputs();
-  adminAddMensagem.textContent='';
-  fecharModal(modalAdminGerenciar);
-  abrirModal(modalAdminAdicionar);
-});
-btnCancelarAdicionarFinal.addEventListener('click', ()=>fecharModal(modalAdminAdicionar));
-formAdicionarHorario.addEventListener('submit', handleAdminAdicionar);
-
-btnConsultarReservas.addEventListener('click', ()=>{ voltarConsulta(); abrirModal(modalConsulta); });
-btnFecharConsulta.addEventListener('click', ()=>fecharModal(modalConsulta));
-btnBuscarReservas.addEventListener('click', handleBuscarReservas);
-btnVoltarConsulta.addEventListener('click', voltarConsulta);
-modalConsulta.addEventListener('click', handleCancelBooking);
-
-// click no container de slots (abre reserva / excluir / atalho admin)
-container.addEventListener('click', (ev)=>{
-  const t=ev.target;
-  if (t.closest('.slot-horario') && t.closest('.slot-horario').classList.contains('status-disponivel') && !isAdmin){
-    const el=t.closest('.slot-horario');
-    abrirModalReserva(el.dataset);
-  } else if (isAdmin && t.classList.contains('status-admin-excluir')){
-    const id=t.dataset.idLinha; if(id) handleAdminDelete(id);
-  } else if (isAdmin && t.closest('.slot-horario') && t.closest('.slot-horario').classList.contains('status-admin-adicionar')){
-    const d=t.closest('.slot-horario').dataset;
-    adminSelectData.value = d.data.split('/').reverse().join('-');
-    adminSelectProfissional.value = d.profissional;
-    updateActivitySelector(d.profissional);
-    adminSelectAtividade.value = d.atividade;
-    toggleAdminInputs();
-    fecharModal(modalAdminGerenciar);
-    abrirModal(modalAdminAdicionar);
-  }
-});
-
-// clique no menu de atividades
-menuAtividades.addEventListener('click', (e)=>{
-  const btn = e.target.closest('.chip-atividade');
-  if(!btn) return;
-  atividadeSelecionada = btn.dataset.atividade || 'TODAS';
-  // marca ativo
-  [...menuAtividades.querySelectorAll('.chip-atividade')].forEach(b=>b.classList.remove('ativo'));
-  btn.classList.add('ativo');
-  // re-render
-  container.innerHTML = criarHTMLAgendaFiltrada(todosOsAgendamentos, atividadeSelecionada);
-});
-
-// ================== Start ==================
-carregarAgenda();
+formAdicionarHorario.addEventListener('keydown', e => { if (e.key === 'Enter
