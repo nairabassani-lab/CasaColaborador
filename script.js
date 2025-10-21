@@ -120,6 +120,7 @@ function atualizarDiaDaSemana(dataString) {
     return;
   }
   const partes = dataString.split('-'); 
+  // O construtor Date precisa de YYYY, MM-1, DD
   const data = new Date(partes[0], partes[1] - 1, partes[2]);
   const opcoes = { weekday: 'long', timeZone: 'UTC' }; 
   let diaDaSemana = data.toLocaleDateString('pt-BR', opcoes);
@@ -309,6 +310,9 @@ function abrirModalReserva(dadosSlot) {
   abrirModal(modalAgendamento);
 }
 
+/**
+ * CORRIGIDO: Envia JSON para evitar erro de URLSearchParams.
+ */
 async function confirmarAgendamento() {
   const matricula = inputMatricula.value.trim();
   if (!matricula) {
@@ -328,14 +332,13 @@ async function confirmarAgendamento() {
       matricula: matricula
     };
     
-    // Usamos POST para operações de escrita
     const response = await fetch(apiUrl, {
       method: 'POST',
       mode: 'cors',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Type': 'application/json', // Alterado para JSON
       },
-      body: new URLSearchParams(dadosParaEnviar).toString()
+      body: JSON.stringify(dadosParaEnviar) // Enviando como JSON
     });
     
     if (!response.ok) {
@@ -407,7 +410,9 @@ function confirmarAdminLogin() {
   }
 }
 
-// IMPLEMENTAÇÃO DE EXCLUSÃO (Admin)
+/**
+ * CORRIGIDO: Envia JSON para evitar erro de URLSearchParams.
+ */
 async function handleAdminDelete(idLinha) {
   if (!confirm(`Tem certeza que deseja EXCLUIR permanentemente o slot da linha ${idLinha}? ATENÇÃO: Isso também cancela quaisquer reservas existentes para este slot.`)) {
     return;
@@ -416,14 +421,13 @@ async function handleAdminDelete(idLinha) {
   try {
     const dadosParaEnviar = { action: 'deleteSchedule', id_linha: idLinha };
     
-    // Usamos POST para operações de exclusão
     const response = await fetch(apiUrl, {
       method: 'POST',
       mode: 'cors',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Type': 'application/json', // Alterado para JSON
       },
-      body: new URLSearchParams(dadosParaEnviar).toString()
+      body: JSON.stringify(dadosParaEnviar) // Enviando como JSON
     });
 
     if (!response.ok) {
@@ -524,12 +528,8 @@ function toggleAdminInputs() {
 }
 
 /**
- * Funçao que coleta os dados e envia a requisição de adição de múltiplos horários
- * para o Google Apps Script via POST.
+ * CORRIGIDO: Envia JSON para evitar erro de URLSearchParams.
  */
-async function handleAdminAdicionar(event) {
-  event.preventDefault();
-
 async function handleAdminAdicionar(event) {
   event.preventDefault();
 
@@ -714,11 +714,14 @@ function renderizarReservas(reservas, matricula) {
   return html;
 }
 
+/**
+ * CORRIGIDO: Envia JSON para evitar erro de URLSearchParams.
+ */
 async function handleCancelBooking(event) {
   const target = event.target;
   if (!target.classList.contains('btn-cancelar-reserva')) return;
   
-  // CORREÇÃO: Pega tanto o bookingId quanto o slotId
+  // Pega bookingId (linha na Reservas) e slotId (linha na Dados)
   const { bookingId, slotId, matricula } = target.dataset; 
   if (!confirm(`Deseja realmente CANCELAR a reserva de ${target.previousElementSibling.textContent}?`)) return;
 
@@ -726,8 +729,6 @@ async function handleCancelBooking(event) {
   target.textContent = 'Cancelando...';
 
   try {
-    // Envia o slotId, que é a linha na aba 'Dados' (para Quick/Reiki)
-    // e o bookingId (que é a linha na aba 'Reservas' para Aulas)
     const dadosParaEnviar = { action: 'cancelBooking', bookingId, slotId, matricula };
     
     // Usa POST para operações de cancelamento (escrita)
@@ -735,9 +736,9 @@ async function handleCancelBooking(event) {
       method: 'POST',
       mode: 'cors',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Type': 'application/json', // Alterado para JSON
       },
-      body: new URLSearchParams(dadosParaEnviar).toString()
+      body: JSON.stringify(dadosParaEnviar) // Enviando como JSON
     });
 
     if (!response.ok) {
@@ -858,4 +859,4 @@ container.addEventListener('click', function(event) {
 
 // Inicialização
 carregarAgenda();
-
+// A última linha deve ser o fechamento do bloco de código, sem chaves soltas ou blocos incompletos.
