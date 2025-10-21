@@ -1,18 +1,25 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Agenda de Horários - Moinhos de Vento</title>
   <link rel="stylesheet" href="style.css">
+
   <style>
+    /* Chips do menu de atividades */
+    #menu-atividades { max-width:1200px; margin:0 auto 10px auto; display:flex; flex-wrap:wrap; gap:8px; }
+    .chip-atividade { border:1px solid var(--cinza-borda); background:#fff; padding:6px 10px; border-radius:999px; cursor:pointer; }
+    .chip-atividade.ativo { background: var(--azul-moinhos); color:#fff; border-color: var(--azul-moinhos); }
+    .badge { display:inline-block; padding:0 6px; border-radius:999px; background:#eef6ff; color:#0b5ed7; font-size:12px; margin-left:4px; }
+
     /* Estilos simples do dashboard */
     .dash-toolbar { display:flex; gap:10px; align-items:center; margin-bottom:12px; }
+    .dash-grid { display:grid; grid-template-columns: 1fr; gap:20px; }
+    @media (min-width: 900px){ .dash-grid{ grid-template-columns: 1fr 1fr; } }
     .dash-table { width:100%; border-collapse: collapse; }
     .dash-table th, .dash-table td { border:1px solid var(--cinza-borda); padding:8px; font-size:14px; }
     .dash-table th { background:#f3f6f8; text-align:left; }
-    .dash-grid { display:grid; grid-template-columns: 1fr; gap:20px; }
-    @media (min-width: 900px){ .dash-grid{ grid-template-columns: 1fr 1fr; } }
     .number { text-align:right; white-space:nowrap; }
     .pill { display:inline-block; padding:2px 8px; border-radius:999px; background:#eef6ff; color:#0b5ed7; font-size:12px; }
   </style>
@@ -46,7 +53,7 @@
   </div>
 
   <!-- Menu de atividades (chips) -->
-  <div id="menu-atividades" style="max-width:1200px;margin:0 auto 10px auto;"></div>
+  <div id="menu-atividades"></div>
 
   <div id="agenda-container" class="agenda-grid">
     <p class="loading">Carregando agenda...</p>
@@ -118,9 +125,7 @@
       <p>Selecione a ação desejada.</p>
       <div class="modal-botoes vertical-botoes">
         <button id="btn-admin-adicionar" class="btn-modal btn-verde" type="button">Adicionar Novos Horários</button>
-        <!-- NOVO: botão para o Dashboard -->
         <button id="btn-admin-dashboard" class="btn-modal btn-azul" type="button">Painel / Dashboard</button>
-
         <button id="btn-admin-logout" class="btn-modal btn-cinza" type="button">Logout Admin</button>
         <button id="btn-fechar-admin-gerenciar" class="btn-modal btn-cinza" type="button">Fechar</button>
       </div>
@@ -185,11 +190,10 @@
     </div>
   </div>
 
-  <!-- NOVO: Modal Dashboard -->
+  <!-- Modal Dashboard -->
   <div id="modal-admin-dashboard" class="modal-overlay hidden">
     <div class="modal-content" style="max-width:1000px">
       <h2>Dashboard — Resumo do Dia</h2>
-
       <div class="dash-toolbar">
         <label for="dash-select-date">Data:</label>
         <input type="date" id="dash-select-date">
@@ -220,6 +224,6 @@
     <img src="img/qr-code-aulas.png" alt="Código QR para Aulas" id="qr-code-aulas">
   </div>
 
-  <script src="script.js?v=20251022b"></script>
+  <script src="script.js?v=20251022c"></script>
 </body>
 </html>
