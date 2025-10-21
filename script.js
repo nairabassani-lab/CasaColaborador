@@ -26,7 +26,7 @@
 })();
 
 // ================== CONFIG ==================
-const apiUrl = 'https://script.google.com/macros/s/AKfycbyf2kN2jHA5amUzLWfpzo39PuKYyryZLTpLljTEqnV58SKSai14mkn8eV1tcmIfBhOh/exec';
+const apiUrl = 'https://script.google.com/macros/s/AKfycbxY1VsWmQB_4FDolmaMNnmSbyyXMDKjxeQ9RBP_qX8kcmoATHl1h3g-w8NsUfuXlf8B/exec';
 
 // ================== Utils ==================
 function formEncode(obj) {
@@ -41,8 +41,7 @@ function withQuery(base, paramsObj) {
   const qs = formEncode(paramsObj);
   return qs ? `${base}?${qs}` : base;
 }
-
-// Normaliza horário para HH:MM (00–23:00–59). Retorna '' se inválido.
+// Normaliza horário para HH:MM (00–23 / 00–59). Retorna '' se inválido.
 function padHora(h) {
   const m = /^(\d{1,2}):(\d{1,2})$/.exec((h || '').trim());
   if (!m) return '';
@@ -55,6 +54,9 @@ function padHora(h) {
 const container = document.getElementById('agenda-container');
 const seletorData = document.getElementById('seletor-data');
 const diaSemanaSpan = document.getElementById('dia-semana');
+
+// NOVO: menu de atividades
+const menuAtividades = document.getElementById('menu-atividades');
 
 const modalAgendamento = document.getElementById('modal-agendamento');
 const modalDetalhes = document.getElementById('modal-detalhes');
@@ -106,7 +108,8 @@ const adminSelectData = document.getElementById('admin-select-data');
 let todosOsAgendamentos = [];
 let agendamentoAtual = {};
 let isAdmin = false;
-let isSubmittingAdmin = false; // (2) flag anti duplo-submit
+let isSubmittingAdmin = false;
+let atividadeSelecionada = 'TODAS'; // NOVO: filtro de atividade
 const ADMIN_PASSWORD = 'admin';
 
 const professionalRules = {
@@ -136,7 +139,7 @@ function atualizarDiaDaSemana(dataString){
   diaSemanaSpan.textContent=`(${dia})`;
 }
 
-// ================== Agenda ==================
+// ================== Agenda (carregar e filtrar) ==================
 async function carregarAgenda(){
   const hoje=new Date();
   const yyyy=hoje.getFullYear();
@@ -144,14 +147,14 @@ async function carregarAgenda(){
   const dd=String(hoje.getDate()).padStart(2,'0');
   const dataPadrao=`${yyyy}-${mm}-${dd}`;
 
-  // (1) bloquear datas passadas
+  // bloquear datas passadas
   seletorData.min = `${yyyy}-${mm}-${dd}`;
   adminSelectData.min = seletorData.min;
 
   const dataSelecionada=seletorData.value||dataPadrao;
   seletorData.value=dataSelecionada;
   atualizarDiaDaSemana(dataSelecionada);
-  renderizarAgendaParaData(dataSelecionada);
+  await renderizarAgendaParaData(dataSelecionada);
 }
 
 async function renderizarAgendaParaData(dataISO){
@@ -164,47 +167,99 @@ async function renderizarAgendaParaData(dataISO){
     if(!response.ok) throw new Error(`Erro de rede (${response.status})`);
     const result = await response.json();
     if(result.status==="success"){
-      todosOsAgendamentos = result.data;
-      container.innerHTML = criarHTMLAgenda(todosOsAgendamentos);
+      todosOsAgendamentos = result.data || [];
+      // construir/atualizar menu de atividades com base no dia
+      construirMenuAtividades(todosOsAgendamentos);
+      // garantir que a atividade selecionada ainda exista; senão, voltar para "TODAS"
+      if (atividadeSelecionada !== 'TODAS' && !getTodasAtividades(todosOsAgendamentos).includes(atividadeSelecionada)) {
+        atividadeSelecionada = 'TODAS';
+      }
+      container.innerHTML = criarHTMLAgendaFiltrada(todosOsAgendamentos, atividadeSelecionada);
     } else {
       container.innerHTML = `<p class="alerta-erro">Erro ao carregar: ${result.message || 'Resposta inválida.'}</p>`;
+      menuAtividades.innerHTML = '';
     }
   }catch(error){
     console.error('Erro de comunicação:', error);
     container.innerHTML = `<p class="alerta-erro">Falha ao carregar agenda: ${error.message}</p>`;
+    menuAtividades.innerHTML = '';
   }
 }
 
-function criarHTMLAgenda(agendamentos){
-  if(!agendamentos||agendamentos.length===0){
-    if(isAdmin) return `<p class="alerta-admin">Não há horários para esta data. Use "Adicionar Novos Horários".</p>`;
-    return '<p class="alerta-info">Não há horários disponíveis.</p>';
-  }
+// Helpers do filtro por atividade
+function getTodasAtividades(agendamentos){
+  const set = new Set();
+  agendamentos.forEach(s=> set.add(s.atividade));
+  return Array.from(set).sort((a,b)=>a.localeCompare(b,'pt-BR'));
+}
+
+function construirMenuAtividades(agendamentos){
+  const atividades = getTodasAtividades(agendamentos);
+  // contagem de disponíveis por atividade (para exibir badge)
+  const dispPorAtividade = atividades.reduce((acc, atv)=> (acc[atv]=0, acc), {});
+  agendamentos.forEach(s=>{
+    const isDisp = (s.vagas_totais - s.reservas) > 0 && !['INDISPONIVEL','BLOQUEADO'].includes((s.reserva||'').toUpperCase());
+    if (isDisp) dispPorAtividade[s.atividade] = (dispPorAtividade[s.atividade]||0) + 1;
+  });
+
+  let html = '';
+  const btn = (nome, active, qtd=null) => `
+    <button class="chip-atividade ${active?'ativo':''}" data-atividade="${nome}">
+      ${nome}${qtd!==null?` <span class="badge">${qtd}</span>`:''}
+    </button>`;
+  const totalDisp = Object.values(dispPorAtividade).reduce((a,b)=>a+b,0);
+  html += btn('TODAS', atividadeSelecionada==='TODAS', totalDisp);
+
+  atividades.forEach(a=>{
+    html += btn(a, atividadeSelecionada===a, dispPorAtividade[a]);
+  });
+
+  menuAtividades.innerHTML = html;
+}
+
+// Gera HTML da agenda filtrando por atividade selecionada
+function criarHTMLAgendaFiltrada(agendamentos, atividadeFiltro){
+  // agrupa por atividade|profissional
   const grupos = agendamentos.reduce((acc, s)=>{
+    if (atividadeFiltro!=='TODAS' && s.atividade !== atividadeFiltro) return acc;
     const k = `${s.atividade}|${s.profissional}`;
     if(!acc[k]) acc[k] = { atividade:s.atividade, profissional:s.profissional, slots:[] };
     acc[k].slots.push(s);
     return acc;
   },{});
 
+  const chaves = Object.keys(grupos).sort((a,b)=> a.localeCompare(b,'pt-BR'));
+  if(chaves.length===0){
+    return '<p class="alerta-info">Não há horários para esta atividade nesta data.</p>';
+  }
+
   let html='';
-  for(const k in grupos){
+  chaves.forEach(k=>{
     const g = grupos[k];
-    const isQuickMassageOrReiki = g.atividade.includes('Quick Massage') || g.atividade.includes('Reiki');
+    // exibir título por atividade e profissional
     html += `<div class="bloco-atividade">
-      <h3 class="titulo-atividade">${g.atividade} <span class="nome-profissional">(${g.profissional})</span></h3>
+      <h3 class="titulo-atividade">${g.atividade}</h3>
+      <h4 class="subtitulo-profissional">${g.profissional}</h4>
       <div class="horarios-atividade">`;
+
+    // ordena horários
     g.slots.sort((a,b)=>a.horario.localeCompare(b.horario)).forEach(s=>{
       const vagasLivres = s.vagas_totais - s.reservas;
+      const indisponivel = ['INDISPONIVEL','BLOQUEADO'].includes((s.reserva||'').toUpperCase());
       let statusClass='', vagasTxt='';
-      if(['INDISPONIVEL','BLOQUEADO'].includes((s.reserva||'').toUpperCase())){
+      if(indisponivel){
         statusClass='status-indisponivel'; vagasTxt='Indisp.';
       } else if (vagasLivres>0){
         statusClass='status-disponivel';
+        const isQuickMassageOrReiki = s.atividade.includes('Quick Massage') || s.atividade.includes('Reiki');
         vagasTxt = isQuickMassageOrReiki ? 'Vaga' : `${vagasLivres}/${s.vagas_totais} Vagas`;
       } else {
         statusClass='status-lotado'; vagasTxt='Esgotado';
       }
+
+      // para usuário (não admin), escondemos os não disponíveis/lotados
+      if (!isAdmin && statusClass !== 'status-disponivel') return;
+
       let adminExtra='';
       if(isAdmin){
         adminExtra = `
@@ -215,18 +270,19 @@ function criarHTMLAgenda(agendamentos){
             ? `<span class="status-admin-reservas" data-reservas="${s.reservas}">0 Reservas</span>`
             : `<span class="status-admin-reservas" data-reservas="${s.reservas}">Reservas: ${s.reservas>0?s.reservas:s.reserva||0}</span>`
           }`;
-        if(vagasLivres>0 && !['INDISPONIVEL','BLOQUEADO'].includes((s.reserva||'').toUpperCase())){
+        if(vagasLivres>0 && !indisponivel){
           statusClass += ' status-admin-ativo';
         }
       }
+
       const dataApi = seletorData.value.split('-').reverse().join('/');
       html += `
         <div class="slot-horario ${statusClass}"
              data-id-linha="${s.id_linha}"
              data-data="${dataApi}"
              data-horario="${s.horario}"
-             data-atividade="${g.atividade}"
-             data-profissional="${g.profissional}"
+             data-atividade="${s.atividade}"
+             data-profissional="${s.profissional}"
              data-vagas-total="${s.vagas_totais}"
              data-vagas-livres="${vagasLivres}">
           <span class="horario-label">${s.horario}</span>
@@ -234,6 +290,8 @@ function criarHTMLAgenda(agendamentos){
           ${adminExtra}
         </div>`;
     });
+
+    // atalho admin para criar novo slot dentro do grupo
     if(isAdmin){
       html += `
         <div class="slot-horario status-admin-adicionar"
@@ -243,9 +301,11 @@ function criarHTMLAgenda(agendamentos){
           <span class="adicionar-label">+ Adicionar Slot</span>
         </div>`;
     }
+
     html += `</div></div>`;
-  }
-  return html;
+  });
+
+  return html || '<p class="alerta-info">Não há horários disponíveis para esta atividade.</p>';
 }
 
 // ================== Usuário – reservar ==================
@@ -302,7 +362,8 @@ function toggleAdminView(on){
     btnGerenciarAgenda.classList.add('hidden');
     const aviso=document.querySelector('.aviso-admin'); if(aviso) aviso.remove();
   }
-  renderizarAgendaParaData(seletorData.value);
+  // re-render com o filtro atual
+  container.innerHTML = criarHTMLAgendaFiltrada(todosOsAgendamentos, atividadeSelecionada);
 }
 function handleAdminLoginClick(){ if(isAdmin){toggleAdminView(false);return;} abrirModal(modalAdminLogin); inputAdminPassword.value=''; adminLoginMensagem.textContent=''; }
 function confirmarAdminLogin(){ if(inputAdminPassword.value.trim()===ADMIN_PASSWORD){ toggleAdminView(true); fecharModal(modalAdminLogin); } else { adminLoginMensagem.textContent='Senha incorreta.'; adminLoginMensagem.style.color='red'; } }
@@ -371,12 +432,12 @@ function toggleAdminInputs(){
   }
 }
 
-// (2) bloquear Enter para não submeter involuntariamente
+// anti-Enter no form admin
 formAdicionarHorario.addEventListener('keydown', e => { if (e.key === 'Enter') e.preventDefault(); });
 
 async function handleAdminAdicionar(e){
   e.preventDefault();
-  if (isSubmittingAdmin) return; // (2) evita duplo clique
+  if (isSubmittingAdmin) return;
   isSubmittingAdmin = true;
 
   const data = adminSelectData.value.split('-').reverse().join('/'); // DD/MM/AAAA
@@ -399,7 +460,6 @@ async function handleAdminAdicionar(e){
       }
     });
   } else {
-    // (3) normalização HH:MM
     const norm = padHora(adminInputHorario.value);
     if(!norm){
       adminAddMensagem.textContent='Horário inválido. Use o formato HH:MM (ex.: 08:30).';
@@ -408,7 +468,7 @@ async function handleAdminAdicionar(e){
       isSubmittingAdmin = false;
       return;
     }
-    adminInputHorario.value = norm; // feedback visual
+    adminInputHorario.value = norm;
     let vagas = parseInt(adminInputVagas.value.trim());
     if(atividade==='Reiki') vagas = 1;
     if(isNaN(vagas) || vagas<1){
@@ -440,7 +500,8 @@ async function handleAdminAdicionar(e){
     const result = await resp.json();
     if(result.status==='success'){
       adminAddMensagem.textContent=result.message; adminAddMensagem.style.color='var(--verde-moinhos)';
-      carregarAgenda(); setTimeout(()=>fecharModal(modalAdminAdicionar), 1500);
+      await renderizarAgendaParaData(seletorData.value); // re-render mantendo filtro
+      setTimeout(()=>fecharModal(modalAdminAdicionar), 1500);
     } else { throw new Error(result.message); }
   }catch(err){
     console.error('Erro ao adicionar agendamento:', err);
@@ -448,7 +509,7 @@ async function handleAdminAdicionar(e){
     adminAddMensagem.style.color='red';
   }finally{
     btnConfirmarAdicionarFinal.disabled=false;
-    isSubmittingAdmin = false; // (2) libera novamente
+    isSubmittingAdmin = false;
   }
 }
 
@@ -521,7 +582,7 @@ function voltarConsulta(){
 }
 
 // ================== Listeners ==================
-seletorData.addEventListener('change', carregarAgenda);
+seletorData.addEventListener('change', ()=>{ atividadeSelecionada='TODAS'; carregarAgenda(); });
 btnCancelar.addEventListener('click', ()=>fecharModal(modalAgendamento));
 btnConfirmar.addEventListener('click', confirmarAgendamento);
 
@@ -552,17 +613,14 @@ btnBuscarReservas.addEventListener('click', handleBuscarReservas);
 btnVoltarConsulta.addEventListener('click', voltarConsulta);
 modalConsulta.addEventListener('click', handleCancelBooking);
 
+// click no container de slots (abre reserva / excluir / atalho admin)
 container.addEventListener('click', (ev)=>{
   const t=ev.target;
-  if(t.classList.contains('titulo-atividade')){
-    t.classList.toggle('ativo');
-    const box=t.nextElementSibling;
-    box.style.maxHeight = box.style.maxHeight ? null : (box.scrollHeight + 'px');
-  } else if (isAdmin && t.classList.contains('status-admin-excluir')){
-    const id=t.dataset.idLinha; if(id) handleAdminDelete(id);
-  } else if (t.closest('.slot-horario') && t.closest('.slot-horario').classList.contains('status-disponivel') && !isAdmin){
+  if (t.closest('.slot-horario') && t.closest('.slot-horario').classList.contains('status-disponivel') && !isAdmin){
     const el=t.closest('.slot-horario');
     abrirModalReserva(el.dataset);
+  } else if (isAdmin && t.classList.contains('status-admin-excluir')){
+    const id=t.dataset.idLinha; if(id) handleAdminDelete(id);
   } else if (isAdmin && t.closest('.slot-horario') && t.closest('.slot-horario').classList.contains('status-admin-adicionar')){
     const d=t.closest('.slot-horario').dataset;
     adminSelectData.value = d.data.split('/').reverse().join('-');
@@ -570,12 +628,22 @@ container.addEventListener('click', (ev)=>{
     updateActivitySelector(d.profissional);
     adminSelectAtividade.value = d.atividade;
     toggleAdminInputs();
-    if(d.atividade!=='Quick Massage') adminInputHorario.value = d.horario || '';
     fecharModal(modalAdminGerenciar);
     abrirModal(modalAdminAdicionar);
   }
 });
 
+// clique no menu de atividades
+menuAtividades.addEventListener('click', (e)=>{
+  const btn = e.target.closest('.chip-atividade');
+  if(!btn) return;
+  atividadeSelecionada = btn.dataset.atividade || 'TODAS';
+  // marca ativo
+  [...menuAtividades.querySelectorAll('.chip-atividade')].forEach(b=>b.classList.remove('ativo'));
+  btn.classList.add('ativo');
+  // re-render
+  container.innerHTML = criarHTMLAgendaFiltrada(todosOsAgendamentos, atividadeSelecionada);
+});
+
 // ================== Start ==================
 carregarAgenda();
-
