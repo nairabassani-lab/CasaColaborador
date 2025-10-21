@@ -530,6 +530,9 @@ function toggleAdminInputs() {
 async function handleAdminAdicionar(event) {
   event.preventDefault();
 
+async function handleAdminAdicionar(event) {
+  event.preventDefault();
+
   const data = adminSelectData.value.split('-').reverse().join('/'); // DD/MM/AAAA
   const profissional = adminSelectProfissional.value;
   const atividade = adminSelectAtividade.value;
@@ -585,23 +588,26 @@ async function handleAdminAdicionar(event) {
     btnConfirmarAdicionarFinal.disabled = false;
     return;
   }
+  
+  // Dados finais para a API
+  const dadosParaEnviar = {
+    action: 'addMultiple', 
+    data: data,
+    profissional: profissional,
+    atividade: atividade,
+    horariosJson: JSON.stringify(horariosParaEnviar)
+  };
 
   try {
-    const dadosParaEnviar = {
-      action: 'addMultiple', 
-      data: data,
-      profissional: profissional,
-      atividade: atividade,
-      horariosJson: JSON.stringify(horariosParaEnviar)
-    };
     
+    // CORREÇÃO: Enviar JSON no corpo da requisição
     const response = await fetch(apiUrl, {
       method: 'POST',
       mode: 'cors',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Type': 'application/json', // Mudar para JSON
       },
-      body: new URLSearchParams(dadosParaEnviar).toString()
+      body: JSON.stringify(dadosParaEnviar) // Enviar objeto como string JSON
     });
     
     if (!response.ok) {
@@ -852,3 +858,4 @@ container.addEventListener('click', function(event) {
 
 // Inicialização
 carregarAgenda();
+
