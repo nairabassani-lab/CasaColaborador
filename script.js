@@ -4,9 +4,7 @@
     function SimpleURLSearchParams(init) {
       this._pairs = [];
       if (init && typeof init === 'object') {
-        for (var k in init) if (Object.prototype.hasOwnProperty.call(init, k)) {
-          this.append(k, init[k]);
-        }
+        for (var k in init) if (Object.prototype.hasOwnProperty.call(init, k)) this.append(k, init[k]);
       } else if (typeof init === 'string') {
         init.replace(/^\?/, '').split('&').forEach(function (p) {
           if (!p) return;
@@ -17,9 +15,7 @@
         }, this);
       }
     }
-    SimpleURLSearchParams.prototype.append = function (k, v) {
-      this._pairs.push([String(k), String(v)]);
-    };
+    SimpleURLSearchParams.prototype.append = function (k, v) { this._pairs.push([String(k), String(v)]); };
     SimpleURLSearchParams.prototype.toString = function () {
       return this._pairs.map(function (kv) {
         return encodeURIComponent(kv[0]) + '=' + encodeURIComponent(kv[1]);
@@ -30,11 +26,9 @@
 })();
 
 // ================== CONFIG ==================
-// URL do seu Apps Script (Web App)
-const apiUrl = 'https://script.google.com/macros/s/AKfycbyf2kN2jHA5amUzLWfpzo39PuKYyryZLTpLljTEqnV58SKSai14mkn8eV1tcmIfBhOh/exec';
+const apiUrl = 'https://script.google.com/macros/s/AKfycbxY1VsWmQB_4FDolmaMNnmSbyyXMDKjxeQ9RBP_qX8kcmoATHl1h3g-w8NsUfuXlf8B/exec';
 
 // ================== Utils ==================
-// Monta application/x-www-form-urlencoded sem usar URLSearchParams
 function formEncode(obj) {
   const out = [];
   for (const k in obj) {
@@ -43,10 +37,18 @@ function formEncode(obj) {
   }
   return out.join('&');
 }
-// monta URL com querystring sem URLSearchParams
 function withQuery(base, paramsObj) {
   const qs = formEncode(paramsObj);
   return qs ? `${base}?${qs}` : base;
+}
+
+// Normaliza horário para HH:MM (00–23:00–59). Retorna '' se inválido.
+function padHora(h) {
+  const m = /^(\d{1,2}):(\d{1,2})$/.exec((h || '').trim());
+  if (!m) return '';
+  let hh = Math.min(23, Math.max(0, parseInt(m[1], 10)));
+  let mm = Math.min(59, Math.max(0, parseInt(m[2], 10)));
+  return String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0');
 }
 
 // ================== DOM refs ==================
@@ -104,6 +106,7 @@ const adminSelectData = document.getElementById('admin-select-data');
 let todosOsAgendamentos = [];
 let agendamentoAtual = {};
 let isAdmin = false;
+let isSubmittingAdmin = false; // (2) flag anti duplo-submit
 const ADMIN_PASSWORD = 'admin';
 
 const professionalRules = {
@@ -140,6 +143,11 @@ async function carregarAgenda(){
   const mm=String(hoje.getMonth()+1).padStart(2,'0');
   const dd=String(hoje.getDate()).padStart(2,'0');
   const dataPadrao=`${yyyy}-${mm}-${dd}`;
+
+  // (1) bloquear datas passadas
+  seletorData.min = `${yyyy}-${mm}-${dd}`;
+  adminSelectData.min = seletorData.min;
+
   const dataSelecionada=seletorData.value||dataPadrao;
   seletorData.value=dataSelecionada;
   atualizarDiaDaSemana(dataSelecionada);
@@ -189,7 +197,7 @@ function criarHTMLAgenda(agendamentos){
     g.slots.sort((a,b)=>a.horario.localeCompare(b.horario)).forEach(s=>{
       const vagasLivres = s.vagas_totais - s.reservas;
       let statusClass='', vagasTxt='';
-      if(['INDISPONIVEL','BLOQUEADO'].includes(s.reserva.toUpperCase())){
+      if(['INDISPONIVEL','BLOQUEADO'].includes((s.reserva||'').toUpperCase())){
         statusClass='status-indisponivel'; vagasTxt='Indisp.';
       } else if (vagasLivres>0){
         statusClass='status-disponivel';
@@ -203,11 +211,11 @@ function criarHTMLAgenda(agendamentos){
           <span class="admin-id">ID: ${s.id_linha}</span>
           <button class="status-admin-excluir" data-id-linha="${s.id_linha}">Excluir</button>
           ${
-            s.reserva.toUpperCase()==='INDISPONIVEL'
+            (s.reserva||'').toUpperCase()==='INDISPONIVEL'
             ? `<span class="status-admin-reservas" data-reservas="${s.reservas}">0 Reservas</span>`
             : `<span class="status-admin-reservas" data-reservas="${s.reservas}">Reservas: ${s.reservas>0?s.reservas:s.reserva||0}</span>`
           }`;
-        if(vagasLivres>0 && !['INDISPONIVEL','BLOQUEADO'].includes(s.reserva.toUpperCase())){
+        if(vagasLivres>0 && !['INDISPONIVEL','BLOQUEADO'].includes((s.reserva||'').toUpperCase())){
           statusClass += ' status-admin-ativo';
         }
       }
@@ -363,8 +371,13 @@ function toggleAdminInputs(){
   }
 }
 
+// (2) bloquear Enter para não submeter involuntariamente
+formAdicionarHorario.addEventListener('keydown', e => { if (e.key === 'Enter') e.preventDefault(); });
+
 async function handleAdminAdicionar(e){
   e.preventDefault();
+  if (isSubmittingAdmin) return; // (2) evita duplo clique
+  isSubmittingAdmin = true;
 
   const data = adminSelectData.value.split('-').reverse().join('/'); // DD/MM/AAAA
   const profissional = adminSelectProfissional.value;
@@ -386,19 +399,34 @@ async function handleAdminAdicionar(e){
       }
     });
   } else {
-    const horario = adminInputHorario.value.trim();
+    // (3) normalização HH:MM
+    const norm = padHora(adminInputHorario.value);
+    if(!norm){
+      adminAddMensagem.textContent='Horário inválido. Use o formato HH:MM (ex.: 08:30).';
+      adminAddMensagem.style.color='red';
+      btnConfirmarAdicionarFinal.disabled=false;
+      isSubmittingAdmin = false;
+      return;
+    }
+    adminInputHorario.value = norm; // feedback visual
     let vagas = parseInt(adminInputVagas.value.trim());
     if(atividade==='Reiki') vagas = 1;
-    if(!horario || isNaN(vagas) || vagas<1){
-      adminAddMensagem.textContent='Preencha horário e vagas corretamente.'; adminAddMensagem.style.color='red';
-      btnConfirmarAdicionarFinal.disabled=false; return;
+    if(isNaN(vagas) || vagas<1){
+      adminAddMensagem.textContent='Preencha Vagas com um número válido (>=1).';
+      adminAddMensagem.style.color='red';
+      btnConfirmarAdicionarFinal.disabled=false;
+      isSubmittingAdmin = false;
+      return;
     }
-    horariosParaEnviar.push({ Horario: horario, Vagas: vagas, Reserva: '' });
+    horariosParaEnviar.push({ Horario: norm, Vagas: vagas, Reserva: '' });
   }
 
   if(horariosParaEnviar.length===0){
-    adminAddMensagem.textContent='Selecione/preencha pelo menos um horário.'; adminAddMensagem.style.color='orange';
-    btnConfirmarAdicionarFinal.disabled=false; return;
+    adminAddMensagem.textContent='Selecione/preencha pelo menos um horário.';
+    adminAddMensagem.style.color='orange';
+    btnConfirmarAdicionarFinal.disabled=false;
+    isSubmittingAdmin = false;
+    return;
   }
 
   try{
@@ -420,6 +448,7 @@ async function handleAdminAdicionar(e){
     adminAddMensagem.style.color='red';
   }finally{
     btnConfirmarAdicionarFinal.disabled=false;
+    isSubmittingAdmin = false; // (2) libera novamente
   }
 }
 
@@ -549,5 +578,3 @@ container.addEventListener('click', (ev)=>{
 
 // ================== Start ==================
 carregarAgenda();
-
-
