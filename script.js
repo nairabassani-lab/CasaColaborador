@@ -1,3 +1,34 @@
+/* Polyfill mínimo para URLSearchParams (compatibilidade legada) */
+(function () {
+  if (typeof window !== 'undefined' && typeof window.URLSearchParams === 'undefined') {
+    function SimpleURLSearchParams(init) {
+      this._pairs = [];
+      if (init && typeof init === 'object') {
+        for (var k in init) if (Object.prototype.hasOwnProperty.call(init, k)) {
+          this.append(k, init[k]);
+        }
+      } else if (typeof init === 'string') {
+        init.replace(/^\?/, '').split('&').forEach(function (p) {
+          if (!p) return;
+          var i = p.indexOf('=');
+          var key = i >= 0 ? p.slice(0, i) : p;
+          var val = i >= 0 ? p.slice(i + 1) : '';
+          this.append(decodeURIComponent(key), decodeURIComponent(val));
+        }, this);
+      }
+    }
+    SimpleURLSearchParams.prototype.append = function (k, v) {
+      this._pairs.push([String(k), String(v)]);
+    };
+    SimpleURLSearchParams.prototype.toString = function () {
+      return this._pairs.map(function (kv) {
+        return encodeURIComponent(kv[0]) + '=' + encodeURIComponent(kv[1]);
+      }).join('&');
+    };
+    window.URLSearchParams = SimpleURLSearchParams;
+  }
+})();
+
 // ================== CONFIG ==================
 // URL do seu Apps Script (Web App)
 const apiUrl = 'https://script.google.com/macros/s/AKfycbxY1VsWmQB_4FDolmaMNnmSbyyXMDKjxeQ9RBP_qX8kcmoATHl1h3g-w8NsUfuXlf8B/exec';
@@ -518,3 +549,4 @@ container.addEventListener('click', (ev)=>{
 
 // ================== Start ==================
 carregarAgenda();
+
