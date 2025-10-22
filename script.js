@@ -25,43 +25,27 @@
 const apiUrl = 'https://script.google.com/macros/s/AKfycbzP0ZIMKk80WED0OOfuJ9kl4lGFjzS3Q1WwlfU_B2H4RNCF3Al55eGET32fLNbZIIAF/exec';
 
 // ================== Utils ==================
-function formEncode(obj) {
-  const out = [];
-  for (const k in obj) { if (!Object.prototype.hasOwnProperty.call(obj, k)) continue;
-    out.push(encodeURIComponent(k) + '=' + encodeURIComponent(String(obj[k])));
-  }
-  return out.join('&');
-}
+function formEncode(obj) { const out=[]; for(const k in obj){ if(!Object.prototype.hasOwnProperty.call(obj,k)) continue; out.push(encodeURIComponent(k)+'='+encodeURIComponent(String(obj[k])));} return out.join('&'); }
 function withQuery(base, paramsObj) { const qs = formEncode(paramsObj); return qs ? `${base}?${qs}` : base; }
-function padHora(h) {
-  const m = /^(\d{1,2}):(\d{1,2})$/.exec((h || '').trim()); if (!m) return '';
-  let hh = Math.min(23, Math.max(0, parseInt(m[1], 10)));
-  let mm = Math.min(59, Math.max(0, parseInt(m[2], 10)));
-  return String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0');
-}
+function padHora(h){ const m=/^(\d{1,2}):(\d{1,2})$/.exec((h||'').trim()); if(!m) return ''; let hh=Math.min(23,Math.max(0,parseInt(m[1],10))); let mm=Math.min(59,Math.max(0,parseInt(m[2],10))); return String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0'); }
+function isElegivel(slot){ const status=String(slot.reserva||'').toUpperCase(); const livres=(slot.vagas_totais||0)-(slot.reservas||0); return status!=='INDISPONIVEL'&&status!=='BLOQUEADO'&&livres>0; }
 
-// bloqueio client-side para slots passados (ex.: hoje 14:10 → tudo <=14:10 some)
-function isPastClient(slot){
-  const selISO = (seletorData.value || '').trim();
-  if (!selISO || !slot || !slot.horario) return false;
-  const [Y,M,D] = selISO.split('-').map(Number);
-  const now = new Date();
-  if (Y===now.getFullYear() && M===(now.getMonth()+1) && D===now.getDate()){
-    const [HH,MM] = String(slot.horario).split(':').map(Number);
-    const nowMin = now.getHours()*60 + now.getMinutes();
-    const slotMin = (HH||0)*60 + (MM||0);
-    return slotMin <= nowMin; // passado ou no mesmo minuto
-  }
-  return false;
+// helpers fetch com cache-buster e melhor erro
+async function getJSON(url, params){
+  const qs = new URLSearchParams(params||{}); qs.append('_ts',Date.now());
+  const ctrl = new AbortController(); const t=setTimeout(()=>ctrl.abort(),12000);
+  try{
+    const resp = await fetch(`${url}?${qs}`, { signal: ctrl.signal });
+    if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    return await resp.json();
+  } finally { clearTimeout(t); }
 }
-
-function isElegivel(slot) {
-  const status = String(slot.reserva || '').toUpperCase();
-  const livres = (slot.vagas_totais || 0) - (slot.reservas || 0);
-  if (status === 'INDISPONIVEL' || status === 'BLOQUEADO') return false;
-  if (livres <= 0) return false;
-  if (isPastClient(slot)) return false;
-  return true;
+async function postForm(url, dataObj){
+  const body = new URLSearchParams();
+  for(const k in dataObj){ body.append(k, dataObj[k]); }
+  const resp = await fetch(url, { method:'POST', body });
+  if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
+  return resp.json();
 }
 
 // ================== DOM refs ==================
@@ -73,6 +57,7 @@ const menuAtividades = document.getElementById('menu-atividades');
 const modalAgendamento = document.getElementById('modal-agendamento');
 const modalDetalhes   = document.getElementById('modal-detalhes');
 const inputMatricula  = document.getElementById('input-matricula');
+const inputEmail      = document.getElementById('input-email');
 const btnCancelar     = document.getElementById('btn-cancelar-agendamento');
 const btnConfirmar    = document.getElementById('btn-confirmar');
 const modalMensagem   = document.getElementById('modal-mensagem');
@@ -104,6 +89,7 @@ const btnBuscarReservas      = document.getElementById('btn-buscar-reservas');
 const btnVoltarConsulta      = document.getElementById('btn-voltar-consulta');
 const listaAgendamentos      = document.getElementById('lista-agendamentos');
 
+// Admin adicionar
 const adminSelectProfissional = document.getElementById('admin-select-profissional');
 const adminSelectAtividade    = document.getElementById('admin-select-atividade');
 const quickMassageContainer   = document.getElementById('quick-massage-container');
@@ -117,7 +103,7 @@ const btnCancelarAdicionarFinal  = document.getElementById('btn-cancelar-adicion
 const adminAddMensagem        = document.getElementById('admin-add-mensagem');
 const adminSelectData         = document.getElementById('admin-select-data');
 
-// Dashboard refs
+// Dashboard
 const modalAdminDashboard = document.getElementById('modal-admin-dashboard');
 const dashSelectDate      = document.getElementById('dash-select-date');
 const dashInfo            = document.getElementById('dash-info');
@@ -161,6 +147,45 @@ function atualizarDiaDaSemana(dataString){
   diaSemanaSpan.textContent=`(${dia})`;
 }
 
+/* === animação de acordeão robusta === */
+function expandPanel(panel){
+  if (!panel) return;
+  panel.classList.add('open');
+  panel.style.overflow = 'hidden';
+  panel.style.maxHeight = panel.scrollHeight + 'px';
+  // ao final, deixa auto para acomodar futuras linhas/resize
+  const onEnd = (e)=>{
+    if (e.target !== panel) return;
+    panel.style.maxHeight = 'none';
+    panel.removeEventListener('transitionend', onEnd);
+  };
+  panel.addEventListener('transitionend', onEnd);
+}
+function collapsePanel(panel){
+  if (!panel) return;
+  // fixa a altura atual, força reflow e anima para 0
+  panel.style.maxHeight = panel.scrollHeight + 'px';
+  panel.offsetHeight; // reflow
+  panel.classList.remove('open');
+  panel.style.maxHeight = '0px';
+}
+
+/* inicializa fechando tudo */
+function initializeAccordions(){
+  container.querySelectorAll('.atividade-content').forEach(sec=>{
+    sec.classList.remove('open');
+    sec.style.maxHeight = '0px';
+    sec.style.overflow = 'hidden';
+  });
+  container.querySelectorAll('.prof-content').forEach(sec=>{
+    sec.classList.remove('open');
+    sec.style.maxHeight = '0px';
+    sec.style.overflow = 'hidden';
+  });
+  container.querySelectorAll('.titulo-atividade').forEach(t=>t.classList.remove('ativo'));
+  container.querySelectorAll('.titulo-profissional').forEach(t=>t.classList.remove('ativo'));
+}
+
 // ================== Agenda (carregar e filtrar) ==================
 async function carregarAgenda(){
   const hoje=new Date();
@@ -183,18 +208,15 @@ async function renderizarAgendaParaData(dataISO){
   const dataApi=dataISO.split('-').reverse().join('/');
 
   try{
-    const url = withQuery(apiUrl, { action:'getSchedule', date:dataApi });
-    const response = await fetch(url);
-    if(!response.ok) throw new Error('Erro de rede (' + response.status + ')');
-    const result = await response.json();
+    const result = await getJSON(apiUrl, { action:'getSchedule', date:dataApi });
     if(result.status==="success"){
-      todosOsAgendamentos = (result.data || []).filter(isElegivel); // só elegíveis
+      todosOsAgendamentos = (result.data || []).filter(isElegivel);
       construirMenuAtividades(todosOsAgendamentos);
       if (atividadeSelecionada !== 'TODAS' && !getTodasAtividades(todosOsAgendamentos).includes(atividadeSelecionada)) {
         atividadeSelecionada = 'TODAS';
       }
       container.innerHTML = criarHTMLAgendaFiltrada(todosOsAgendamentos, atividadeSelecionada);
-      initializeAccordions(); // fecha tudo e habilita clique
+      initializeAccordions(); // colapsa tudo
     } else {
       container.innerHTML = '<p class="alerta-erro">Erro ao carregar: ' + (result.message || 'Resposta inválida.') + '</p>';
       menuAtividades.innerHTML = '';
@@ -212,89 +234,82 @@ function getTodasAtividades(agendamentos){
   agendamentos.forEach(s=> set.add(s.atividade));
   return Array.from(set).sort((a,b)=>a.localeCompare(b,'pt-BR'));
 }
-
 function construirMenuAtividades(agendamentos){
   const atividades = getTodasAtividades(agendamentos);
-  const dispPorAtividade = atividades.reduce(function(acc, atv){ acc[atv]=0; return acc; }, {});
-  agendamentos.forEach(function(s){
+  const dispPorAtividade = atividades.reduce((acc,atv)=>(acc[atv]=0,acc),{});
+  agendamentos.forEach(s=>{
     const livres = (s.vagas_totais - s.reservas);
-    if (livres > 0 && !isPastClient(s)) dispPorAtividade[s.atividade] = (dispPorAtividade[s.atividade]||0) + 1;
+    if (livres > 0) dispPorAtividade[s.atividade] = (dispPorAtividade[s.atividade]||0) + 1;
   });
 
-  let html = '';
-  const btn = function (nome, active, qtd){
-    return '<button class="chip-atividade ' + (active?'ativo':'') + '" data-atividade="' + nome + '">' +
-      nome + (qtd!=null?(' <span class="badge">' + qtd + '</span>'):'') + '</button>';
-  };
-  const totalDisp = Object.values(dispPorAtividade).reduce(function(a,b){return a+b;},0);
+  let html='';
+  const btn=(nome,active,qtd)=>(
+    '<button class="chip-atividade '+(active?'ativo':'')+'" data-atividade="'+nome+'">'+
+    nome + (qtd!=null?(' <span class="badge">'+qtd+'</span>'):'') + '</button>'
+  );
+  const totalDisp = Object.values(dispPorAtividade).reduce((a,b)=>a+b,0);
   html += btn('TODAS', atividadeSelecionada==='TODAS', totalDisp);
-  atividades.forEach(function(a){ html += btn(a, atividadeSelecionada===a, dispPorAtividade[a]); });
+  atividades.forEach(a=> html += btn(a, atividadeSelecionada===a, dispPorAtividade[a]));
   menuAtividades.innerHTML = html;
 }
 
-// =============== HTML agenda filtrada (ACORDEÃO POR ATIVIDADE e PROFISSIONAL) ===============
+// =============== HTML agenda filtrada (ACORDEÃO ATIVIDADE → PROFISSIONAL) ===============
 function criarHTMLAgendaFiltrada(agendamentos, atividadeFiltro){
-  // atividade -> { prof -> [slots] }
   const map = {};
-  agendamentos.forEach(function(s){
+  agendamentos.forEach(s=>{
     if (atividadeFiltro !== 'TODAS' && s.atividade !== atividadeFiltro) return;
     if (!map[s.atividade]) map[s.atividade] = {};
     if (!map[s.atividade][s.profissional]) map[s.atividade][s.profissional] = [];
     map[s.atividade][s.profissional].push(s);
   });
 
-  const atividades = Object.keys(map).sort(function(a,b){ return a.localeCompare(b,'pt-BR'); });
+  const atividades = Object.keys(map).sort((a,b)=>a.localeCompare(b,'pt-BR'));
   if (!atividades.length) return '<p class="alerta-info">Não há horários para esta atividade nesta data.</p>';
 
-  let html = '';
-  atividades.forEach(function(atividade){
+  let html='';
+  atividades.forEach(atividade=>{
     html += '<div class="bloco-atividade">' +
-              '<h3 class="titulo-atividade" role="button" tabindex="0" aria-expanded="false">' + atividade + '</h3>' +
+              '<h3 class="titulo-atividade">' + atividade + '</h3>' +
               '<div class="atividade-content">';
 
-    const profs = Object.keys(map[atividade]).sort(function(a,b){ return a.localeCompare(b,'pt-BR'); });
-    profs.forEach(function(prof){
-      const slots = map[atividade][prof].slice().sort(function(a,b){ return a.horario.localeCompare(b.horario); });
+    const profs = Object.keys(map[atividade]).sort((a,b)=>a.localeCompare(b,'pt-BR'));
+    profs.forEach(prof=>{
+      const slots = map[atividade][prof].slice().sort((a,b)=> a.horario.localeCompare(b.horario));
 
-      let grade = '';
-      slots.forEach(function(s){
+      // grade de horários
+      let grade='';
+      slots.forEach(s=>{
         const vagasLivres = s.vagas_totais - s.reservas;
         const isQM = s.atividade.indexOf('Quick Massage') !== -1 || s.atividade.indexOf('Reiki') !== -1;
         const vagasTxt = isQM ? 'Vaga' : (vagasLivres + '/' + s.vagas_totais + ' Vagas');
-
         const dataApi = seletorData.value.split('-').reverse().join('/');
         grade +=
           '<div class="slot-horario status-disponivel"' +
-              ' data-id-linha="' + s.id_linha + '"' +
-              ' data-data="' + dataApi + '"' +
-              ' data-horario="' + s.horario + '"' +
-              ' data-atividade="' + s.atividade + '"' +
-              ' data-profissional="' + s.profissional + '"' +
-              ' data-vagas-total="' + s.vagas_totais + '"' +
-              ' data-vagas-livres="' + vagasLivres + '">' +
-            '<span class="horario-label">' + s.horario + '</span>' +
-            '<span class="vagas-label">' + vagasTxt + '</span>' +
+              ' data-id-linha="'+s.id_linha+'"' +
+              ' data-data="'+dataApi+'"' +
+              ' data-horario="'+s.horario+'"' +
+              ' data-atividade="'+s.atividade+'"' +
+              ' data-profissional="'+s.profissional+'"' +
+              ' data-vagas-total="'+s.vagas_totais+'"' +
+              ' data-vagas-livres="'+vagasLivres+'">' +
+            '<span class="horario-label">'+s.horario+'</span>' +
+            '<span class="vagas-label">'+vagasTxt+'</span>' +
           '</div>';
       });
-
       if (!grade.trim()) return;
 
-      html +=
-        '<div class="prof-bloco">' +
-          '<h4 class="subtitulo-profissional" role="button" tabindex="0" aria-expanded="false">' + prof + '</h4>' +
-          '<div class="prof-content">' +
-            '<div class="slots-grid">' +
-              grade +
-              (isAdmin
-                ? ('<div class="slot-horario status-admin-adicionar"' +
-                   ' data-data="' + seletorData.value.split('-').reverse().join('/') + '"' +
-                   ' data-profissional="' + prof + '"' +
-                   ' data-atividade="' + atividade + '">' +
-                   '<span class="adicionar-label">+ Adicionar Slot</span></div>')
-                : '') +
-            '</div>' +
-          '</div>' +
-        '</div>';
+      html += '<div class="prof-bloco">' +
+                '<h4 class="titulo-profissional">' + prof + '</h4>' +
+                '<div class="prof-content">' +
+                  '<div class="slots-grid">'+ grade + (isAdmin
+                    ? ('<div class="slot-horario status-admin-adicionar" '+
+                       'data-data="'+seletorData.value.split('-').reverse().join('/')+'" '+
+                       'data-profissional="'+prof+'" data-atividade="'+atividade+'">'+
+                       '<span class="adicionar-label">+ Adicionar Slot</span></div>')
+                    : '') +
+                  '</div>' +
+                '</div>' +
+              '</div>';
     });
 
     html +=   '</div>' + // fecha .atividade-content
@@ -302,29 +317,6 @@ function criarHTMLAgendaFiltrada(agendamentos, atividadeFiltro){
   });
 
   return html;
-}
-
-// Inicializa acordeões: fecha tudo (atividade e profissional)
-function initializeAccordions(){
-  const closeSection = function(el){
-    el.style.maxHeight = '0px';
-    el.style.overflow = 'hidden';
-    el.style.transition = 'max-height 0.35s ease, padding 0.25s ease';
-    el.style.padding = '0 12px';
-    el.classList.remove('aberta');
-  };
-
-  container.querySelectorAll('.atividade-content').forEach(closeSection);
-  container.querySelectorAll('.prof-content').forEach(closeSection);
-
-  container.querySelectorAll('.titulo-atividade').forEach(function(t){
-    t.classList.remove('ativo');
-    t.setAttribute('aria-expanded', 'false');
-  });
-  container.querySelectorAll('.subtitulo-profissional').forEach(function(t){
-    t.classList.remove('ativo');
-    t.setAttribute('aria-expanded', 'false');
-  });
 }
 
 // ================== Usuário – reservar ==================
@@ -347,20 +339,15 @@ function abrirModalReserva(dadosSlot){
 
 async function confirmarAgendamento(){
   const matricula=inputMatricula.value.trim();
-  const emailOpt = (document.getElementById('input-email') ? document.getElementById('input-email').value.trim() : '');
+  const email=(inputEmail?.value||'').trim();
   if(!matricula){ modalMensagem.textContent='A matrícula é obrigatória.'; modalMensagem.style.color='red'; return; }
   btnConfirmar.disabled=true;
   modalMensagem.textContent='Processando...'; modalMensagem.style.color='var(--cinza-texto)';
 
   try{
-    const body = formEncode({ action:'bookSlot', id_linha: agendamentoAtual.idLinha, matricula, email: emailOpt });
-    const resp = await fetch(apiUrl, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'}, body });
-    if(!resp.ok) throw new Error('HTTP ' + resp.status);
-    const result = await resp.json();
-    if(result.status==='success'){
-      modalMensagem.textContent=result.message; modalMensagem.style.color='var(--verde-moinhos)';
-      carregarAgenda(); setTimeout(function(){ fecharModal(modalAgendamento); }, 1500);
-    }else{ throw new Error(result.message); }
+    const result = await postForm(apiUrl, { action:'bookSlot', id_linha: agendamentoAtual.idLinha, matricula, email });
+    modalMensagem.textContent=result.message || 'Reserva efetuada.'; modalMensagem.style.color='var(--verde-moinhos)';
+    await carregarAgenda(); setTimeout(()=> fecharModal(modalAgendamento), 1200);
   }catch(err){
     modalMensagem.textContent = err.message || 'Erro ao reservar.'; modalMensagem.style.color='red';
   }finally{ btnConfirmar.disabled=false; }
@@ -392,12 +379,8 @@ function confirmarAdminLogin(){ if(inputAdminPassword.value.trim()===ADMIN_PASSW
 async function handleAdminDelete(idLinha){
   if(!confirm('Excluir permanentemente a linha ' + idLinha + '?')) return;
   try{
-    const body = formEncode({ action:'deleteSchedule', id_linha:idLinha });
-    const resp = await fetch(apiUrl, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'}, body });
-    if(!resp.ok) throw new Error('HTTP ' + resp.status);
-    const result = await resp.json();
-    if(result.status==='success'){ alert(result.message); carregarAgenda(); }
-    else { throw new Error(result.message); }
+    const result = await postForm(apiUrl, { action:'deleteSchedule', id_linha:idLinha });
+    alert(result.message||'Excluído.'); carregarAgenda();
   }catch(err){ alert('Erro ao excluir: ' + err.message); }
 }
 
@@ -409,7 +392,6 @@ function updateActivitySelector(prof){
   if(rule){ rule.activities.forEach(function(a){ const op=document.createElement('option'); op.value=a; op.textContent=a; adminSelectAtividade.appendChild(op); }); }
 }
 function renderQuickMassageGrid(){
-  // Quick Massage: somente checkbox do horário (sem “Indisp.”)
   quickMassageHorariosGrid.innerHTML='';
   quickMassageHours.forEach(function(h){
     const id='qm-' + h.replace(':','-');
@@ -450,9 +432,7 @@ function toggleAdminInputs(){
     if(!isReiki){ vagasContainerUnico.classList.remove('hidden'); adminInputVagas.required=true; }
   }
 }
-
-// anti-Enter no form admin
-formAdicionarHorario.addEventListener('keydown', function(e){ if (e.key === 'Enter') e.preventDefault(); });
+formAdicionarHorario.addEventListener('keydown', e=>{ if (e.key === 'Enter') e.preventDefault(); });
 
 async function handleAdminAdicionar(e){
   e.preventDefault();
@@ -469,62 +449,38 @@ async function handleAdminAdicionar(e){
 
   if(atividade==='Quick Massage'){
     const cbs = quickMassageHorariosGrid.querySelectorAll('.qm-checkbox');
-    cbs.forEach(function(cb){
-      if(cb.checked){
-        horariosParaEnviar.push({ Horario: cb.dataset.horario, Vagas: 1, Reserva: '' });
-      }
-    });
+    cbs.forEach(cb=>{ if(cb.checked){ horariosParaEnviar.push({ Horario: cb.dataset.horario, Vagas: 1, Reserva: '' }); } });
   } else {
     const norm = padHora(adminInputHorario.value);
     if(!norm){
-      adminAddMensagem.textContent='Horário inválido. Use o formato HH:MM (ex.: 08:30).';
-      adminAddMensagem.style.color='red';
-      btnConfirmarAdicionarFinal.disabled=false;
-      isSubmittingAdmin = false;
-      return;
+      adminAddMensagem.textContent='Horário inválido. Use o formato HH:MM (ex.: 08:30).'; adminAddMensagem.style.color='red';
+      btnConfirmarAdicionarFinal.disabled=false; isSubmittingAdmin = false; return;
     }
     adminInputHorario.value = norm;
     let vagas = parseInt(adminInputVagas.value.trim(),10);
     if(atividade==='Reiki') vagas = 1;
     if(isNaN(vagas) || vagas<1){
-      adminAddMensagem.textContent='Preencha Vagas com um número válido (>=1).';
-      adminAddMensagem.style.color='red';
-      btnConfirmarAdicionarFinal.disabled=false;
-      isSubmittingAdmin = false;
-      return;
+      adminAddMensagem.textContent='Preencha Vagas com um número válido (>=1).'; adminAddMensagem.style.color='red';
+      btnConfirmarAdicionarFinal.disabled=false; isSubmittingAdmin = false; return;
     }
     horariosParaEnviar.push({ Horario: norm, Vagas: vagas, Reserva: '' });
   }
 
   if(horariosParaEnviar.length===0){
-    adminAddMensagem.textContent='Selecione/preencha pelo menos um horário.';
-    adminAddMensagem.style.color='orange';
-    btnConfirmarAdicionarFinal.disabled=false;
-    isSubmittingAdmin = false;
-    return;
+    adminAddMensagem.textContent='Selecione/preencha pelo menos um horário.'; adminAddMensagem.style.color='orange';
+    btnConfirmarAdicionarFinal.disabled=false; isSubmittingAdmin = false; return;
   }
 
   try{
-    const body = formEncode({
-      action:'addMultiple',
-      data, profissional, atividade,
-      horariosJson: JSON.stringify(horariosParaEnviar)
-    });
-    const resp = await fetch(apiUrl, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'}, body });
-    if(!resp.ok) throw new Error('HTTP ' + resp.status);
-    const result = await resp.json();
-    if(result.status==='success'){
-      adminAddMensagem.textContent=result.message; adminAddMensagem.style.color='var(--verde-moinhos)';
-      await renderizarAgendaParaData(seletorData.value);
-      setTimeout(function(){ fecharModal(modalAdminAdicionar); }, 1200);
-    } else { throw new Error(result.message); }
+    const result = await postForm(apiUrl, { action:'addMultiple', data, profissional, atividade, horariosJson: JSON.stringify(horariosParaEnviar) });
+    adminAddMensagem.textContent=result.message; adminAddMensagem.style.color='var(--verde-moinhos)';
+    await renderizarAgendaParaData(seletorData.value);
+    setTimeout(()=> fecharModal(modalAdminAdicionar), 1000);
   }catch(err){
     console.error('Erro ao adicionar agendamento:', err);
-    adminAddMensagem.textContent = 'Erro de processamento POST: ' + err.message;
-    adminAddMensagem.style.color='red';
+    adminAddMensagem.textContent = 'Erro: ' + err.message; adminAddMensagem.style.color='red';
   }finally{
-    btnConfirmarAdicionarFinal.disabled=false;
-    isSubmittingAdmin = false;
+    btnConfirmarAdicionarFinal.disabled=false; isSubmittingAdmin = false;
   }
 }
 
@@ -553,7 +509,6 @@ async function handleBuscarReservas(){
     consultaMensagem.textContent='Erro ao buscar: ' + err.message; consultaMensagem.style.color='red';
   }
 }
-
 function renderizarReservas(reservas, matricula){
   reservas.sort(function(a,b){
     const da=a.data.split('/'); const db=b.data.split('/');
@@ -571,108 +526,73 @@ function renderizarReservas(reservas, matricula){
   });
   html+='</ul>'; return html;
 }
-
 async function handleCancelBooking(event){
   const t=event.target;
   if(!t.classList.contains('btn-cancelar-reserva')) return;
   const bookingId = t.getAttribute('data-booking-id');
   const slotId    = t.getAttribute('data-slot-id');
   const matricula = t.getAttribute('data-matricula');
-  const emailOpt  = (document.getElementById('input-consulta-email') ? document.getElementById('input-consulta-email').value.trim() : '');
   if(!confirm('Cancelar ' + t.previousElementSibling.textContent + '?')) return;
   t.disabled=true; t.textContent='Cancelando...';
   try{
-    const body = formEncode({ action:'cancelBooking', bookingId, slotId, matricula, email: emailOpt });
-    const resp = await fetch(apiUrl, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'}, body });
-    if(!resp.ok) throw new Error('HTTP ' + resp.status);
-    const result = await resp.json();
-    if(result.status==='success'){ alert(result.message); handleBuscarReservas(); carregarAgenda(); }
-    else { throw new Error(result.message); }
+    const result = await postForm(apiUrl, { action:'cancelBooking', bookingId, slotId, matricula });
+    alert(result.message||'Cancelado.'); handleBuscarReservas(); carregarAgenda();
   }catch(err){ alert('Erro ao cancelar: ' + err.message); }
   finally{ t.disabled=false; t.textContent='Cancelar'; }
 }
-
-function voltarConsulta(){
-  consultaViewInicial.classList.remove('hidden');
-  consultaViewResultados.classList.add('hidden');
-  consultaMensagem.textContent='';
-}
+function voltarConsulta(){ consultaViewInicial.classList.remove('hidden'); consultaViewResultados.classList.add('hidden'); consultaMensagem.textContent=''; }
 
 // ================== Dashboard (Admin) ==================
 function formatNum(n){ return (n||0).toLocaleString('pt-BR'); }
-
 function buildTable(headers, rows){
   let html = '<table class="dash-table"><thead><tr>';
-  headers.forEach(function(h){ html += '<th>' + h + '</th>'; });
+  headers.forEach(h=> html += '<th>' + h + '</th>');
   html += '</tr></thead><tbody>';
   if(!rows.length){
     html += '<tr><td colspan="' + headers.length + '" style="text-align:center;color:#6c757d;">Sem dados</td></tr>';
   } else {
-    rows.forEach(function(r){
+    rows.forEach(r=>{
       html += '<tr>';
-      r.forEach(function(cell, i){
-        const cls = (i>=headers.length-3)?' class="number"':'';
-        html += '<td' + cls + '>' + cell + '</td>';
-      });
+      r.forEach((cell,i)=>{ const cls=(i>=headers.length-3)?' class="number"':''; html += '<td'+cls+'>' + cell + '</td>'; });
       html += '</tr>';
     });
   }
   html += '</tbody></table>';
   return html;
 }
-
-function openDashboard(){
-  dashSelectDate.value = seletorData.value;
-  atualizarDashboard();
-  abrirModal(modalAdminDashboard);
-}
-
+function openDashboard(){ dashSelectDate.value = seletorData.value; atualizarDashboard(); abrirModal(modalAdminDashboard); }
 function atualizarDashboard(){
   const dataISO = dashSelectDate.value;
   if(!dataISO){ dashActivityTable.innerHTML=''; dashProfTable.innerHTML=''; dashAPTable.innerHTML=''; return; }
   const dataBR = dataISO.split('-').reverse().join('/');
 
-  const slotsDia = todosOsAgendamentos.filter(function(s){ return s.data === dataBR; }).filter(isElegivel);
+  const slotsDia = todosOsAgendamentos.filter(s=> s.data === dataBR).filter(isElegivel);
 
-  const byAtv = {};
-  const byProf = {};
-  const byAP = {};
-
-  slotsDia.forEach(function(s){
-    const keyAtv = s.atividade;
-    const keyProf = s.profissional;
-    const keyAP = keyAtv + '|' + keyProf;
-
+  const byAtv = {}, byProf = {}, byAP = {};
+  slotsDia.forEach(s=>{
+    const keyAtv = s.atividade, keyProf = s.profissional, keyAP = keyAtv + '|' + keyProf;
     if(!byAtv[keyAtv]) byAtv[keyAtv] = { tot:0, res:0 };
     if(!byProf[keyProf]) byProf[keyProf] = { tot:0, res:0 };
     if(!byAP[keyAP]) byAP[keyAP] = { atv: keyAtv, prof: keyProf, tot:0, res:0 };
-
-    byAtv[keyAtv].tot += s.vagas_totais;
-    byAtv[keyAtv].res += s.reservas;
-
-    byProf[keyProf].tot += s.vagas_totais;
-    byProf[keyProf].res += s.reservas;
-
-    byAP[keyAP].tot += s.vagas_totais;
-    byAP[keyAP].res += s.reservas;
+    byAtv[keyAtv].tot += s.vagas_totais; byAtv[keyAtv].res += s.reservas;
+    byProf[keyProf].tot += s.vagas_totais; byProf[keyProf].res += s.reservas;
+    byAP[keyAP].tot += s.vagas_totais; byAP[keyAP].res += s.reservas;
   });
 
-  const rowsAtv = Object.keys(byAtv).sort(function(a,b){return a.localeCompare(b,'pt-BR');})
-    .map(function(k){ const o=byAtv[k]; return [k, formatNum(o.tot), formatNum(o.res), formatNum(o.tot - o.res)]; });
-
-  const rowsProf = Object.keys(byProf).sort(function(a,b){return a.localeCompare(b,'pt-BR');})
-    .map(function(k){ const o=byProf[k]; return [k, formatNum(o.tot), formatNum(o.res), formatNum(o.tot - o.res)]; });
-
-  const rowsAP = Object.keys(byAP).sort(function(a,b){return a.localeCompare(b,'pt-BR');})
-    .map(function(k){ const o=byAP[k]; return [o.atv + ' × ' + o.prof, formatNum(o.tot), formatNum(o.res), formatNum(o.tot - o.res)]; });
+  const rowsAtv = Object.keys(byAtv).sort((a,b)=>a.localeCompare(b,'pt-BR'))
+    .map(k=>{ const o=byAtv[k]; return [k, formatNum(o.tot), formatNum(o.res), formatNum(o.tot - o.res)]; });
+  const rowsProf = Object.keys(byProf).sort((a,b)=>a.localeCompare(b,'pt-BR'))
+    .map(k=>{ const o=byProf[k]; return [k, formatNum(o.tot), formatNum(o.res), formatNum(o.tot - o.res)]; });
+  const rowsAP = Object.keys(byAP).sort((a,b)=>a.localeCompare(b,'pt-BR'))
+    .map(k=>{ const o=byAP[k]; return [o.atv + ' × ' + o.prof, formatNum(o.tot), formatNum(o.res), formatNum(o.tot - o.res)]; });
 
   dashActivityTable.innerHTML = buildTable(['Atividade','Total','Reservas','Disponíveis'], rowsAtv);
   dashProfTable.innerHTML     = buildTable(['Profissional','Total','Reservas','Disponíveis'], rowsProf);
   dashAPTable.innerHTML       = buildTable(['Atividade × Profissional','Total','Reservas','Disponíveis'], rowsAP);
 
-  const sumTot = rowsAtv.reduce(function(a,r){ return a + parseInt((r[1]+'').replace(/\./g,''),10); },0);
-  const sumRes = rowsAtv.reduce(function(a,r){ return a + parseInt((r[2]+'').replace(/\./g,''),10); },0);
-  const sumDisp = rowsAtv.reduce(function(a,r){ return a + parseInt((r[3]+'').replace(/\./g,''),10); },0);
+  const sumTot = rowsAtv.reduce((a,r)=> a + parseInt((r[1]+'').replace(/\./g,''),10),0);
+  const sumRes = rowsAtv.reduce((a,r)=> a + parseInt((r[2]+'').replace(/\./g,''),10),0);
+  const sumDisp = rowsAtv.reduce((a,r)=> a + parseInt((r[3]+'').replace(/\./g,''),10),0);
   dashInfo.textContent = 'Total: ' + formatNum(sumTot) + ' • Reservas: ' + formatNum(sumRes) + ' • Disponíveis: ' + formatNum(sumDisp);
 }
 
@@ -709,62 +629,41 @@ btnBuscarReservas.addEventListener('click', handleBuscarReservas);
 btnVoltarConsulta.addEventListener('click', voltarConsulta);
 modalConsulta.addEventListener('click', handleCancelBooking);
 
-// click no container (acordeão + slots + admin)
+// Delegação de cliques: acordeões e slots
 container.addEventListener('click', function(ev){
-  // 1) acordeão de ATIVIDADE
-  const titleAtv = ev.target.closest('.titulo-atividade');
-  if (titleAtv){
-    titleAtv.classList.toggle('ativo');
-    const content = titleAtv.nextElementSibling; // .atividade-content
-    if (content){
-      const isOpen = content.classList.toggle('aberta');
-      if (isOpen){
-        content.style.padding = '12px';
-        content.style.maxHeight = content.scrollHeight + 'px';
-        titleAtv.setAttribute('aria-expanded','true');
-      } else {
-        content.style.maxHeight = '0px';
-        content.style.padding = '0 12px';
-        titleAtv.setAttribute('aria-expanded','false');
-      }
-    }
+  // atividade
+  const atvTitle = ev.target.closest('.titulo-atividade');
+  if (atvTitle){
+    atvTitle.classList.toggle('ativo');
+    const panel = atvTitle.nextElementSibling; // .atividade-content
+    if (!panel) return;
+    if (panel.classList.contains('open')) collapsePanel(panel); else expandPanel(panel);
+    return;
+  }
+  // profissional
+  const profTitle = ev.target.closest('.titulo-profissional');
+  if (profTitle){
+    profTitle.classList.toggle('ativo');
+    const panel = profTitle.nextElementSibling; // .prof-content
+    if (!panel) return;
+    if (panel.classList.contains('open')) collapsePanel(panel); else expandPanel(panel);
     return;
   }
 
-  // 1.2) acordeão de PROFISSIONAL
-  const titleProf = ev.target.closest('.subtitulo-profissional');
-  if (titleProf){
-    titleProf.classList.toggle('ativo');
-    const content = titleProf.nextElementSibling; // .prof-content
-    if (content){
-      const isOpen = content.classList.toggle('aberta');
-      if (isOpen){
-        content.style.padding = '10px 12px 12px';
-        content.style.maxHeight = content.scrollHeight + 'px';
-        titleProf.setAttribute('aria-expanded','true');
-      } else {
-        content.style.maxHeight = '0px';
-        content.style.padding = '0 12px';
-        titleProf.setAttribute('aria-expanded','false');
-      }
-    }
-    return;
-  }
-
-  // 2) clique em um slot (usuário)
+  // slot (usuário)
   const el = ev.target.closest('.slot-horario');
   if(el && el.classList.contains('status-disponivel') && !isAdmin){
     abrirModalReserva(el.dataset);
     return;
   }
 
-  // 3) admin excluir
+  // admin excluir
   if (isAdmin && ev.target.classList.contains('status-admin-excluir')){
     const id=ev.target.getAttribute('data-id-linha'); if(id) handleAdminDelete(id);
     return;
   }
 
-  // 4) admin atalho adicionar
+  // admin atalho adicionar
   if (isAdmin && el && el.classList.contains('status-admin-adicionar')){
     const d=el.dataset;
     adminSelectData.value = d.data.split('/').reverse().join('-');
@@ -795,4 +694,3 @@ dashSelectDate.addEventListener('change', atualizarDashboard);
 
 // ================== Start ==================
 carregarAgenda();
-
