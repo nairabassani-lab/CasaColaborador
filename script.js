@@ -32,7 +32,7 @@ function formEncode(obj) {
   }
   return out.join('&');
 }
-function withQuery(base, paramsObj) { const qs = formEncode(paramsObj); return qs ? base + '?' + qs : base; }
+function withQuery(base, paramsObj) { const qs = formEncode(paramsObj); return qs ? `${base}?${qs}` : base; }
 function padHora(h) {
   const m = /^(\d{1,2}):(\d{1,2})$/.exec((h || '').trim()); if (!m) return '';
   let hh = Math.min(23, Math.max(0, parseInt(m[1], 10)));
@@ -42,26 +42,19 @@ function padHora(h) {
 function isElegivel(slot) {
   const status = String(slot.reserva || '').toUpperCase();
   const livres = (slot.vagas_totais || 0) - (slot.reservas || 0);
-  return status !== 'INDISPONIVEL' && status !== 'BLOQUEADO' && livres > 0;
+  return status !== 'INDISPONIVEL' && status !== 'BLOQUEADO' && livres > 0 && !isSlotPast(slot);
 }
-
-// ===== NOVO: Helpers de data/hora (bloqueio de passados) =====
-function todayISO_(){
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = ('0'+(d.getMonth()+1)).slice(-2);
-  const da = ('0'+d.getDate()).slice(-2);
-  return y + '-' + m + '-' + da;
-}
-function isPastISOTime_(iso, hhmm){
-  // iso: YYYY-MM-DD, hhmm: HH:MM
-  if(!iso || !hhmm) return false;
-  const p = iso.split('-'); if (p.length!==3) return false;
-  const t = hhmm.split(':'); if (t.length<2) return false;
-  const Y = parseInt(p[0],10), M = parseInt(p[1],10)-1, D = parseInt(p[2],10);
-  const H = parseInt(t[0],10), Min = parseInt(t[1],10);
-  const dt = new Date(Y,M,D,H,Min,0,0);
-  return dt.getTime() <= Date.now(); // passou ou é exatamente agora → bloqueia
+function isSlotPast(slot) {
+  // slot.data formato DD/MM/YYYY, slot.horario HH:mm
+  try {
+    const [dd, mm, yy] = String(slot.data).split('/').map(Number);
+    const [HH, MM] = String(slot.horario).split(':').map(Number);
+    const when = new Date(yy, mm - 1, dd, HH, MM, 0);
+    const now = new Date();
+    return when.getTime() <= now.getTime();
+  } catch(_) {
+    return false;
+  }
 }
 
 // ================== DOM refs ==================
@@ -73,6 +66,7 @@ const menuAtividades = document.getElementById('menu-atividades');
 const modalAgendamento = document.getElementById('modal-agendamento');
 const modalDetalhes   = document.getElementById('modal-detalhes');
 const inputMatricula  = document.getElementById('input-matricula');
+const inputEmail      = document.getElementById('input-email'); // ← novo (opcional)
 const btnCancelar     = document.getElementById('btn-cancelar-agendamento');
 const btnConfirmar    = document.getElementById('btn-confirmar');
 const modalMensagem   = document.getElementById('modal-mensagem');
@@ -149,28 +143,28 @@ const quickMassageHours = [
 ];
 
 // ================== Helpers UI ==================
-function abrirModal(m){ m.classList.remove('hidden'); setTimeout(function(){ m.style.opacity=1; },10); }
-function fecharModal(m){ m.style.opacity=0; setTimeout(function(){ m.classList.add('hidden'); },300); }
+function abrirModal(m){ m.classList.remove('hidden'); setTimeout(()=>m.style.opacity=1,10); }
+function fecharModal(m){ m.style.opacity=0; setTimeout(()=>m.classList.add('hidden'),300); }
 function atualizarDiaDaSemana(dataString){
   if(!dataString){ diaSemanaSpan.textContent=''; return; }
-  const p = dataString.split('-').map(Number);
-  const data=new Date(p[0],p[1]-1,p[2]);
-  const opcoes={weekday:'long'};
+  const [Y,M,D]=dataString.split('-').map(Number);
+  const data=new Date(Y,M-1,D);
+  const opcoes={weekday:'long', timeZone:'UTC'};
   let dia=data.toLocaleDateString('pt-BR',opcoes);
   dia=dia.charAt(0).toUpperCase()+dia.slice(1);
-  diaSemanaSpan.textContent='(' + dia + ')';
+  diaSemanaSpan.textContent=`(${dia})`;
 }
 
 // ================== Agenda (carregar e filtrar) ==================
 async function carregarAgenda(){
   const hoje=new Date();
   const yyyy=hoje.getFullYear();
-  const mm=('0'+(hoje.getMonth()+1)).slice(-2);
-  const dd=('0'+hoje.getDate()).slice(-2);
-  const dataPadrao=yyyy+'-'+mm+'-'+dd;
+  const mm=String(hoje.getMonth()+1).padStart(2,'0');
+  const dd=String(hoje.getDate()).padStart(2,'0');
+  const dataPadrao=`${yyyy}-${mm}-${dd}`;
 
-  // Bloqueia datas passadas
-  seletorData.min = dataPadrao;
+  // bloquear datas passadas no seletor
+  seletorData.min = `${yyyy}-${mm}-${dd}`;
   adminSelectData.min = seletorData.min;
 
   const dataSelecionada=seletorData.value||dataPadrao;
@@ -189,20 +183,14 @@ async function renderizarAgendaParaData(dataISO){
     if(!response.ok) throw new Error('Erro de rede (' + response.status + ')');
     const result = await response.json();
     if(result.status==="success"){
-      // 1) apenas slots elegíveis
-      var arr = (result.data || []).filter(isElegivel);
-      // 2) se é hoje, remove horários que já passaram
-      if (dataISO === todayISO_()){
-        arr = arr.filter(function(s){ return !isPastISOTime_(dataISO, s.horario); });
-      }
-      todosOsAgendamentos = arr;
-
+      // Só slots elegíveis e não passados
+      todosOsAgendamentos = (result.data || []).filter(isElegivel);
       construirMenuAtividades(todosOsAgendamentos);
-      if (atividadeSelecionada !== 'TODAS' && getTodasAtividades(todosOsAgendamentos).indexOf(atividadeSelecionada) === -1) {
+      if (atividadeSelecionada !== 'TODAS' && !getTodasAtividades(todosOsAgendamentos).includes(atividadeSelecionada)) {
         atividadeSelecionada = 'TODAS';
       }
       container.innerHTML = criarHTMLAgendaFiltrada(todosOsAgendamentos, atividadeSelecionada);
-      initializeAccordions(); // colapsa tudo e habilita clique no título
+      initializeAccordions(); // colapsa tudo
     } else {
       container.innerHTML = '<p class="alerta-erro">Erro ao carregar: ' + (result.message || 'Resposta inválida.') + '</p>';
       menuAtividades.innerHTML = '';
@@ -217,8 +205,8 @@ async function renderizarAgendaParaData(dataISO){
 // Helpers do filtro por atividade
 function getTodasAtividades(agendamentos){
   const set = new Set();
-  agendamentos.forEach(function(s){ set.add(s.atividade); });
-  return Array.from(set).sort(function(a,b){return a.localeCompare(b,'pt-BR');});
+  agendamentos.forEach(s=> set.add(s.atividade));
+  return Array.from(set).sort((a,b)=>a.localeCompare(b,'pt-BR'));
 }
 
 function construirMenuAtividades(agendamentos){
@@ -264,13 +252,11 @@ function criarHTMLAgendaFiltrada(agendamentos, atividadeFiltro){
     profs.forEach(function(prof){
       const slots = map[atividade][prof].slice().sort(function(a,b){ return a.horario.localeCompare(b.horario); });
 
-      // monta grade de horários do profissional
       let grade = '';
       slots.forEach(function(s){
         const vagasLivres = s.vagas_totais - s.reservas;
         const isQM = s.atividade.indexOf('Quick Massage') !== -1 || s.atividade.indexOf('Reiki') !== -1;
         const vagasTxt = isQM ? 'Vaga' : (vagasLivres + '/' + s.vagas_totais + ' Vagas');
-
         const dataApi = seletorData.value.split('-').reverse().join('/');
         grade +=
           '<div class="slot-horario status-disponivel"' +
@@ -301,7 +287,7 @@ function criarHTMLAgendaFiltrada(agendamentos, atividadeFiltro){
                 '</div>';
     });
 
-    html +=   '</div>' + // fecha .atividade-content (colapsável)
+    html +=   '</div>' +
             '</div>';
   });
 
@@ -331,6 +317,10 @@ function abrirModalReserva(dadosSlot){
     atividade: dadosSlot.atividade,
     profissional: dadosSlot.profissional
   };
+  // preenche e-mail se houver salvo
+  const savedEmail = localStorage.getItem('userEmail') || '';
+  if (inputEmail) inputEmail.value = savedEmail;
+
   modalDetalhes.innerHTML =
     '<li><strong>Data:</strong> ' + agendamentoAtual.data + '</li>' +
     '<li><strong>Horário:</strong> ' + agendamentoAtual.horario + '</li>' +
@@ -342,23 +332,20 @@ function abrirModalReserva(dadosSlot){
 
 async function confirmarAgendamento(){
   const matricula=inputMatricula.value.trim();
+  const email=(inputEmail?.value || '').trim(); // opcional
+
   if(!matricula){ modalMensagem.textContent='A matrícula é obrigatória.'; modalMensagem.style.color='red'; return; }
-
-  // Segurança extra no front: se o slot já virou passado, bloqueia
-  const iso = seletorData.value;
-  if (isPastISOTime_(iso, agendamentoAtual.horario)){
-    modalMensagem.textContent='Este horário já passou.'; modalMensagem.style.color='red'; return;
-  }
-
   btnConfirmar.disabled=true;
   modalMensagem.textContent='Processando...'; modalMensagem.style.color='var(--cinza-texto)';
 
   try{
-    const body = formEncode({ action:'bookSlot', id_linha: agendamentoAtual.idLinha, matricula });
+    const body = formEncode({ action:'bookSlot', id_linha: agendamentoAtual.idLinha, matricula, email });
     const resp = await fetch(apiUrl, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'}, body });
     if(!resp.ok) throw new Error('HTTP ' + resp.status);
     const result = await resp.json();
     if(result.status==='success'){
+      // salva e-mail para futuras ações (cancelamento/novo agendamento)
+      if (email) localStorage.setItem('userEmail', email);
       modalMensagem.textContent=result.message; modalMensagem.style.color='var(--verde-moinhos)';
       carregarAgenda(); setTimeout(function(){ fecharModal(modalAgendamento); }, 1500);
     }else{ throw new Error(result.message); }
@@ -579,10 +566,11 @@ async function handleCancelBooking(event){
   const bookingId = t.getAttribute('data-booking-id');
   const slotId    = t.getAttribute('data-slot-id');
   const matricula = t.getAttribute('data-matricula');
+  const email = localStorage.getItem('userEmail') || ''; // ← usa e-mail salvo, se houver
   if(!confirm('Cancelar ' + t.previousElementSibling.textContent + '?')) return;
   t.disabled=true; t.textContent='Cancelando...';
   try{
-    const body = formEncode({ action:'cancelBooking', bookingId, slotId, matricula });
+    const body = formEncode({ action:'cancelBooking', bookingId, slotId, matricula, email });
     const resp = await fetch(apiUrl, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'}, body });
     if(!resp.ok) throw new Error('HTTP ' + resp.status);
     const result = await resp.json();
@@ -632,12 +620,7 @@ function atualizarDashboard(){
   if(!dataISO){ dashActivityTable.innerHTML=''; dashProfTable.innerHTML=''; dashAPTable.innerHTML=''; return; }
   const dataBR = dataISO.split('-').reverse().join('/');
 
-  // slots do dia + elegíveis
-  let slotsDia = todosOsAgendamentos.filter(function(s){ return s.data === dataBR; }).filter(isElegivel);
-  // se hoje, ignora horários passados
-  if (dataISO === todayISO_()){
-    slotsDia = slotsDia.filter(function(s){ return !isPastISOTime_(dataISO, s.horario); });
-  }
+  const slotsDia = todosOsAgendamentos.filter(function(s){ return s.data === dataBR; }).filter(isElegivel);
 
   const byAtv = {};
   const byProf = {};
@@ -737,14 +720,6 @@ container.addEventListener('click', function(ev){
   // 2) clique em um slot (usuário)
   const el = ev.target.closest('.slot-horario');
   if(el && el.classList.contains('status-disponivel') && !isAdmin){
-    // segurança extra: se já passou, bloqueia
-    const iso = seletorData.value;
-    const hhmm = el.getAttribute('data-horario');
-    if (isPastISOTime_(iso, hhmm)){
-      alert('Este horário já passou.');
-      carregarAgenda();
-      return;
-    }
     abrirModalReserva(el.dataset);
     return;
   }
