@@ -169,8 +169,12 @@ header {
         BLOCOS / SLOTS
    ============================== */
 
-/* Títulos */
+/* Bloco de atividade */
+.bloco-atividade { margin-top: 18px; }
+
+/* Título (Acordeão) */
 .titulo-atividade {
+    position: relative;
     font-size: 1.6em;
     color: var(--azul-moinhos);
     border-bottom: 2px solid var(--verde-moinhos);
@@ -180,15 +184,51 @@ header {
     padding: 12px 15px;
     border-radius: 8px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    user-select: none;
+    cursor: pointer;
 }
+.titulo-atividade::after{
+    content: "";
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    width: 10px;
+    height: 10px;
+    border-right: 3px solid var(--azul-moinhos);
+    border-bottom: 3px solid var(--azul-moinhos);
+    transform: translateY(-60%) rotate(45deg); /* seta apontando para baixo */
+    transition: transform .25s ease;
+}
+.titulo-atividade.ativo::after{
+    transform: translateY(-30%) rotate(-135deg); /* seta para cima */
+}
+
+/* Área colapsável do acordeão (o JS controla max-height/padding) */
+.atividade-content{
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    margin-bottom: 16px;
+    overflow: hidden; /* importante para a animação do max-height */
+}
+
+/* Subtítulo do profissional */
 .subtitulo-profissional {
-    margin: 6px 0 6px 2px;
+    margin: 10px 0 8px 2px;
     font-weight: 600;
     color: var(--cinza-texto);
     opacity: .95;
 }
 
-/* Container de slots (sempre visível) */
+/* Grid de slots do profissional */
+.slots-grid{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 5px 0 10px 0;
+}
+
+/* (mantido para compatibilidade caso existam usos antigos) */
 .horarios-atividade {
     display: flex;
     flex-wrap: wrap;
