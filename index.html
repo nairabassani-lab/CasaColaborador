@@ -36,12 +36,12 @@
     </p>
   </header>
 
-  <div id="seletor-container">
+  <div id="seletor-container" role="region" aria-label="Seleção de data e ações">
     <label for="seletor-data">Selecione uma data:</label>
-    <input type="date" id="seletor-data">
+    <input type="date" id="seletor-data" aria-describedby="dia-semana">
     <span id="dia-semana" class="dia-semana-label"></span>
 
-    <button id="btn-consultar-reservas" class="btn-acao btn-azul">Minhas Reservas</button>
+    <button id="btn-consultar-reservas" class="btn-acao btn-azul" type="button">Minhas Reservas</button>
     <button id="btn-gerenciar-agenda" class="btn-acao btn-vermelho hidden" type="button">Gerenciar Agenda</button>
   </div>
 
@@ -53,22 +53,23 @@
   </div>
 
   <!-- Modal Reserva -->
-  <div id="modal-agendamento" class="modal-overlay hidden">
-    <div class="modal-content">
-      <h2>Confirmar Agendamento</h2>
+  <div id="modal-agendamento" class="modal-overlay hidden" aria-hidden="true">
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="titulo-modal-agendamento">
+      <h2 id="titulo-modal-agendamento">Confirmar Agendamento</h2>
       <ul id="modal-detalhes" class="detalhes-agendamento-lista"></ul>
+
       <div class="form-group">
         <label for="input-matricula">Sua Matrícula (Ex: 12345):</label>
         <input type="text" id="input-matricula" placeholder="Digite sua matrícula" required>
       </div>
 
-      <!-- NOVO: e-mail opcional -->
+      <!-- E-mail opcional (confirmação de reserva) -->
       <div class="form-group">
         <label for="input-email">E-mail (opcional para confirmação):</label>
         <input type="email" id="input-email" placeholder="ex: nome@hmv.org.br">
       </div>
 
-      <div id="modal-mensagem"></div>
+      <div id="modal-mensagem" aria-live="polite"></div>
       <div class="modal-botoes">
         <button id="btn-cancelar-agendamento" class="btn-modal btn-cinza" type="button">Cancelar</button>
         <button id="btn-confirmar" class="btn-modal btn-verde" type="button">Confirmar Reserva</button>
@@ -77,20 +78,29 @@
   </div>
 
   <!-- Modal Consulta Reservas -->
-  <div id="modal-consulta" class="modal-overlay hidden">
-    <div class="modal-content">
+  <div id="modal-consulta" class="modal-overlay hidden" aria-hidden="true">
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="titulo-modal-consulta">
       <div id="consulta-view-inicial">
-        <h2>Minhas Reservas</h2>
+        <h2 id="titulo-modal-consulta">Minhas Reservas</h2>
         <p>Digite sua matrícula para ver ou cancelar seus agendamentos futuros.</p>
+
         <div class="form-group">
           <label for="input-consulta-matricula">Sua Matrícula:</label>
           <input type="text" id="input-consulta-matricula" placeholder="Digite sua matrícula">
         </div>
+
+        <!-- E-mail opcional (confirmação de cancelamento) -->
+        <div class="form-group">
+          <label for="input-consulta-email">E-mail (opcional para notificações de cancelamento):</label>
+          <input type="email" id="input-consulta-email" placeholder="ex: nome@hmv.org.br">
+        </div>
+
         <div class="modal-botoes">
           <button id="btn-fechar-consulta" class="btn-modal btn-cinza" type="button">Fechar</button>
           <button id="btn-buscar-reservas" class="btn-modal btn-azul" type="button">Buscar</button>
         </div>
       </div>
+
       <div id="consulta-view-resultados" class="hidden">
         <h2>Seus Agendamentos</h2>
         <div id="lista-agendamentos"></div>
@@ -98,19 +108,20 @@
           <button id="btn-voltar-consulta" class="btn-modal btn-cinza" type="button">Voltar</button>
         </div>
       </div>
-      <div id="consulta-mensagem"></div>
+
+      <div id="consulta-mensagem" aria-live="polite"></div>
     </div>
   </div>
 
   <!-- Modal Admin Login -->
-  <div id="modal-admin-login" class="modal-overlay hidden">
-    <div class="modal-content">
-      <h2>Acesso Administrativo</h2>
+  <div id="modal-admin-login" class="modal-overlay hidden" aria-hidden="true">
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="titulo-modal-admin-login">
+      <h2 id="titulo-modal-admin-login">Acesso Administrativo</h2>
       <div class="form-group">
         <label for="input-admin-password">Senha Admin:</label>
         <input type="password" id="input-admin-password" placeholder="Digite a senha">
       </div>
-      <div id="admin-login-mensagem"></div>
+      <div id="admin-login-mensagem" aria-live="polite"></div>
       <div class="modal-botoes">
         <button id="btn-cancelar-admin-login" class="btn-modal btn-cinza" type="button">Cancelar</button>
         <button id="btn-confirmar-admin-login" class="btn-modal btn-vermelho" type="button">Entrar</button>
@@ -119,14 +130,13 @@
   </div>
 
   <!-- Modal Admin Gerenciar -->
-  <div id="modal-admin-gerenciar" class="modal-overlay hidden">
-    <div class="modal-content">
-      <h2>Painel de Administração</h2>
+  <div id="modal-admin-gerenciar" class="modal-overlay hidden" aria-hidden="true">
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="titulo-modal-admin-gerenciar">
+      <h2 id="titulo-modal-admin-gerenciar">Painel de Administração</h2>
       <p>Selecione a ação desejada.</p>
       <div class="modal-botoes vertical-botoes">
         <button id="btn-admin-adicionar" class="btn-modal btn-verde" type="button">Adicionar Novos Horários</button>
         <button id="btn-admin-dashboard" class="btn-modal btn-azul" type="button">Painel / Dashboard</button>
-
         <button id="btn-admin-logout" class="btn-modal btn-cinza" type="button">Logout Admin</button>
         <button id="btn-fechar-admin-gerenciar" class="btn-modal btn-cinza" type="button">Fechar</button>
       </div>
@@ -134,10 +144,10 @@
   </div>
 
   <!-- Modal Admin Adicionar -->
-  <div id="modal-admin-adicionar" class="modal-overlay hidden">
-    <div class="modal-content large-modal">
-      <h2>Adicionar Novo Horário à Agenda</h2>
-      <div id="admin-add-mensagem"></div>
+  <div id="modal-admin-adicionar" class="modal-overlay hidden" aria-hidden="true">
+    <div class="modal-content large-modal" role="dialog" aria-modal="true" aria-labelledby="titulo-modal-admin-adicionar">
+      <h2 id="titulo-modal-admin-adicionar">Adicionar Novo Horário à Agenda</h2>
+      <div id="admin-add-mensagem" aria-live="polite"></div>
       <form id="form-adicionar-horario">
         <div class="form-row">
           <div class="form-group flex-item">
@@ -192,9 +202,9 @@
   </div>
 
   <!-- Modal Dashboard -->
-  <div id="modal-admin-dashboard" class="modal-overlay hidden">
-    <div class="modal-content" style="max-width:1000px">
-      <h2>Dashboard — Resumo do Dia</h2>
+  <div id="modal-admin-dashboard" class="modal-overlay hidden" aria-hidden="true">
+    <div class="modal-content" style="max-width:1000px" role="dialog" aria-modal="true" aria-labelledby="titulo-modal-dashboard">
+      <h2 id="titulo-modal-dashboard">Dashboard — Resumo do Dia</h2>
 
       <div class="dash-toolbar">
         <label for="dash-select-date">Data:</label>
@@ -226,6 +236,7 @@
     <img src="img/qr-code-aulas.png" alt="Código QR para Aulas" id="qr-code-aulas">
   </div>
 
-  <script src="script.js?v=20251022-email"></script>
+  <!-- atualize a versão se fizer novo deploy para forçar o refresh do navegador -->
+  <script src="script.js?v=20251022-accordion-email"></script>
 </body>
 </html>
