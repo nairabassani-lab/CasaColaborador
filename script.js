@@ -175,6 +175,7 @@ async function renderizarAgendaParaData(dataISO){
         atividadeSelecionada = 'TODAS';
       }
       container.innerHTML = criarHTMLAgendaFiltrada(todosOsAgendamentos, atividadeSelecionada);
+      initializeAccordions(); // <- colapsa tudo e habilita clique no título
     } else {
       container.innerHTML = '<p class="alerta-erro">Erro ao carregar: ' + (result.message || 'Resposta inválida.') + '</p>';
       menuAtividades.innerHTML = '';
@@ -212,63 +213,86 @@ function construirMenuAtividades(agendamentos){
   menuAtividades.innerHTML = html;
 }
 
-// HTML agenda filtrada
+// =============== HTML agenda filtrada (ACORDEÃO POR ATIVIDADE) ===============
 function criarHTMLAgendaFiltrada(agendamentos, atividadeFiltro){
-  const grupos = agendamentos.reduce(function(acc, s){
-    if (atividadeFiltro!=='TODAS' && s.atividade !== atividadeFiltro) return acc;
-    const k = s.atividade + '|' + s.profissional;
-    if(!acc[k]) acc[k] = { atividade:s.atividade, profissional:s.profissional, slots:[] };
-    acc[k].slots.push(s);
-    return acc;
-  },{});
-
-  const chaves = Object.keys(grupos).sort(function(a,b){ return a.localeCompare(b,'pt-BR'); });
-  if(chaves.length===0){ return '<p class="alerta-info">Não há horários para esta atividade nesta data.</p>'; }
-
-  let html='';
-  chaves.forEach(function(k){
-    const g = grupos[k];
-    html += '<div class="bloco-atividade">' +
-      '<h3 class="titulo-atividade">' + g.atividade + '</h3>' +
-      '<h4 class="subtitulo-profissional">' + g.profissional + '</h4>' +
-      '<div class="horarios-atividade">';
-
-    g.slots.sort(function(a,b){ return a.horario.localeCompare(b.horario); }).forEach(function(s){
-      const vagasLivres = s.vagas_totais - s.reservas;
-      let statusClass='status-disponivel';
-      const isQM = s.atividade.indexOf('Quick Massage') !== -1 || s.atividade.indexOf('Reiki') !== -1;
-      const vagasTxt = isQM ? 'Vaga' : (vagasLivres + '/' + s.vagas_totais + ' Vagas');
-
-      const dataApi = seletorData.value.split('-').reverse().join('/');
-      html +=
-        '<div class="slot-horario ' + statusClass + '"' +
-        ' data-id-linha="' + s.id_linha + '"' +
-        ' data-data="' + dataApi + '"' +
-        ' data-horario="' + s.horario + '"' +
-        ' data-atividade="' + s.atividade + '"' +
-        ' data-profissional="' + s.profissional + '"' +
-        ' data-vagas-total="' + s.vagas_totais + '"' +
-        ' data-vagas-livres="' + vagasLivres + '">' +
-          '<span class="horario-label">' + s.horario + '</span>' +
-          '<span class="vagas-label">' + vagasTxt + '</span>' +
-        '</div>';
-    });
-
-    // atalho admin para criar novo slot dentro do grupo
-    if(isAdmin){
-      html +=
-        '<div class="slot-horario status-admin-adicionar"' +
-        ' data-data="' + seletorData.value.split('-').reverse().join('/') + '"' +
-        ' data-profissional="' + g.profissional + '"' +
-        ' data-atividade="' + g.atividade + '">' +
-          '<span class="adicionar-label">+ Adicionar Slot</span>' +
-        '</div>';
-    }
-
-    html += '</div></div>';
+  // atividade -> { prof -> [slots] }
+  const map = {};
+  agendamentos.forEach(function(s){
+    if (atividadeFiltro !== 'TODAS' && s.atividade !== atividadeFiltro) return;
+    if (!map[s.atividade]) map[s.atividade] = {};
+    if (!map[s.atividade][s.profissional]) map[s.atividade][s.profissional] = [];
+    map[s.atividade][s.profissional].push(s);
   });
 
-  return html || '<p class="alerta-info">Não há horários disponíveis para esta atividade.</p>';
+  const atividades = Object.keys(map).sort(function(a,b){ return a.localeCompare(b,'pt-BR'); });
+  if (!atividades.length) return '<p class="alerta-info">Não há horários para esta atividade nesta data.</p>';
+
+  let html = '';
+  atividades.forEach(function(atividade){
+    html += '<div class="bloco-atividade">' +
+              '<h3 class="titulo-atividade">' + atividade + '</h3>' +
+              '<div class="atividade-content">';
+
+    const profs = Object.keys(map[atividade]).sort(function(a,b){ return a.localeCompare(b,'pt-BR'); });
+    profs.forEach(function(prof){
+      const slots = map[atividade][prof].slice().sort(function(a,b){ return a.horario.localeCompare(b.horario); });
+
+      // monta grade de horários do profissional
+      let grade = '';
+      slots.forEach(function(s){
+        const vagasLivres = s.vagas_totais - s.reservas;
+        const isQM = s.atividade.indexOf('Quick Massage') !== -1 || s.atividade.indexOf('Reiki') !== -1;
+        const vagasTxt = isQM ? 'Vaga' : (vagasLivres + '/' + s.vagas_totais + ' Vagas');
+
+        const dataApi = seletorData.value.split('-').reverse().join('/');
+        grade +=
+          '<div class="slot-horario status-disponivel"' +
+              ' data-id-linha="' + s.id_linha + '"' +
+              ' data-data="' + dataApi + '"' +
+              ' data-horario="' + s.horario + '"' +
+              ' data-atividade="' + s.atividade + '"' +
+              ' data-profissional="' + s.profissional + '"' +
+              ' data-vagas-total="' + s.vagas_totais + '"' +
+              ' data-vagas-livres="' + vagasLivres + '">' +
+            '<span class="horario-label">' + s.horario + '</span>' +
+            '<span class="vagas-label">' + vagasTxt + '</span>' +
+          '</div>';
+      });
+
+      if (!grade.trim()) return;
+
+      html +=   '<h4 class="subtitulo-profissional">' + prof + '</h4>' +
+                '<div class="slots-grid" style="display:flex;flex-wrap:wrap;gap:10px;">' +
+                  grade +
+                  (isAdmin
+                    ? ('<div class="slot-horario status-admin-adicionar"' +
+                       ' data-data="' + seletorData.value.split('-').reverse().join('/') + '"' +
+                       ' data-profissional="' + prof + '"' +
+                       ' data-atividade="' + atividade + '">' +
+                       '<span class="adicionar-label">+ Adicionar Slot</span></div>')
+                    : '') +
+                '</div>';
+    });
+
+    html +=   '</div>' + // fecha .atividade-content (colapsável)
+            '</div>';
+  });
+
+  return html;
+}
+
+// Inicializa acordeão: começa tudo fechado
+function initializeAccordions(){
+  const sections = container.querySelectorAll('.atividade-content');
+  sections.forEach(function(sec){
+    sec.style.maxHeight = '0px';
+    sec.style.overflow = 'hidden';
+    sec.style.transition = 'max-height 0.4s ease, padding 0.3s ease';
+    sec.style.padding = '0 15px';
+    sec.classList.remove('aberta');
+  });
+  const titles = container.querySelectorAll('.titulo-atividade');
+  titles.forEach(function(t){ t.classList.remove('ativo'); });
 }
 
 // ================== Usuário – reservar ==================
@@ -326,6 +350,7 @@ function toggleAdminView(on){
     const aviso=document.querySelector('.aviso-admin'); if(aviso) aviso.remove();
   }
   container.innerHTML = criarHTMLAgendaFiltrada(todosOsAgendamentos, atividadeSelecionada);
+  initializeAccordions();
 }
 function handleAdminLoginClick(){ if(isAdmin){toggleAdminView(false);return;} abrirModal(modalAdminLogin); inputAdminPassword.value=''; adminLoginMensagem.textContent=''; }
 function confirmarAdminLogin(){ if(inputAdminPassword.value.trim()===ADMIN_PASSWORD){ toggleAdminView(true); fecharModal(modalAdminLogin); } else { adminLoginMensagem.textContent='Senha incorreta.'; adminLoginMensagem.style.color='red'; } }
@@ -563,7 +588,6 @@ function buildTable(headers, rows){
 }
 
 function openDashboard(){
-  // data padrão = selecionada na tela principal
   dashSelectDate.value = seletorData.value;
   atualizarDashboard();
   abrirModal(modalAdminDashboard);
@@ -574,14 +598,10 @@ function atualizarDashboard(){
   if(!dataISO){ dashActivityTable.innerHTML=''; dashProfTable.innerHTML=''; dashAPTable.innerHTML=''; return; }
   const dataBR = dataISO.split('-').reverse().join('/');
 
-  // filtrar elegíveis do dia selecionado
   const slotsDia = todosOsAgendamentos.filter(function(s){ return s.data === dataBR; }).filter(isElegivel);
 
-  // agregação por atividade
   const byAtv = {};
-  // agregação por profissional
   const byProf = {};
-  // agregação por atividade x profissional
   const byAP = {};
 
   slotsDia.forEach(function(s){
@@ -603,7 +623,6 @@ function atualizarDashboard(){
     byAP[keyAP].res += s.reservas;
   });
 
-  // linhas
   const rowsAtv = Object.keys(byAtv).sort(function(a,b){return a.localeCompare(b,'pt-BR');})
     .map(function(k){ const o=byAtv[k]; return [k, formatNum(o.tot), formatNum(o.res), formatNum(o.tot - o.res)]; });
 
@@ -656,17 +675,40 @@ btnBuscarReservas.addEventListener('click', handleBuscarReservas);
 btnVoltarConsulta.addEventListener('click', voltarConsulta);
 modalConsulta.addEventListener('click', handleCancelBooking);
 
-// click no container de slots (abre reserva / excluir / atalho admin)
+// click no container (acordeão + slots + admin)
 container.addEventListener('click', function(ev){
+  // 1) acordeão: clicar no título abre/fecha
+  const title = ev.target.closest('.titulo-atividade');
+  if (title){
+    title.classList.toggle('ativo');
+    const content = title.nextElementSibling; // .atividade-content
+    if (content){
+      const isOpen = content.classList.toggle('aberta');
+      if (isOpen){
+        content.style.padding = '15px';
+        content.style.maxHeight = content.scrollHeight + 'px';
+      } else {
+        content.style.maxHeight = '0px';
+        content.style.padding = '0 15px';
+      }
+    }
+    return;
+  }
+
+  // 2) clique em um slot (usuário)
   const el = ev.target.closest('.slot-horario');
   if(el && el.classList.contains('status-disponivel') && !isAdmin){
     abrirModalReserva(el.dataset);
     return;
   }
+
+  // 3) admin excluir
   if (isAdmin && ev.target.classList.contains('status-admin-excluir')){
     const id=ev.target.getAttribute('data-id-linha'); if(id) handleAdminDelete(id);
     return;
   }
+
+  // 4) admin atalho adicionar
   if (isAdmin && el && el.classList.contains('status-admin-adicionar')){
     const d=el.dataset;
     adminSelectData.value = d.data.split('/').reverse().join('-');
@@ -684,12 +726,11 @@ menuAtividades.addEventListener('click', function(e){
   const btn = e.target.closest('.chip-atividade');
   if(!btn) return;
   atividadeSelecionada = btn.getAttribute('data-atividade') || 'TODAS';
-  // marca ativo
   var chips = menuAtividades.querySelectorAll('.chip-atividade');
   for (var i=0;i<chips.length;i++){ chips[i].classList.remove('ativo'); }
   btn.classList.add('ativo');
-  // re-render
   container.innerHTML = criarHTMLAgendaFiltrada(todosOsAgendamentos, atividadeSelecionada);
+  initializeAccordions();
 });
 
 // Dashboard handlers
