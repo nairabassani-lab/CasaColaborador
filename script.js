@@ -42,19 +42,7 @@ function padHora(h) {
 function isElegivel(slot) {
   const status = String(slot.reserva || '').toUpperCase();
   const livres = (slot.vagas_totais || 0) - (slot.reservas || 0);
-  return status !== 'INDISPONIVEL' && status !== 'BLOQUEADO' && livres > 0 && !isSlotPast(slot);
-}
-function isSlotPast(slot) {
-  // slot.data formato DD/MM/YYYY, slot.horario HH:mm
-  try {
-    const [dd, mm, yy] = String(slot.data).split('/').map(Number);
-    const [HH, MM] = String(slot.horario).split(':').map(Number);
-    const when = new Date(yy, mm - 1, dd, HH, MM, 0);
-    const now = new Date();
-    return when.getTime() <= now.getTime();
-  } catch(_) {
-    return false;
-  }
+  return status !== 'INDISPONIVEL' && status !== 'BLOQUEADO' && livres > 0;
 }
 
 // ================== DOM refs ==================
@@ -66,7 +54,7 @@ const menuAtividades = document.getElementById('menu-atividades');
 const modalAgendamento = document.getElementById('modal-agendamento');
 const modalDetalhes   = document.getElementById('modal-detalhes');
 const inputMatricula  = document.getElementById('input-matricula');
-const inputEmail      = document.getElementById('input-email'); // ← novo (opcional)
+const inputEmail      = document.getElementById('input-email'); // campo opcional no modal (se existir no HTML)
 const btnCancelar     = document.getElementById('btn-cancelar-agendamento');
 const btnConfirmar    = document.getElementById('btn-confirmar');
 const modalMensagem   = document.getElementById('modal-mensagem');
@@ -163,7 +151,6 @@ async function carregarAgenda(){
   const dd=String(hoje.getDate()).padStart(2,'0');
   const dataPadrao=`${yyyy}-${mm}-${dd}`;
 
-  // bloquear datas passadas no seletor
   seletorData.min = `${yyyy}-${mm}-${dd}`;
   adminSelectData.min = seletorData.min;
 
@@ -183,14 +170,13 @@ async function renderizarAgendaParaData(dataISO){
     if(!response.ok) throw new Error('Erro de rede (' + response.status + ')');
     const result = await response.json();
     if(result.status==="success"){
-      // Só slots elegíveis e não passados
-      todosOsAgendamentos = (result.data || []).filter(isElegivel);
+      todosOsAgendamentos = (result.data || []).filter(isElegivel); // só elegíveis
       construirMenuAtividades(todosOsAgendamentos);
       if (atividadeSelecionada !== 'TODAS' && !getTodasAtividades(todosOsAgendamentos).includes(atividadeSelecionada)) {
         atividadeSelecionada = 'TODAS';
       }
       container.innerHTML = criarHTMLAgendaFiltrada(todosOsAgendamentos, atividadeSelecionada);
-      initializeAccordions(); // colapsa tudo
+      initializeAccordions(); // colapsa tudo (atividade e profissionais)
     } else {
       container.innerHTML = '<p class="alerta-erro">Erro ao carregar: ' + (result.message || 'Resposta inválida.') + '</p>';
       menuAtividades.innerHTML = '';
@@ -228,7 +214,7 @@ function construirMenuAtividades(agendamentos){
   menuAtividades.innerHTML = html;
 }
 
-// =============== HTML agenda filtrada (ACORDEÃO POR ATIVIDADE) ===============
+// =============== HTML agenda filtrada (ACORDEÃO POR ATIVIDADE e PROFISSIONAL) ===============
 function criarHTMLAgendaFiltrada(agendamentos, atividadeFiltro){
   // atividade -> { prof -> [slots] }
   const map = {};
@@ -252,11 +238,13 @@ function criarHTMLAgendaFiltrada(agendamentos, atividadeFiltro){
     profs.forEach(function(prof){
       const slots = map[atividade][prof].slice().sort(function(a,b){ return a.horario.localeCompare(b.horario); });
 
+      // monta grade de horários do profissional
       let grade = '';
       slots.forEach(function(s){
         const vagasLivres = s.vagas_totais - s.reservas;
         const isQM = s.atividade.indexOf('Quick Massage') !== -1 || s.atividade.indexOf('Reiki') !== -1;
         const vagasTxt = isQM ? 'Vaga' : (vagasLivres + '/' + s.vagas_totais + ' Vagas');
+
         const dataApi = seletorData.value.split('-').reverse().join('/');
         grade +=
           '<div class="slot-horario status-disponivel"' +
@@ -274,38 +262,54 @@ function criarHTMLAgendaFiltrada(agendamentos, atividadeFiltro){
 
       if (!grade.trim()) return;
 
+      // bloco profissional (colapsável)
       html +=   '<h4 class="subtitulo-profissional">' + prof + '</h4>' +
-                '<div class="slots-grid" style="display:flex;flex-wrap:wrap;gap:10px;">' +
-                  grade +
-                  (isAdmin
-                    ? ('<div class="slot-horario status-admin-adicionar"' +
-                       ' data-data="' + seletorData.value.split('-').reverse().join('/') + '"' +
-                       ' data-profissional="' + prof + '"' +
-                       ' data-atividade="' + atividade + '">' +
-                       '<span class="adicionar-label">+ Adicionar Slot</span></div>')
-                    : '') +
+                '<div class="prof-content">' + // ← será colapsado por JS
+                  '<div class="slots-grid" style="display:flex;flex-wrap:wrap;gap:10px;">' +
+                    grade +
+                    (isAdmin
+                      ? ('<div class="slot-horario status-admin-adicionar"' +
+                         ' data-data="' + seletorData.value.split('-').reverse().join('/') + '"' +
+                         ' data-profissional="' + prof + '"' +
+                         ' data-atividade="' + atividade + '">' +
+                         '<span class="adicionar-label">+ Adicionar Slot</span></div>')
+                      : '') +
+                  '</div>' +
                 '</div>';
     });
 
-    html +=   '</div>' +
+    html +=   '</div>' + // fecha .atividade-content
             '</div>';
   });
 
   return html;
 }
 
-// Inicializa acordeão: começa tudo fechado
+// Inicializa acordeões: começa tudo fechado (atividade e profissionais)
 function initializeAccordions(){
-  const sections = container.querySelectorAll('.atividade-content');
-  sections.forEach(function(sec){
+  // fecha profissionais
+  const profSections = container.querySelectorAll('.prof-content');
+  profSections.forEach(function(sec){
+    sec.style.maxHeight = '0px';
+    sec.style.overflow = 'hidden';
+    sec.style.transition = 'max-height 0.3s ease, padding 0.25s ease';
+    sec.style.padding = '0 15px';
+    sec.classList.remove('aberta');
+  });
+
+  // fecha atividades (contendo os profissionais)
+  const actSections = container.querySelectorAll('.atividade-content');
+  actSections.forEach(function(sec){
     sec.style.maxHeight = '0px';
     sec.style.overflow = 'hidden';
     sec.style.transition = 'max-height 0.4s ease, padding 0.3s ease';
     sec.style.padding = '0 15px';
     sec.classList.remove('aberta');
   });
-  const titles = container.querySelectorAll('.titulo-atividade');
-  titles.forEach(function(t){ t.classList.remove('ativo'); });
+
+  // remove marcação visual
+  container.querySelectorAll('.titulo-atividade').forEach(function(t){ t.classList.remove('ativo'); });
+  container.querySelectorAll('.subtitulo-profissional').forEach(function(t){ t.classList.remove('ativo'); });
 }
 
 // ================== Usuário – reservar ==================
@@ -317,35 +321,32 @@ function abrirModalReserva(dadosSlot){
     atividade: dadosSlot.atividade,
     profissional: dadosSlot.profissional
   };
-  // preenche e-mail se houver salvo
-  const savedEmail = localStorage.getItem('userEmail') || '';
-  if (inputEmail) inputEmail.value = savedEmail;
-
   modalDetalhes.innerHTML =
     '<li><strong>Data:</strong> ' + agendamentoAtual.data + '</li>' +
     '<li><strong>Horário:</strong> ' + agendamentoAtual.horario + '</li>' +
     '<li><strong>Atividade:</strong> ' + agendamentoAtual.atividade + '</li>' +
     '<li><strong>Profissional:</strong> ' + agendamentoAtual.profissional + '</li>';
-  inputMatricula.value=''; modalMensagem.textContent='';
+  if (inputMatricula) inputMatricula.value='';
+  if (inputEmail) inputEmail.value='';
+  modalMensagem.textContent='';
   abrirModal(modalAgendamento);
 }
 
 async function confirmarAgendamento(){
-  const matricula=inputMatricula.value.trim();
-  const email=(inputEmail?.value || '').trim(); // opcional
-
+  const matricula=(inputMatricula?.value||'').trim();
+  const email=(inputEmail?.value||'').trim();
   if(!matricula){ modalMensagem.textContent='A matrícula é obrigatória.'; modalMensagem.style.color='red'; return; }
   btnConfirmar.disabled=true;
   modalMensagem.textContent='Processando...'; modalMensagem.style.color='var(--cinza-texto)';
 
   try{
-    const body = formEncode({ action:'bookSlot', id_linha: agendamentoAtual.idLinha, matricula, email });
+    const bodyObj = { action:'bookSlot', id_linha: agendamentoAtual.idLinha, matricula };
+    if (email) bodyObj.email = email;
+    const body = formEncode(bodyObj);
     const resp = await fetch(apiUrl, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'}, body });
     if(!resp.ok) throw new Error('HTTP ' + resp.status);
     const result = await resp.json();
     if(result.status==='success'){
-      // salva e-mail para futuras ações (cancelamento/novo agendamento)
-      if (email) localStorage.setItem('userEmail', email);
       modalMensagem.textContent=result.message; modalMensagem.style.color='var(--verde-moinhos)';
       carregarAgenda(); setTimeout(function(){ fecharModal(modalAgendamento); }, 1500);
     }else{ throw new Error(result.message); }
@@ -566,11 +567,10 @@ async function handleCancelBooking(event){
   const bookingId = t.getAttribute('data-booking-id');
   const slotId    = t.getAttribute('data-slot-id');
   const matricula = t.getAttribute('data-matricula');
-  const email = localStorage.getItem('userEmail') || ''; // ← usa e-mail salvo, se houver
   if(!confirm('Cancelar ' + t.previousElementSibling.textContent + '?')) return;
   t.disabled=true; t.textContent='Cancelando...';
   try{
-    const body = formEncode({ action:'cancelBooking', bookingId, slotId, matricula, email });
+    const body = formEncode({ action:'cancelBooking', bookingId, slotId, matricula, email: '' });
     const resp = await fetch(apiUrl, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'}, body });
     if(!resp.ok) throw new Error('HTTP ' + resp.status);
     const result = await resp.json();
@@ -697,16 +697,17 @@ btnBuscarReservas.addEventListener('click', handleBuscarReservas);
 btnVoltarConsulta.addEventListener('click', voltarConsulta);
 modalConsulta.addEventListener('click', handleCancelBooking);
 
-// click no container (acordeão + slots + admin)
+// click no container (acordeões + slots + admin)
 container.addEventListener('click', function(ev){
-  // 1) acordeão: clicar no título abre/fecha
-  const title = ev.target.closest('.titulo-atividade');
-  if (title){
-    title.classList.toggle('ativo');
-    const content = title.nextElementSibling; // .atividade-content
+  // 1) acordeão atividade
+  const actTitle = ev.target.closest('.titulo-atividade');
+  if (actTitle){
+    actTitle.classList.toggle('ativo');
+    const content = actTitle.nextElementSibling; // .atividade-content
     if (content){
       const isOpen = content.classList.toggle('aberta');
       if (isOpen){
+        // ao abrir a atividade, mantém os profissionais ainda fechados
         content.style.padding = '15px';
         content.style.maxHeight = content.scrollHeight + 'px';
       } else {
@@ -717,20 +718,47 @@ container.addEventListener('click', function(ev){
     return;
   }
 
-  // 2) clique em um slot (usuário)
+  // 2) acordeão profissional (só reage se a atividade estiver aberta)
+  const profTitle = ev.target.closest('.subtitulo-profissional');
+  if (profTitle){
+    profTitle.classList.toggle('ativo');
+    const profContent = profTitle.nextElementSibling; // .prof-content
+    if (profContent){
+      const isOpen = profContent.classList.toggle('aberta');
+      if (isOpen){
+        profContent.style.padding = '15px';
+        profContent.style.maxHeight = profContent.scrollHeight + 'px';
+      } else {
+        profContent.style.maxHeight = '0px';
+        profContent.style.padding = '0 15px';
+      }
+
+      // Ajusta altura do container de atividade para acomodar expansão/fechamento do prof
+      const actContent = profTitle.parentElement; // está dentro de .atividade-content
+      if (actContent && actContent.classList.contains('atividade-content') && actContent.classList.contains('aberta')){
+        // recalcula altura total
+        requestAnimationFrame(function(){
+          actContent.style.maxHeight = actContent.scrollHeight + 'px';
+        });
+      }
+    }
+    return;
+  }
+
+  // 3) clique em um slot (usuário)
   const el = ev.target.closest('.slot-horario');
   if(el && el.classList.contains('status-disponivel') && !isAdmin){
     abrirModalReserva(el.dataset);
     return;
   }
 
-  // 3) admin excluir
+  // 4) admin excluir
   if (isAdmin && ev.target.classList.contains('status-admin-excluir')){
     const id=ev.target.getAttribute('data-id-linha'); if(id) handleAdminDelete(id);
     return;
   }
 
-  // 4) admin atalho adicionar
+  // 5) admin atalho adicionar
   if (isAdmin && el && el.classList.contains('status-admin-adicionar')){
     const d=el.dataset;
     adminSelectData.value = d.data.split('/').reverse().join('-');
@@ -743,7 +771,7 @@ container.addEventListener('click', function(ev){
   }
 });
 
-// clique no menu de atividades
+// clique no menu de atividades (chips)
 menuAtividades.addEventListener('click', function(e){
   const btn = e.target.closest('.chip-atividade');
   if(!btn) return;
