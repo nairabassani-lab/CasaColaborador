@@ -232,11 +232,64 @@
     </div>
   </div>
 
-  <div class="qr-code-container">
-    <img src="img/qr-code-aulas.png" alt="Código QR para Aulas" id="qr-code-aulas">
+  <!-- QR responsivo com quiet zone e zoom -->
+  <section class="qr-code-container" aria-labelledby="qr-title">
+    <h2 id="qr-title">Aponte a câmera para acessar as aulas</h2>
+
+    <div class="qr-wrap">
+      <img
+        id="qr-code-aulas"
+        src="img/qr-code-aulas.png"
+        srcset="img/qr-code-aulas.png 1x, img/qr-code-aulas@2x.png 2x, img/qr-code-aulas@3x.png 3x"
+        sizes="(max-width:520px) 88vw, (max-width:820px) 70vw, 520px"
+        alt="Código QR para Aulas"
+        loading="lazy"
+        decoding="async"
+      />
+      <button type="button" class="btn-acao btn-azul btn-ampliar" aria-haspopup="dialog">
+        Ampliar QR
+      </button>
+    </div>
+  </section>
+
+  <!-- Modal de Zoom do QR -->
+  <div class="modal-overlay hidden" id="qr-modal" role="dialog" aria-modal="true" aria-label="QR em tela cheia">
+    <div class="modal-content">
+      <img
+        id="qr-zoom"
+        src="img/qr-code-aulas@2x.png"
+        srcset="img/qr-code-aulas.png 1x, img/qr-code-aulas@2x.png 2x, img/qr-code-aulas@3x.png 3x"
+        alt="QR Code ampliado"
+      />
+      <div class="modal-botoes">
+        <button class="btn-modal btn-cinza" id="fechar-qr" type="button">Fechar</button>
+        <a class="btn-modal btn-verde" id="baixar-qr" download href="img/qr-code-aulas@3x.png">Baixar</a>
+      </div>
+    </div>
   </div>
 
   <!-- atualize a versão se fizer novo deploy para forçar o refresh do navegador -->
   <script src="script.js?v=20251022-accordion-email"></script>
+
+  <!-- Inicializador do zoom (caso o script.js não tenha esse trecho ainda) -->
+  <script>
+    (function(){
+      const qrImg = document.getElementById('qr-code-aulas');
+      const modal = document.getElementById('qr-modal');
+      const fechar = document.getElementById('fechar-qr');
+      const btnAmpliar = document.querySelector('.btn-ampliar');
+
+      if (!qrImg || !modal || !fechar || !btnAmpliar) return;
+
+      const abrir = () => { modal.classList.remove('hidden'); modal.style.opacity = '1'; };
+      const fecharModal = () => { modal.classList.add('hidden'); modal.style.opacity = '0'; };
+
+      qrImg.addEventListener('click', abrir, { passive:true });
+      btnAmpliar.addEventListener('click', abrir);
+      fechar.addEventListener('click', fecharModal);
+      modal.addEventListener('click', (e) => { if(e.target === modal) fecharModal(); });
+      document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && !modal.classList.contains('hidden')) fecharModal(); });
+    })();
+  </script>
 </body>
 </html>
